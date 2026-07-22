@@ -26,6 +26,8 @@
   .g-btn:hover{background:#f7f6f2 !important;border-color:#c8c6bd !important}
   .sub-btn:hover{background:#c11a24 !important}
   .fld:focus{border-color:#d81f2a !important;box-shadow:0 0 0 3px rgba(216,31,42,.14) !important}
+  .back-link{color:#767c88;transition:color .15s}
+  .back-link:hover{color:#181a1d}
   @media (max-width:880px){
     [data-page]{grid-template-columns:1fr !important}
     [data-page]>aside{display:none !important}
@@ -38,7 +40,6 @@
 
   <!-- ══ LEFT · dashboard real (light) rolando ══ -->
   <aside style="position:relative;overflow:hidden;background:linear-gradient(155deg,#f2f0e9 0%,#e7e3d9 100%);display:flex;flex-direction:column;padding:34px 34px 44px">
-    <canvas ref="{{ rainRef }}" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none"></canvas>
 
     <div style="position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column">
       <div style="position:relative;flex:1;min-height:0;border-radius:15px;overflow:hidden;background:#fff;border:1px solid #dfe2e7;box-shadow:0 30px 80px -42px rgba(20,24,31,.55);transition:opacity .55s ease,transform .55s ease;{{ winStyle }}">
@@ -63,7 +64,7 @@
   <!-- ══ RIGHT · form (cadastro OU login, conforme ?mode) ══ -->
   <main style="position:relative;overflow-y:auto;max-height:100vh;display:flex;justify-content:center;padding:40px 40px 56px">
     <div style="width:100%;max-width:440px;margin:auto 0">
-      <a href="index.html" style="display:inline-flex;align-items:center;gap:7px;font-size:14px;color:#767c88;font-weight:600;margin-bottom:40px" onmouseover="this.style.color='#181a1d'" onmouseout="this.style.color='#767c88'"><span style="font-size:16px">←</span> Voltar ao site</a>
+      <a href="index.html" class="back-link" style="display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;margin-bottom:40px"><span style="font-size:16px">←</span> Voltar ao site</a>
       <h1 style="font-family:'Space Grotesk',sans-serif;font-size:38px;line-height:1.05;font-weight:700;letter-spacing:-.02em;color:#181a1d;margin:0 0 12px">{{ heading }}</h1>
       <p style="font-size:15px;color:#767c88;margin:0 0 30px">{{ altPrefix }} <a href="{{ altHref }}" style="font-weight:700">{{ altLabel }}</a></p>
       <button type="button" class="g-btn" onClick="{{ onGoogle }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:15px 18px;border-radius:12px;border:1px solid #d8d6cd;background:#fff;font-size:15px;font-weight:700;color:#181a1d;cursor:pointer;transition:background .15s,border-color .15s">
@@ -133,9 +134,6 @@ class Component extends DCLogic {
     { screen: 'findings', label: 'Findings' },
     { screen: 'attack', label: 'AI Insights' },
     { screen: 'remediations', label: 'Remediações' },
-    { screen: 'pipelines', label: 'Scans' },
-    { screen: 'inventory', label: 'Inventário' },
-    { screen: 'integrations', label: 'Integrações' },
   ];
 
   isLogin(){ try { return new URLSearchParams(location.search).get('mode') === 'login'; } catch(e){ return false; } }
@@ -144,7 +142,7 @@ class Component extends DCLogic {
     if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
     this._iv = setInterval(() => this.setState(s => ({ active: (s.active + 1) % this.STEPS.length })), 4600);
   }
-  componentWillUnmount(){ clearInterval(this._iv); cancelAnimationFrame(this._rainRaf); if(this._rainResize) window.removeEventListener('resize', this._rainResize); if(this._appFit) window.removeEventListener('resize', this._appFit); }
+  componentWillUnmount(){ clearInterval(this._iv); if(this._appFit) window.removeEventListener('resize', this._appFit); }
 
   appRef = (el) => {
     if(!el || this._appEl === el) return;
@@ -194,53 +192,6 @@ class Component extends DCLogic {
   }
 
   componentDidUpdate(prevProps, prevState){ if(!prevState || prevState.active !== this.state.active) this._navApp(); }
-
-  rainRef = (el) => {
-    if(!el || this._rainEl === el) return;
-    this._rainEl = el;
-    const ctx = el.getContext('2d');
-    const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
-    let W = 0, H = 0, DPR = 1;
-    const GL = '01{}</>xaf9$;=+#λ';
-    const resize = () => {
-      const r = el.getBoundingClientRect();
-      W = r.width; H = r.height;
-      DPR = Math.min(window.devicePixelRatio || 1, 1.75);
-      el.width = Math.round(W * DPR); el.height = Math.round(H * DPR);
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    };
-    resize(); this._rainResize = resize;
-    window.addEventListener('resize', resize);
-    if(reduce) return;
-    this._rain = [];
-    const draw = (now) => {
-      const dt = Math.min(0.05, (now - (this._rlast || now)) / 1000);
-      this._rlast = now;
-      ctx.clearRect(0, 0, W, H);
-      if(this._rain.length < 80 && Math.random() < 0.5){
-        const len = 5 + Math.floor(Math.random() * 6);
-        this._rain.push({ x: Math.round(Math.random() * W), y: -Math.random() * 120, vy: 32 + Math.random() * 58, step: 13, g: Array.from({length: len}, () => GL[Math.floor(Math.random() * GL.length)]) });
-      }
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '600 11px "JetBrains Mono",monospace';
-      for(let i = this._rain.length - 1; i >= 0; i--){
-        const dr = this._rain[i];
-        dr.y += dr.vy * dt;
-        if(Math.random() < 0.02) dr.g[dr.g.length - 1] = GL[Math.floor(Math.random() * GL.length)];
-        if(dr.y - dr.g.length * dr.step > H){ this._rain.splice(i, 1); continue; }
-        for(let k = 0; k < dr.g.length; k++){
-          const gy = dr.y - k * dr.step;
-          if(gy < -12 || gy > H + 12) continue;
-          const fade = 1 - k / dr.g.length;
-          ctx.globalAlpha = (k === 0 ? 0.5 : 0.26 * fade);
-          ctx.fillStyle = 'rgba(216,31,42,' + (k === 0 ? 1 : 0.85) + ')';
-          ctx.fillText(dr.g[k], dr.x, gy);
-        }
-      }
-      ctx.globalAlpha = 1;
-      this._rainRaf = requestAnimationFrame(draw);
-    };
-    this._rainRaf = requestAnimationFrame(draw);
-  };
 
   // ── autenticação (fácil de plugar no banco depois) ──
   _emailOk(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
@@ -295,7 +246,6 @@ class Component extends DCLogic {
     }));
     const noticeColor = this.state.noticeKind === 'ok' ? '#177a52' : (this.state.noticeKind === 'info' ? '#2b6cb0' : '#b3232c');
     return {
-      rainRef: this.rainRef,
       appRef: this.appRef,
       winStyle: intro ? 'opacity:0;transform:scale(.97);pointer-events:none' : 'opacity:1;transform:none',
       introOn: intro ? 'opacity:1' : 'opacity:0',
