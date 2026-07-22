@@ -1,407 +1,326 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<link rel="icon" href="assets/mark.svg">
-<title>aperIA · Criar conta</title>
-<meta name="description" content="Crie sua conta na aperIA — Attack Path Validation. Cadastre-se por e-mail ou com sua conta Google.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root{
-  color-scheme: light;
-  --paper:#f2f0e9; --bg:#f2f0e9; --band:#eceae5; --panel:#ffffff;
-  --accent:#e5333b; --accent-bright:#ff4d54; --accent-deep:#b3232c;
-  --text:#181a1d; --fg:#181a1d; --fg-mute:#565961; --fg-dim:#8a8f98;
-  --surface:#ffffff; --surface-2:#efeee9; --surface-deep:#e7e5e0;
-  --line:#e0ded7; --line-strong:#cfccc3;
-  --ok:#2ecc8b; --danger:#e5333b;
-  /* tokens do palco escuro (walkthrough) */
-  --d-bg:#0e1013; --d-panel:#161a20; --d-line:#2a2f37; --d-fg:#e9ebef; --d-mute:#98a0ab;
-  --fd:'Manrope',system-ui,sans-serif; --fb:'Inter',system-ui,sans-serif; --fm:'JetBrains Mono',monospace;
-  --r:13px; --rs:9px;
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{min-height:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--fb);-webkit-font-smoothing:antialiased;line-height:1.55}
-::selection{background:rgba(229,51,59,.24)}
-a{color:inherit;text-decoration:none}
-:focus-visible{outline:2px solid var(--accent-bright);outline-offset:3px;border-radius:6px}
-.wrap{display:grid;grid-template-columns:1.05fr .95fr;min-height:100vh}
-
-/* ============================================================
-   PALCO ESQUERDO · walkthrough do produto (tipo vídeo/onboarding)
-   ============================================================ */
-.tour{
-  position:relative;overflow:hidden;color:var(--d-fg);
-  background:radial-gradient(120% 90% at 12% 8%, #2a1113 0%, transparent 52%),
-             linear-gradient(160deg,#0c0e11 0%,#141013 45%,#2a1013 100%);
-  padding:44px 48px;display:flex;flex-direction:column;
-}
-.tour::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
-  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
-  background-size:60px 60px;
-  -webkit-mask-image:radial-gradient(120% 100% at 30% 15%,#000 30%,transparent 100%);mask-image:radial-gradient(120% 100% at 30% 15%,#000 30%,transparent 100%)}
-.tour>*{position:relative;z-index:1}
-.tour-top{display:flex;align-items:center;gap:11px;margin-bottom:8px}
-.tour-top img{height:38px;filter:drop-shadow(0 0 12px rgba(229,51,59,.7))}
-.tour-top b{font-family:var(--fd);font-weight:800;font-size:19px;letter-spacing:-.01em}
-.tour-top b i{font-style:normal;color:var(--accent-bright)}
-.tour-lead{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ff9aa0;margin:14px 0 18px;display:flex;align-items:center;gap:9px}
-.tour-lead .dot{width:7px;height:7px;border-radius:50%;background:var(--accent-bright);box-shadow:0 0 10px var(--accent-bright);animation:pulse 2.2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-
-/* janela do app */
-.win{background:var(--d-panel);border:1px solid var(--d-line);border-radius:14px;overflow:hidden;
-  box-shadow:0 30px 70px -30px rgba(0,0,0,.8);margin:auto 0}
-.win-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--d-line);background:rgba(0,0,0,.25)}
-.win-bar .dots{display:flex;gap:6px}
-.win-bar .dots i{width:11px;height:11px;border-radius:50%;display:block}
-.win-bar .dots i:nth-child(1){background:#ff5f57}.win-bar .dots i:nth-child(2){background:#febc2e}.win-bar .dots i:nth-child(3){background:#28c840}
-.win-bar .url{margin-left:8px;font-family:var(--fm);font-size:11.5px;color:var(--d-mute);background:rgba(255,255,255,.05);border:1px solid var(--d-line);border-radius:6px;padding:4px 12px}
-
-.screens{position:relative;height:330px}
-.screen{position:absolute;inset:0;padding:20px 22px;opacity:0;transform:translateY(14px);
-  transition:opacity .6s ease,transform .6s ease;pointer-events:none}
-.screen.active{opacity:1;transform:none}
-.screen .s-head{font-family:var(--fd);font-weight:700;font-size:15px;margin-bottom:3px}
-.screen .s-sub{font-family:var(--fm);font-size:11px;color:var(--d-mute);margin-bottom:16px}
-
-/* peças reutilizáveis dentro das telas */
-.row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--d-line);border-radius:9px;padding:10px 12px;margin-bottom:9px}
-.row .ic{width:26px;height:26px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;background:rgba(229,51,59,.16);color:var(--accent-bright)}
-.row .t{font-size:13px;color:var(--d-fg)}
-.row .t small{display:block;color:var(--d-mute);font-family:var(--fm);font-size:10.5px}
-.row .badge{margin-left:auto;font-family:var(--fm);font-size:10px;padding:3px 9px;border-radius:100px}
-.badge.run{color:#febc2e;background:rgba(254,188,46,.14)}
-.badge.ok{color:var(--ok);background:rgba(46,204,139,.14)}
-.badge.crit{color:var(--accent-bright);background:rgba(229,51,59,.16)}
-.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--accent-bright);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
-.chip{font-family:var(--fm);font-size:10.5px;color:var(--d-mute);border:1px solid var(--d-line);border-radius:100px;padding:4px 10px;background:rgba(255,255,255,.03)}
-.count{font-family:var(--fd);font-weight:800;font-size:34px;color:#fff;line-height:1}
-.count span{font-size:15px;color:var(--d-mute)}
-
-/* mini attack path (tela 3) */
-.path{display:flex;align-items:center;gap:6px;margin:14px 0}
-.node{flex:1;text-align:center;font-family:var(--fm);font-size:9.5px;color:var(--d-mute);border:1px solid var(--d-line);border-radius:8px;padding:8px 4px;background:rgba(255,255,255,.03)}
-.node.hot{border-color:var(--accent-bright);color:#ff9aa0;background:rgba(229,51,59,.1);box-shadow:0 0 16px -6px var(--accent-bright)}
-.node .tp{color:var(--accent-bright);font-weight:600}
-.arrow{color:var(--accent);font-size:12px;flex:none}
-.verdict{display:flex;align-items:center;gap:10px;background:linear-gradient(120deg,rgba(229,51,59,.16),transparent);border:1px solid rgba(229,51,59,.4);border-radius:10px;padding:11px 13px;margin-top:6px}
-.verdict b{font-family:var(--fd);font-weight:800;color:#fff;font-size:15px}
-.verdict .sc{margin-left:auto;font-family:var(--fd);font-weight:800;color:var(--accent-bright);font-size:20px}
-
-/* diff (tela 4) */
-.diff{font-family:var(--fm);font-size:11.5px;border:1px solid var(--d-line);border-radius:9px;overflow:hidden;margin-top:4px}
-.diff .cap{padding:7px 12px;background:rgba(255,255,255,.05);color:var(--d-fg);font-size:11px}
-.diff .ln{display:flex;padding:3px 12px;white-space:nowrap;overflow:hidden}
-.diff .ln.del{background:rgba(229,51,59,.14)}.diff .ln.del .s{color:var(--accent-bright)}
-.diff .ln.add{background:rgba(46,204,139,.14)}.diff .ln.add .s{color:var(--ok)}
-.diff .ln .s{width:16px;flex:none}
-.merge{display:flex;align-items:center;gap:9px;margin-top:10px;font-size:12px;color:var(--d-mute)}
-.merge .lock{width:22px;height:22px;border-radius:50%;background:rgba(229,51,59,.16);color:var(--accent-bright);display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
-
-/* controle inferior: etapa + progresso */
-.tour-steps{margin-top:22px}
-.step-label{font-family:var(--fd);font-weight:700;font-size:16px;min-height:24px}
-.step-label span{color:var(--accent-bright);font-family:var(--fm);font-size:13px;font-weight:600;margin-right:8px}
-.bars{display:flex;gap:7px;margin-top:14px}
-.bars .b{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;cursor:pointer}
-.bars .b i{display:block;height:100%;width:0;background:var(--accent-bright);border-radius:3px}
-.bars .b.done i{width:100%}
-.bars .b.active i{width:100%;transition:width var(--dur,3400ms) linear}
-
-/* ============================================================
-   LADO DIREITO · formulário (inalterado)
-   ============================================================ */
-.form-side{display:flex;align-items:center;justify-content:center;padding:48px 32px}
-.card{width:100%;max-width:420px}
-.card .head{margin-bottom:26px}
-.card .head h1{font-family:var(--fd);font-weight:800;font-size:30px;letter-spacing:-.02em}
-.card .head p{color:var(--fg-mute);font-size:15px;margin-top:8px}
-.card .head p a{color:var(--accent);font-weight:600}
-.card .head p a:hover{text-decoration:underline}
-.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;border:1px solid var(--line-strong);border-radius:var(--rs);padding:13px 16px;font-family:var(--fb);font-size:15px;font-weight:600;color:#3c4043;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s,transform .1s}
-.btn-google:hover{background:#f7f7f5;border-color:var(--fg-dim);box-shadow:0 2px 10px rgba(0,0,0,.06)}
-.btn-google:active{transform:translateY(1px)}
-.btn-google svg{width:19px;height:19px;flex:none}
-.divisor{display:flex;align-items:center;gap:14px;margin:22px 0;color:var(--fg-dim);font-size:12.5px;font-family:var(--fm);letter-spacing:.08em}
-.divisor::before,.divisor::after{content:"";flex:1;height:1px;background:var(--line)}
-.field{margin-bottom:16px}
-.field label{display:block;font-size:13px;font-weight:600;color:var(--fg-mute);margin-bottom:7px}
-.control{position:relative}
-.field input{width:100%;padding:13px 15px;border:1px solid var(--line-strong);border-radius:var(--rs);background:var(--surface);color:var(--text);font-family:var(--fb);font-size:15px;transition:border-color .15s,box-shadow .15s}
-.field input::placeholder{color:var(--fg-dim)}
-.field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(229,51,59,.12)}
-.field.invalid input{border-color:var(--danger);box-shadow:0 0 0 3px rgba(229,51,59,.12)}
-.field .toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-dim);font-size:12px;font-family:var(--fm);padding:8px 10px;border-radius:6px}
-.field .toggle:hover{color:var(--fg-mute);background:var(--surface-2)}
-.field .hint{font-size:12px;color:var(--fg-dim);margin-top:6px}
-.field .err{font-size:12.5px;color:var(--danger);margin-top:6px;display:none}
-.field.invalid .err{display:block}.field.invalid .hint{display:none}
-.terms{display:flex;gap:10px;align-items:flex-start;margin:6px 0 20px;font-size:13px;color:var(--fg-mute)}
-.terms input{margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex:none;cursor:pointer}
-.terms a{color:var(--accent);font-weight:600}.terms a:hover{text-decoration:underline}
-.btn-primary{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:14px 18px;font-family:var(--fd);font-size:15.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 26px -10px rgba(229,51,59,.7);transition:transform .15s,box-shadow .2s,background .15s}
-.btn-primary:hover{transform:translateY(-2px);background:var(--accent-deep);box-shadow:0 16px 34px -10px rgba(229,51,59,.85)}
-.btn-primary:active{transform:translateY(0)}
-.foot-note{text-align:center;font-size:12.5px;color:var(--fg-dim);margin-top:22px}
-.back{display:inline-flex;align-items:center;gap:6px;color:var(--fg-mute);font-size:13px;margin-bottom:26px}
-.back:hover{color:var(--text)}
-.notice{margin-top:16px;padding:12px 14px;border-radius:var(--rs);font-size:13.5px;display:none;align-items:center;gap:9px}
-.notice.show{display:flex}
-.notice.ok{background:rgba(46,204,139,.12);border:1px solid rgba(46,204,139,.4);color:#177a52}
-.notice.info{background:rgba(74,163,255,.1);border:1px solid rgba(74,163,255,.35);color:#2b6cb0}
-
-/* ---------- responsivo ---------- */
-@media (max-width:860px){
-  .wrap{grid-template-columns:1fr}
-  .tour{padding:28px 24px}
-  .screens{height:300px}
-  .form-side{padding:36px 24px 56px}
-}
-@media (max-width:420px){
-  .form-side{padding:28px 18px 44px}
-  .card .head h1{font-size:26px}
-  .screens{height:320px}
-}
-@media (prefers-reduced-motion:reduce){
-  .screen{transition:opacity .2s}
-  .bars .b.active i{transition:none;width:100%}
-  .spin{animation:none}
-}
-</style>
+<script src="./support.js"></script>
 </head>
 <body>
-<main class="wrap">
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Open+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link rel="icon" href="assets/mark.svg">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:'Open Sans','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;background:#f2f0e9}
+  a{color:#d81f2a;text-decoration:none}
+  a:hover{color:#e5333b}
+  ::selection{background:rgba(216,31,42,.28);color:#fff}
+  input::placeholder{color:#9aa0ab}
+  @keyframes shineSweep{0%{background-position:-140% 0,0 0}100%{background-position:260% 0,0 0}}
+  @font-face{font-family:'Electro Garden';src:url("assets/fonts/ElectroGarden.ttf") format("truetype");font-weight:400;font-style:normal;font-display:block}
+  .g-btn:hover{background:#f7f6f2 !important;border-color:#c8c6bd !important}
+  .sub-btn:hover{background:#c11a24 !important}
+  .fld:focus{border-color:#d81f2a !important;box-shadow:0 0 0 3px rgba(216,31,42,.14) !important}
+  @media (max-width:880px){
+    [data-page]{grid-template-columns:1fr !important}
+    [data-page]>aside{display:none !important}
+    [data-page]>main{max-height:none !important}
+  }
+</style>
+</helmet>
 
-  <!-- PALCO / WALKTHROUGH -->
-  <aside class="tour" aria-label="Como a aperIA funciona">
-    <div class="tour-top"><img src="assets/mark.svg" alt="aperIA"><b>aper<i>IA</i></b></div>
-    <div class="tour-lead"><span class="dot"></span>Veja como funciona · em 4 passos</div>
+<div data-page="" style="display:grid;grid-template-columns:minmax(0,0.94fr) minmax(0,1fr);min-height:100vh;background:#f2f0e9">
 
-    <div class="win">
-      <div class="win-bar">
-        <span class="dots"><i></i><i></i><i></i></span>
-        <span class="url">app.aperia.io/dashboard</span>
+  <!-- ══ LEFT · dashboard real (light) rolando ══ -->
+  <aside style="position:relative;overflow:hidden;background:linear-gradient(155deg,#f2f0e9 0%,#e7e3d9 100%);display:flex;flex-direction:column;padding:34px 34px 44px">
+    <canvas ref="{{ rainRef }}" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none"></canvas>
+
+    <div style="position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column">
+      <div style="position:relative;flex:1;min-height:0;border-radius:15px;overflow:hidden;background:#fff;border:1px solid #dfe2e7;box-shadow:0 30px 80px -42px rgba(20,24,31,.55);transition:opacity .55s ease,transform .55s ease;{{ winStyle }}">
+        <iframe ref="{{ appRef }}" src="dash/index.html" title="aperIA dashboard real" scrolling="no" style="position:absolute;top:0;left:0;border:0;background:#f4f6fa;transform-origin:0 0"></iframe>
       </div>
-      <div class="screens" id="screens">
 
-        <!-- 1 -->
-        <div class="screen active" data-i="0">
-          <div class="s-head">Um Pull Request chega</div>
-          <div class="s-sub">webhook do GitHub · aperIA acordou</div>
-          <div class="row"><span class="ic">⑂</span><span class="t">fix/login-flow <small>PR #142 · 12 arquivos alterados</small></span><span class="badge run"><span class="spin"></span></span></div>
-          <div class="row"><span class="ic">◆</span><span class="t">Pipeline iniciado <small>3 tiers · Celery</small></span><span class="badge run">na fila</span></div>
-          <div class="chips"><span class="chip">push detectado</span><span class="chip">commit a3f9c1</span><span class="chip">repo conectado</span></div>
-        </div>
-
-        <!-- 2 -->
-        <div class="screen" data-i="1">
-          <div class="s-head">Scanners varrem tudo</div>
-          <div class="s-sub">código · dependências · nuvem</div>
-          <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:12px">
-            <div class="count" id="cnt">147<span>&nbsp;findings</span></div>
-            <span class="badge ok" style="margin-bottom:4px">superfície 100%</span>
-          </div>
-          <div class="row"><span class="ic">T1</span><span class="t">Segredos & SAST <small>TruffleHog · Semgrep</small></span><span class="badge ok">✓</span></div>
-          <div class="row"><span class="ic">T2</span><span class="t">Deps & Nuvem <small>Trivy · Prowler</small></span><span class="badge ok">✓</span></div>
-          <div class="chips"><span class="chip">ZAP</span><span class="chip">OpenCTI</span><span class="chip">MITRE Caldera</span></div>
-        </div>
-
-        <!-- 3 -->
-        <div class="screen" data-i="2">
-          <div class="s-head">A IA correlaciona e prova</div>
-          <div class="s-sub">emulação de adversário · sandbox isolada</div>
-          <div class="path">
-            <div class="node hot">segredo<br><span class="tp">T1552</span></div>
-            <span class="arrow">→</span>
-            <div class="node hot">nuvem<br><span class="tp">T1078</span></div>
-            <span class="arrow">→</span>
-            <div class="node hot">lateral<br><span class="tp">T1210</span></div>
-            <span class="arrow">→</span>
-            <div class="node hot">dados<br><span class="tp">T1530</span></div>
-          </div>
-          <div class="verdict"><span class="ic" style="background:rgba(229,51,59,.2)">◎</span><b>Ataque confirmado</b><span class="sc">94/100</span></div>
-          <div class="chips" style="margin-top:12px"><span class="chip">kill chain 5/5</span><span class="chip">0 falso positivo</span></div>
-        </div>
-
-        <!-- 4 -->
-        <div class="screen" data-i="3">
-          <div class="s-head">Você recebe o fix no PR</div>
-          <div class="s-sub">com a prova anexada · decisão sua</div>
-          <div class="diff">
-            <div class="cap">app/config.py · corta o caminho na origem</div>
-            <div class="ln del"><span class="s">-</span>DATABASE_URL = "postgres://admin:S3nh4@…"</div>
-            <div class="ln add"><span class="s">+</span>DATABASE_URL = os.environ["DATABASE_URL"]</div>
-          </div>
-          <div class="merge"><span class="lock">🔒</span> Merge bloqueado · aguardando aprovação humana</div>
-          <div class="chips" style="margin-top:12px"><span class="chip">code suggestion</span><span class="chip">evidência anexada</span></div>
-        </div>
-
+      <!-- intro (antes do dash aparecer) -->
+      <div style="position:absolute;inset:0;z-index:3;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;transition:opacity .7s ease;{{ introOn }}">
+        <div style="font-family:'Electro Garden','Space Grotesk',sans-serif;font-weight:400;font-size:40px;line-height:1.08;text-transform:uppercase;letter-spacing:-.01em;background:linear-gradient(115deg,transparent 34%,rgba(255,226,228,.95) 49%,transparent 64%) -140% 0/240% 100% no-repeat,linear-gradient(180deg,#ff9095,#d81f2a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(216,31,42,.35));animation:shineSweep 2.8s linear infinite">{{ introText }}</div>
+        <div style="width:46px;height:3px;border-radius:999px;background:#d81f2a;margin-top:22px;box-shadow:0 0 12px rgba(216,31,42,.6)"></div>
       </div>
-    </div>
 
-    <div class="tour-steps">
-      <div class="step-label" id="stepLabel"><span>01</span>Um PR chega no seu repositório</div>
-      <div class="bars" id="bars">
-        <div class="b" data-i="0"><i></i></div>
-        <div class="b" data-i="1"><i></i></div>
-        <div class="b" data-i="2"><i></i></div>
-        <div class="b" data-i="3"><i></i></div>
+      <!-- dots -->
+      <div style="position:absolute;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:7px;z-index:4">
+        <sc-for list="{{ dots }}" as="dot" hint-placeholder-count="8">
+          <span style="{{ dot.style }}"></span>
+        </sc-for>
       </div>
     </div>
   </aside>
 
-  <!-- FORMULÁRIO -->
-  <section class="form-side">
-    <div class="card">
-      <a class="back" href="index.html">← Voltar ao site</a>
-      <div class="head">
-        <h1>Criar conta</h1>
-        <p>Já tem uma conta? <a href="login.html">Entrar</a></p>
-      </div>
-
-      <button type="button" class="btn-google" id="googleBtn">
-        <svg viewBox="0 0 48 48" aria-hidden="true">
-          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-        </svg>
-        Continuar com Google
+  <!-- ══ RIGHT · form (cadastro OU login, conforme ?mode) ══ -->
+  <main style="position:relative;overflow-y:auto;max-height:100vh;display:flex;justify-content:center;padding:40px 40px 56px">
+    <div style="width:100%;max-width:440px;margin:auto 0">
+      <a href="index.html" style="display:inline-flex;align-items:center;gap:7px;font-size:14px;color:#767c88;font-weight:600;margin-bottom:40px" onmouseover="this.style.color='#181a1d'" onmouseout="this.style.color='#767c88'"><span style="font-size:16px">←</span> Voltar ao site</a>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:38px;line-height:1.05;font-weight:700;letter-spacing:-.02em;color:#181a1d;margin:0 0 12px">{{ heading }}</h1>
+      <p style="font-size:15px;color:#767c88;margin:0 0 30px">{{ altPrefix }} <a href="{{ altHref }}" style="font-weight:700">{{ altLabel }}</a></p>
+      <button type="button" class="g-btn" onClick="{{ onGoogle }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:15px 18px;border-radius:12px;border:1px solid #d8d6cd;background:#fff;font-size:15px;font-weight:700;color:#181a1d;cursor:pointer;transition:background .15s,border-color .15s">
+        <svg width="19" height="19" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg>
+        {{ googleLabel }}
       </button>
-
-      <div class="divisor">ou cadastre-se com e-mail</div>
-
-      <form id="signupForm" novalidate>
-        <div class="field" id="f-nome">
-          <label for="nome">Nome completo</label>
-          <div class="control"><input id="nome" name="nome" type="text" autocomplete="name" placeholder="Seu nome" required></div>
-          <div class="err">Informe seu nome.</div>
+      <div style="display:flex;align-items:center;gap:16px;margin:24px 0">
+        <span style="flex:1;height:1px;background:#d8d6cd"></span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.2em;color:#d81f2a;text-transform:uppercase;white-space:nowrap">{{ dividerText }}</span>
+        <span style="flex:1;height:1px;background:#d8d6cd"></span>
+      </div>
+      <form onSubmit="{{ onSubmit }}" style="display:flex;flex-direction:column;gap:18px">
+        <div style="{{ nameStyle }}">
+          <label style="display:block;font-size:14px;font-weight:700;color:#181a1d;margin-bottom:9px">Nome</label>
+          <input class="fld" name="nome" type="text" placeholder="Seu nome" style="width:100%;padding:15px 16px;border-radius:12px;border:1px solid #d8d6cd;background:#fff;font-size:15px;color:#181a1d;transition:border-color .15s,box-shadow .15s">
         </div>
-        <div class="field" id="f-email">
-          <label for="email">E-mail de trabalho</label>
-          <div class="control"><input id="email" name="email" type="email" autocomplete="email" placeholder="voce@empresa.com" required></div>
-          <div class="err">Informe um e-mail válido.</div>
+        <div>
+          <label style="display:block;font-size:14px;font-weight:700;color:#181a1d;margin-bottom:9px">E-mail</label>
+          <input class="fld" name="email" type="email" required="" placeholder="voce@empresa.com" style="width:100%;padding:15px 16px;border-radius:12px;border:1px solid #d8d6cd;background:#fff;font-size:15px;color:#181a1d;transition:border-color .15s,box-shadow .15s">
         </div>
-        <div class="field" id="f-senha">
-          <label for="senha">Senha</label>
-          <div class="control">
-            <input id="senha" name="senha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required minlength="8">
-            <button type="button" class="toggle" id="toggleSenha" aria-label="Mostrar senha">mostrar</button>
+        <div>
+          <label style="display:block;font-size:14px;font-weight:700;color:#181a1d;margin-bottom:9px">Senha</label>
+          <div style="position:relative;display:flex;align-items:center">
+            <input class="fld" name="senha" type="{{ pwType }}" required="" minlength="8" placeholder="Mínimo 8 caracteres" style="width:100%;padding:15px 74px 15px 16px;border-radius:12px;border:1px solid #d8d6cd;background:#fff;font-size:15px;color:#181a1d;transition:border-color .15s,box-shadow .15s">
+            <button type="button" onClick="{{ togglePw }}" style="position:absolute;right:14px;background:none;border:none;font-family:'JetBrains Mono',monospace;font-size:13px;color:#767c88;cursor:pointer;padding:4px">{{ pwLabel }}</button>
           </div>
-          <div class="hint">Use ao menos 8 caracteres.</div>
-          <div class="err">A senha precisa de pelo menos 8 caracteres.</div>
         </div>
-        <label class="terms">
-          <input type="checkbox" id="terms" required>
-          <span>Concordo com os <a href="#">Termos de Uso</a> e a <a href="#">Política de Privacidade</a>.</span>
+        <label style="display:flex;align-items:flex-start;gap:11px;font-size:13.5px;line-height:1.5;color:#5b616c;cursor:pointer;margin-top:2px;{{ termsStyle }}">
+          <input type="checkbox" name="terms" style="margin-top:2px;width:17px;height:17px;accent-color:#d81f2a;flex-shrink:0">
+          <span>Concordo com os <a href="#" style="font-weight:600">Termos de Uso</a> e a <a href="#" style="font-weight:600">Política de Privacidade</a>.</span>
         </label>
-        <button type="submit" class="btn-primary">Criar conta →</button>
+        <button type="submit" class="sub-btn" style="width:100%;margin-top:6px;padding:16px;border:none;border-radius:12px;background:#d81f2a;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 12px 30px -12px rgba(216,31,42,.7);transition:background .15s">{{ ctaLabel }}</button>
       </form>
 
-      <div class="notice" id="notice"></div>
-      <p class="foot-note">Ao se cadastrar, você inicia no plano gratuito. Sem cartão de crédito.</p>
+      <div style="margin-top:16px;font-size:13.5px;line-height:1.5;{{ noticeStyle }}">{{ noticeText }}</div>
     </div>
-  </section>
+  </main>
 
-</main>
-
-<script>
-(function(){
-  "use strict";
-
-  /* ============================================================
-     WALKTHROUGH (esquerda) — avança sozinho em loop, tipo vídeo.
-     Para trocar por screenshots reais/vídeo depois: substitua o
-     conteúdo de cada .screen por <img> ou troque .win por <video>.
-     ============================================================ */
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var STEPS = [
-    "Um PR chega no seu repositório",
-    "Scanners varrem código, deps e nuvem",
-    "A IA correlaciona e a emulação prova",
-    "Você recebe o fix como Pull Request"
-  ];
-  var DUR = 3600;
-  var screens = [].slice.call(document.querySelectorAll(".screen"));
-  var bars = [].slice.call(document.querySelectorAll("#bars .b"));
-  var label = document.getElementById("stepLabel");
-  var cur = -1, timer = null;
-
-  function show(i){
-    cur = i;
-    screens.forEach(function(s,k){ s.classList.toggle("active", k===i); });
-    bars.forEach(function(b,k){
-      b.classList.remove("active","done");
-      if (k<i) b.classList.add("done");
-      else if (k===i){ b.style.setProperty("--dur", DUR+"ms"); void b.offsetWidth; b.classList.add("active"); }
-    });
-    label.innerHTML = '<span>'+String(i+1).padStart(2,"0")+'</span>'+STEPS[i];
-    if (i===1) animateCount();
-  }
-  function next(){ show((cur+1) % screens.length); }
-  function play(){ if(timer) clearInterval(timer); if(!reduce) timer = setInterval(next, DUR); }
-
-  /* contador de findings (tela 2) */
-  function animateCount(){
-    if (reduce) return;
-    var el = document.getElementById("cnt");
-    var start=null, from=0, to=147;
-    function frame(ts){ if(!start)start=ts; var p=Math.min((ts-start)/900,1);
-      el.firstChild.nodeValue = Math.round(from+(to-from)*p);
-      if(p<1) requestAnimationFrame(frame); }
-    requestAnimationFrame(frame);
-  }
-
-  /* clicar numa barra pula pro passo */
-  bars.forEach(function(b){ b.addEventListener("click", function(){ show(+b.dataset.i); play(); }); });
-
-  show(0); play();
-
-  /* ============================================================
-     CONFIG · preencha para ativar o cadastro de verdade
-     ============================================================ */
-  var CONFIG = {
-    GOOGLE_CLIENT_ID: "",
-    GOOGLE_REDIRECT_URI: location.origin + "/auth/google/callback",
-    SIGNUP_ENDPOINT: ""
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  /* ═══════════════════════════════════════════════════════════════
+     CONFIG · conectar ao banco depois é só preencher aqui.
+     - SIGNUP_ENDPOINT / LOGIN_ENDPOINT: rotas POST do backend.
+       Recebem JSON e devem responder 2xx em caso de sucesso.
+       Enquanto vazios, o fluxo segue em modo demonstração
+       (vai direto para DASHBOARD_URL, sem gravar nada).
+     - GOOGLE_CLIENT_ID: OAuth Web (console.cloud.google.com).
+     - DASHBOARD_URL: para onde redirecionar após autenticar.
+       Troque por "https://app.aperia.io" (ou a rota real) quando
+       o dashboard estiver publicado.
+     ═══════════════════════════════════════════════════════════════ */
+  CONFIG = {
+    SIGNUP_ENDPOINT: '',
+    LOGIN_ENDPOINT:  '',
+    GOOGLE_CLIENT_ID: '',
+    GOOGLE_REDIRECT_URI: location.origin + '/auth/google/callback',
+    DASHBOARD_URL: 'dash/index.html'
   };
-  var notice = document.getElementById("notice");
-  function showNotice(msg, kind){ notice.className = "notice show " + (kind||"info"); notice.textContent = msg; }
 
-  document.getElementById("googleBtn").addEventListener("click", function(){
-    if (!CONFIG.GOOGLE_CLIENT_ID){ showNotice("Cadastro com Google pronto na interface — falta configurar o GOOGLE_CLIENT_ID no código para ativar.", "info"); return; }
-    var params = new URLSearchParams({ client_id:CONFIG.GOOGLE_CLIENT_ID, redirect_uri:CONFIG.GOOGLE_REDIRECT_URI, response_type:"code", scope:"openid email profile", access_type:"offline", prompt:"select_account" });
-    window.location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString();
-  });
+  state = { active: 0, showPw: false, notice: '', noticeKind: '', busy: false };
 
-  var form = document.getElementById("signupForm");
-  function setInvalid(id, bad){ document.getElementById(id).classList.toggle("invalid", bad); }
-  var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  form.addEventListener("submit", function(e){
+  STEPS = [
+    { intro: 'Bem-vindo ao aperIA' },
+    { screen: 'home', label: 'Postura de Segurança' },
+    { screen: 'findings', label: 'Findings' },
+    { screen: 'attack', label: 'AI Insights' },
+    { screen: 'remediations', label: 'Remediações' },
+    { screen: 'pipelines', label: 'Scans' },
+    { screen: 'inventory', label: 'Inventário' },
+    { screen: 'integrations', label: 'Integrações' },
+  ];
+
+  isLogin(){ try { return new URLSearchParams(location.search).get('mode') === 'login'; } catch(e){ return false; } }
+
+  componentDidMount(){
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    this._iv = setInterval(() => this.setState(s => ({ active: (s.active + 1) % this.STEPS.length })), 4600);
+  }
+  componentWillUnmount(){ clearInterval(this._iv); cancelAnimationFrame(this._rainRaf); if(this._rainResize) window.removeEventListener('resize', this._rainResize); if(this._appFit) window.removeEventListener('resize', this._appFit); }
+
+  appRef = (el) => {
+    if(!el || this._appEl === el) return;
+    this._appEl = el;
+    const APPW = 1500;
+    const fit = () => {
+      const win = el.parentElement;
+      if(!win) return;
+      const w = win.clientWidth, h = win.clientHeight;
+      if(!w || !h) return;
+      const scale = w / APPW;
+      el.style.width = APPW + 'px';
+      el.style.height = Math.ceil(h / scale) + 'px';
+      el.style.transform = 'scale(' + scale + ')';
+    };
+    fit(); this._appFit = fit;
+    window.addEventListener('resize', fit);
+    el.addEventListener('load', () => {
+      fit();
+      try {
+        const w = el.contentWindow;
+        const needTheme = w.localStorage.getItem('aperia-theme') !== 'light';
+        const needConn = w.localStorage.getItem('aperia-connected') !== 'true';
+        if(needTheme || needConn){
+          w.localStorage.setItem('aperia-theme', 'light');
+          w.localStorage.setItem('aperia-connected', 'true');
+          w.location.reload();
+          return;
+        }
+        this._appReady = true;
+        this._navApp();
+      } catch(e){}
+    });
+  };
+
+  _navApp(){
+    if(!this._appEl) return;
+    const step = this.STEPS[this.state.active];
+    if(!step || !step.screen) return;
+    try {
+      const w = this._appEl.contentWindow, d = w.document;
+      const item = d.querySelector('.sb-item[data-screen="' + step.screen + '"]');
+      if(item){ item.click(); }
+      else if(typeof w.navigate === 'function'){ w.navigate(step.screen); }
+      try { w.scrollTo(0, 0); d.documentElement.scrollTop = 0; d.body.scrollTop = 0; } catch(e){}
+    } catch(e){}
+  }
+
+  componentDidUpdate(prevProps, prevState){ if(!prevState || prevState.active !== this.state.active) this._navApp(); }
+
+  rainRef = (el) => {
+    if(!el || this._rainEl === el) return;
+    this._rainEl = el;
+    const ctx = el.getContext('2d');
+    const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+    let W = 0, H = 0, DPR = 1;
+    const GL = '01{}</>xaf9$;=+#λ';
+    const resize = () => {
+      const r = el.getBoundingClientRect();
+      W = r.width; H = r.height;
+      DPR = Math.min(window.devicePixelRatio || 1, 1.75);
+      el.width = Math.round(W * DPR); el.height = Math.round(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    };
+    resize(); this._rainResize = resize;
+    window.addEventListener('resize', resize);
+    if(reduce) return;
+    this._rain = [];
+    const draw = (now) => {
+      const dt = Math.min(0.05, (now - (this._rlast || now)) / 1000);
+      this._rlast = now;
+      ctx.clearRect(0, 0, W, H);
+      if(this._rain.length < 80 && Math.random() < 0.5){
+        const len = 5 + Math.floor(Math.random() * 6);
+        this._rain.push({ x: Math.round(Math.random() * W), y: -Math.random() * 120, vy: 32 + Math.random() * 58, step: 13, g: Array.from({length: len}, () => GL[Math.floor(Math.random() * GL.length)]) });
+      }
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '600 11px "JetBrains Mono",monospace';
+      for(let i = this._rain.length - 1; i >= 0; i--){
+        const dr = this._rain[i];
+        dr.y += dr.vy * dt;
+        if(Math.random() < 0.02) dr.g[dr.g.length - 1] = GL[Math.floor(Math.random() * GL.length)];
+        if(dr.y - dr.g.length * dr.step > H){ this._rain.splice(i, 1); continue; }
+        for(let k = 0; k < dr.g.length; k++){
+          const gy = dr.y - k * dr.step;
+          if(gy < -12 || gy > H + 12) continue;
+          const fade = 1 - k / dr.g.length;
+          ctx.globalAlpha = (k === 0 ? 0.5 : 0.26 * fade);
+          ctx.fillStyle = 'rgba(216,31,42,' + (k === 0 ? 1 : 0.85) + ')';
+          ctx.fillText(dr.g[k], dr.x, gy);
+        }
+      }
+      ctx.globalAlpha = 1;
+      this._rainRaf = requestAnimationFrame(draw);
+    };
+    this._rainRaf = requestAnimationFrame(draw);
+  };
+
+  // ── autenticação (fácil de plugar no banco depois) ──
+  _emailOk(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+  _goDashboard(){
+    if(this.CONFIG.DASHBOARD_URL) window.location.href = this.CONFIG.DASHBOARD_URL;
+    else this.setState({ notice: 'Autenticado! Dashboard em desenvolvimento — configure DASHBOARD_URL.', noticeKind: 'ok' });
+  }
+
+  _submit = (e) => {
     e.preventDefault();
-    var nome=document.getElementById("nome").value.trim(), email=document.getElementById("email").value.trim(), senha=document.getElementById("senha").value, terms=document.getElementById("terms").checked;
-    var okN=nome.length>=2, okE=emailRe.test(email), okS=senha.length>=8;
-    setInvalid("f-nome",!okN); setInvalid("f-email",!okE); setInvalid("f-senha",!okS);
-    if(!terms){ showNotice("Aceite os Termos de Uso para continuar.","info"); return; }
-    if(!(okN&&okE&&okS)) return;
-    if(!CONFIG.SIGNUP_ENDPOINT){ showNotice("Conta validada na interface! Configure o SIGNUP_ENDPOINT para gravar no seu backend.","ok"); form.reset(); return; }
-    fetch(CONFIG.SIGNUP_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nome:nome,email:email,senha:senha})})
-      .then(function(r){ if(r.ok) window.location.href="/dashboard"; else showNotice("Não foi possível criar a conta. Tente novamente.","info"); })
-      .catch(function(){ showNotice("Falha de conexão. Tente novamente.","info"); });
-  });
-  ["nome","email","senha"].forEach(function(id){ document.getElementById(id).addEventListener("input", function(){ document.getElementById("f-"+id).classList.remove("invalid"); }); });
-  var senhaEl = document.getElementById("senha");
-  document.getElementById("toggleSenha").addEventListener("click", function(){ var show=senhaEl.type==="password"; senhaEl.type=show?"text":"password"; this.textContent=show?"ocultar":"mostrar"; });
-})();
+    if(this.state.busy) return;
+    const login = this.isLogin();
+    const f = e.target;
+    const email = (f.querySelector('input[name=email]') || {}).value ? f.querySelector('input[name=email]').value.trim() : '';
+    const senha = (f.querySelector('input[name=senha]') || {}).value || '';
+    const nomeEl = f.querySelector('input[name=nome]');
+    const nome = nomeEl ? nomeEl.value.trim() : '';
+    const termsEl = f.querySelector('input[name=terms]');
+
+    if(!this._emailOk(email)) return this.setState({ notice: 'Informe um e-mail válido.', noticeKind: 'err' });
+    if(senha.length < 8) return this.setState({ notice: 'A senha precisa de pelo menos 8 caracteres.', noticeKind: 'err' });
+    if(!login && (!nome || nome.length < 2)) return this.setState({ notice: 'Informe seu nome.', noticeKind: 'err' });
+    if(!login && termsEl && !termsEl.checked) return this.setState({ notice: 'Aceite os Termos de Uso para continuar.', noticeKind: 'err' });
+
+    const endpoint = login ? this.CONFIG.LOGIN_ENDPOINT : this.CONFIG.SIGNUP_ENDPOINT;
+    const payload = login ? { email, senha } : { nome, email, senha };
+
+    // Sem backend configurado → demonstração: segue direto ao dashboard.
+    if(!endpoint){ this._goDashboard(); return; }
+
+    this.setState({ busy: true, notice: '' });
+    fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload) })
+      .then(r => { if(r.ok) this._goDashboard(); else { this.setState({ busy: false, notice: login ? 'E-mail ou senha inválidos.' : 'Não foi possível criar a conta.', noticeKind: 'err' }); } })
+      .catch(() => this.setState({ busy: false, notice: 'Falha de conexão. Tente novamente.', noticeKind: 'err' }));
+  };
+
+  _google = () => {
+    const c = this.CONFIG;
+    if(!c.GOOGLE_CLIENT_ID){ this.setState({ notice: 'Login com Google pronto na interface — configure GOOGLE_CLIENT_ID para ativar.', noticeKind: 'info' }); return; }
+    const params = new URLSearchParams({ client_id: c.GOOGLE_CLIENT_ID, redirect_uri: c.GOOGLE_REDIRECT_URI, response_type: 'code', scope: 'openid email profile', access_type: 'offline', prompt: 'select_account' });
+    window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  };
+
+  renderVals(){
+    const a = this.state.active;
+    const step = this.STEPS[a] || {};
+    const intro = !step.screen;
+    const login = this.isLogin();
+    const dots = this.STEPS.map((s, i) => ({
+      style: 'height:7px;border-radius:999px;transition:all .4s;' + (a === i ? 'width:22px;background:#d81f2a' : 'width:7px;background:#c4c9d0')
+    }));
+    const noticeColor = this.state.noticeKind === 'ok' ? '#177a52' : (this.state.noticeKind === 'info' ? '#2b6cb0' : '#b3232c');
+    return {
+      rainRef: this.rainRef,
+      appRef: this.appRef,
+      winStyle: intro ? 'opacity:0;transform:scale(.97);pointer-events:none' : 'opacity:1;transform:none',
+      introOn: intro ? 'opacity:1' : 'opacity:0',
+      introText: step.intro || 'Bem-vindo ao aperIA',
+      dots,
+      pwType: this.state.showPw ? 'text' : 'password',
+      pwLabel: this.state.showPw ? 'ocultar' : 'mostrar',
+      togglePw: () => this.setState(s => ({ showPw: !s.showPw })),
+      // ── textos/estados por modo (cadastro x login) ──
+      heading: login ? 'Entrar' : 'Criar conta',
+      altPrefix: login ? 'Ainda não tem conta?' : 'Já tem uma conta?',
+      altLabel: login ? 'Criar conta' : 'Entrar',
+      altHref: login ? 'cadastro.html' : 'cadastro.html?mode=login',
+      googleLabel: login ? 'Entrar com Google' : 'Continuar com Google',
+      dividerText: login ? 'ou entre com e-mail' : 'ou cadastre-se com e-mail',
+      ctaLabel: this.state.busy ? 'Aguarde…' : (login ? 'Entrar' : 'Criar conta'),
+      nameStyle: login ? 'display:none' : '',
+      termsStyle: login ? 'display:none' : '',
+      noticeStyle: this.state.notice ? ('color:' + noticeColor) : 'display:none',
+      noticeText: this.state.notice,
+      onSubmit: this._submit,
+      onGoogle: this._google,
+    };
+  }
+}
 </script>
 </body>
 </html>
