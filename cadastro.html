@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="assets/mark.svg">
+<title>aperIA · Criar conta</title>
+<meta name="description" content="Crie sua conta na aperIA — Attack Path Validation. Cadastre-se por e-mail ou com sua conta Google.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --paper:#f2f0e9; --bg:#f2f0e9; --band:#eceae5; --panel:#ffffff;
+  --accent:#e5333b; --accent-bright:#ff4d54; --accent-deep:#b3232c;
+  --text:#181a1d; --fg:#181a1d; --fg-mute:#565961; --fg-dim:#8a8f98;
+  --surface:#ffffff; --surface-2:#efeee9; --surface-deep:#e7e5e0;
+  --line:#e0ded7; --line-strong:#cfccc3;
+  --ok:#2ecc8b; --danger:#e5333b;
+  /* tokens do palco escuro (walkthrough) */
+  --d-bg:#0e1013; --d-panel:#161a20; --d-line:#2a2f37; --d-fg:#e9ebef; --d-mute:#98a0ab;
+  --fd:'Manrope',system-ui,sans-serif; --fb:'Inter',system-ui,sans-serif; --fm:'JetBrains Mono',monospace;
+  --r:13px; --rs:9px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);-webkit-font-smoothing:antialiased;line-height:1.55}
+::selection{background:rgba(229,51,59,.24)}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--accent-bright);outline-offset:3px;border-radius:6px}
+.wrap{display:grid;grid-template-columns:1.05fr .95fr;min-height:100vh}
+
+/* ============================================================
+   PALCO ESQUERDO · walkthrough do produto (tipo vídeo/onboarding)
+   ============================================================ */
+.tour{
+  position:relative;overflow:hidden;color:var(--d-fg);
+  background:radial-gradient(120% 90% at 12% 8%, #2a1113 0%, transparent 52%),
+             linear-gradient(160deg,#0c0e11 0%,#141013 45%,#2a1013 100%);
+  padding:44px 48px;display:flex;flex-direction:column;
+}
+.tour::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:60px 60px;
+  -webkit-mask-image:radial-gradient(120% 100% at 30% 15%,#000 30%,transparent 100%);mask-image:radial-gradient(120% 100% at 30% 15%,#000 30%,transparent 100%)}
+.tour>*{position:relative;z-index:1}
+.tour-top{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+.tour-top img{height:38px;filter:drop-shadow(0 0 12px rgba(229,51,59,.7))}
+.tour-top b{font-family:var(--fd);font-weight:800;font-size:19px;letter-spacing:-.01em}
+.tour-top b i{font-style:normal;color:var(--accent-bright)}
+.tour-lead{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ff9aa0;margin:14px 0 18px;display:flex;align-items:center;gap:9px}
+.tour-lead .dot{width:7px;height:7px;border-radius:50%;background:var(--accent-bright);box-shadow:0 0 10px var(--accent-bright);animation:pulse 2.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* janela do app */
+.win{background:var(--d-panel);border:1px solid var(--d-line);border-radius:14px;overflow:hidden;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.8);margin:auto 0}
+.win-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--d-line);background:rgba(0,0,0,.25)}
+.win-bar .dots{display:flex;gap:6px}
+.win-bar .dots i{width:11px;height:11px;border-radius:50%;display:block}
+.win-bar .dots i:nth-child(1){background:#ff5f57}.win-bar .dots i:nth-child(2){background:#febc2e}.win-bar .dots i:nth-child(3){background:#28c840}
+.win-bar .url{margin-left:8px;font-family:var(--fm);font-size:11.5px;color:var(--d-mute);background:rgba(255,255,255,.05);border:1px solid var(--d-line);border-radius:6px;padding:4px 12px}
+
+.screens{position:relative;height:330px}
+.screen{position:absolute;inset:0;padding:20px 22px;opacity:0;transform:translateY(14px);
+  transition:opacity .6s ease,transform .6s ease;pointer-events:none}
+.screen.active{opacity:1;transform:none}
+.screen .s-head{font-family:var(--fd);font-weight:700;font-size:15px;margin-bottom:3px}
+.screen .s-sub{font-family:var(--fm);font-size:11px;color:var(--d-mute);margin-bottom:16px}
+
+/* peças reutilizáveis dentro das telas */
+.row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--d-line);border-radius:9px;padding:10px 12px;margin-bottom:9px}
+.row .ic{width:26px;height:26px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;background:rgba(229,51,59,.16);color:var(--accent-bright)}
+.row .t{font-size:13px;color:var(--d-fg)}
+.row .t small{display:block;color:var(--d-mute);font-family:var(--fm);font-size:10.5px}
+.row .badge{margin-left:auto;font-family:var(--fm);font-size:10px;padding:3px 9px;border-radius:100px}
+.badge.run{color:#febc2e;background:rgba(254,188,46,.14)}
+.badge.ok{color:var(--ok);background:rgba(46,204,139,.14)}
+.badge.crit{color:var(--accent-bright);background:rgba(229,51,59,.16)}
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--accent-bright);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.chip{font-family:var(--fm);font-size:10.5px;color:var(--d-mute);border:1px solid var(--d-line);border-radius:100px;padding:4px 10px;background:rgba(255,255,255,.03)}
+.count{font-family:var(--fd);font-weight:800;font-size:34px;color:#fff;line-height:1}
+.count span{font-size:15px;color:var(--d-mute)}
+
+/* mini attack path (tela 3) */
+.path{display:flex;align-items:center;gap:6px;margin:14px 0}
+.node{flex:1;text-align:center;font-family:var(--fm);font-size:9.5px;color:var(--d-mute);border:1px solid var(--d-line);border-radius:8px;padding:8px 4px;background:rgba(255,255,255,.03)}
+.node.hot{border-color:var(--accent-bright);color:#ff9aa0;background:rgba(229,51,59,.1);box-shadow:0 0 16px -6px var(--accent-bright)}
+.node .tp{color:var(--accent-bright);font-weight:600}
+.arrow{color:var(--accent);font-size:12px;flex:none}
+.verdict{display:flex;align-items:center;gap:10px;background:linear-gradient(120deg,rgba(229,51,59,.16),transparent);border:1px solid rgba(229,51,59,.4);border-radius:10px;padding:11px 13px;margin-top:6px}
+.verdict b{font-family:var(--fd);font-weight:800;color:#fff;font-size:15px}
+.verdict .sc{margin-left:auto;font-family:var(--fd);font-weight:800;color:var(--accent-bright);font-size:20px}
+
+/* diff (tela 4) */
+.diff{font-family:var(--fm);font-size:11.5px;border:1px solid var(--d-line);border-radius:9px;overflow:hidden;margin-top:4px}
+.diff .cap{padding:7px 12px;background:rgba(255,255,255,.05);color:var(--d-fg);font-size:11px}
+.diff .ln{display:flex;padding:3px 12px;white-space:nowrap;overflow:hidden}
+.diff .ln.del{background:rgba(229,51,59,.14)}.diff .ln.del .s{color:var(--accent-bright)}
+.diff .ln.add{background:rgba(46,204,139,.14)}.diff .ln.add .s{color:var(--ok)}
+.diff .ln .s{width:16px;flex:none}
+.merge{display:flex;align-items:center;gap:9px;margin-top:10px;font-size:12px;color:var(--d-mute)}
+.merge .lock{width:22px;height:22px;border-radius:50%;background:rgba(229,51,59,.16);color:var(--accent-bright);display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+
+/* controle inferior: etapa + progresso */
+.tour-steps{margin-top:22px}
+.step-label{font-family:var(--fd);font-weight:700;font-size:16px;min-height:24px}
+.step-label span{color:var(--accent-bright);font-family:var(--fm);font-size:13px;font-weight:600;margin-right:8px}
+.bars{display:flex;gap:7px;margin-top:14px}
+.bars .b{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;cursor:pointer}
+.bars .b i{display:block;height:100%;width:0;background:var(--accent-bright);border-radius:3px}
+.bars .b.done i{width:100%}
+.bars .b.active i{width:100%;transition:width var(--dur,3400ms) linear}
+
+/* ============================================================
+   LADO DIREITO · formulário (inalterado)
+   ============================================================ */
+.form-side{display:flex;align-items:center;justify-content:center;padding:48px 32px}
+.card{width:100%;max-width:420px}
+.card .head{margin-bottom:26px}
+.card .head h1{font-family:var(--fd);font-weight:800;font-size:30px;letter-spacing:-.02em}
+.card .head p{color:var(--fg-mute);font-size:15px;margin-top:8px}
+.card .head p a{color:var(--accent);font-weight:600}
+.card .head p a:hover{text-decoration:underline}
+.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;border:1px solid var(--line-strong);border-radius:var(--rs);padding:13px 16px;font-family:var(--fb);font-size:15px;font-weight:600;color:#3c4043;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s,transform .1s}
+.btn-google:hover{background:#f7f7f5;border-color:var(--fg-dim);box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.btn-google:active{transform:translateY(1px)}
+.btn-google svg{width:19px;height:19px;flex:none}
+.divisor{display:flex;align-items:center;gap:14px;margin:22px 0;color:var(--fg-dim);font-size:12.5px;font-family:var(--fm);letter-spacing:.08em}
+.divisor::before,.divisor::after{content:"";flex:1;height:1px;background:var(--line)}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--fg-mute);margin-bottom:7px}
+.control{position:relative}
+.field input{width:100%;padding:13px 15px;border:1px solid var(--line-strong);border-radius:var(--rs);background:var(--surface);color:var(--text);font-family:var(--fb);font-size:15px;transition:border-color .15s,box-shadow .15s}
+.field input::placeholder{color:var(--fg-dim)}
+.field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(229,51,59,.12)}
+.field.invalid input{border-color:var(--danger);box-shadow:0 0 0 3px rgba(229,51,59,.12)}
+.field .toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-dim);font-size:12px;font-family:var(--fm);padding:8px 10px;border-radius:6px}
+.field .toggle:hover{color:var(--fg-mute);background:var(--surface-2)}
+.field .hint{font-size:12px;color:var(--fg-dim);margin-top:6px}
+.field .err{font-size:12.5px;color:var(--danger);margin-top:6px;display:none}
+.field.invalid .err{display:block}.field.invalid .hint{display:none}
+.terms{display:flex;gap:10px;align-items:flex-start;margin:6px 0 20px;font-size:13px;color:var(--fg-mute)}
+.terms input{margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex:none;cursor:pointer}
+.terms a{color:var(--accent);font-weight:600}.terms a:hover{text-decoration:underline}
+.btn-primary{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:14px 18px;font-family:var(--fd);font-size:15.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 26px -10px rgba(229,51,59,.7);transition:transform .15s,box-shadow .2s,background .15s}
+.btn-primary:hover{transform:translateY(-2px);background:var(--accent-deep);box-shadow:0 16px 34px -10px rgba(229,51,59,.85)}
+.btn-primary:active{transform:translateY(0)}
+.foot-note{text-align:center;font-size:12.5px;color:var(--fg-dim);margin-top:22px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--fg-mute);font-size:13px;margin-bottom:26px}
+.back:hover{color:var(--text)}
+.notice{margin-top:16px;padding:12px 14px;border-radius:var(--rs);font-size:13.5px;display:none;align-items:center;gap:9px}
+.notice.show{display:flex}
+.notice.ok{background:rgba(46,204,139,.12);border:1px solid rgba(46,204,139,.4);color:#177a52}
+.notice.info{background:rgba(74,163,255,.1);border:1px solid rgba(74,163,255,.35);color:#2b6cb0}
+
+/* ---------- responsivo ---------- */
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr}
+  .tour{padding:28px 24px}
+  .screens{height:300px}
+  .form-side{padding:36px 24px 56px}
+}
+@media (max-width:420px){
+  .form-side{padding:28px 18px 44px}
+  .card .head h1{font-size:26px}
+  .screens{height:320px}
+}
+@media (prefers-reduced-motion:reduce){
+  .screen{transition:opacity .2s}
+  .bars .b.active i{transition:none;width:100%}
+  .spin{animation:none}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- PALCO / WALKTHROUGH -->
+  <aside class="tour" aria-label="Como a aperIA funciona">
+    <div class="tour-top"><img src="assets/mark.svg" alt="aperIA"><b>aper<i>IA</i></b></div>
+    <div class="tour-lead"><span class="dot"></span>Veja como funciona · em 4 passos</div>
+
+    <div class="win">
+      <div class="win-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">app.aperia.io/dashboard</span>
+      </div>
+      <div class="screens" id="screens">
+
+        <!-- 1 -->
+        <div class="screen active" data-i="0">
+          <div class="s-head">Um Pull Request chega</div>
+          <div class="s-sub">webhook do GitHub · aperIA acordou</div>
+          <div class="row"><span class="ic">⑂</span><span class="t">fix/login-flow <small>PR #142 · 12 arquivos alterados</small></span><span class="badge run"><span class="spin"></span></span></div>
+          <div class="row"><span class="ic">◆</span><span class="t">Pipeline iniciado <small>3 tiers · Celery</small></span><span class="badge run">na fila</span></div>
+          <div class="chips"><span class="chip">push detectado</span><span class="chip">commit a3f9c1</span><span class="chip">repo conectado</span></div>
+        </div>
+
+        <!-- 2 -->
+        <div class="screen" data-i="1">
+          <div class="s-head">Scanners varrem tudo</div>
+          <div class="s-sub">código · dependências · nuvem</div>
+          <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:12px">
+            <div class="count" id="cnt">147<span>&nbsp;findings</span></div>
+            <span class="badge ok" style="margin-bottom:4px">superfície 100%</span>
+          </div>
+          <div class="row"><span class="ic">T1</span><span class="t">Segredos & SAST <small>TruffleHog · Semgrep</small></span><span class="badge ok">✓</span></div>
+          <div class="row"><span class="ic">T2</span><span class="t">Deps & Nuvem <small>Trivy · Prowler</small></span><span class="badge ok">✓</span></div>
+          <div class="chips"><span class="chip">ZAP</span><span class="chip">OpenCTI</span><span class="chip">MITRE Caldera</span></div>
+        </div>
+
+        <!-- 3 -->
+        <div class="screen" data-i="2">
+          <div class="s-head">A IA correlaciona e prova</div>
+          <div class="s-sub">emulação de adversário · sandbox isolada</div>
+          <div class="path">
+            <div class="node hot">segredo<br><span class="tp">T1552</span></div>
+            <span class="arrow">→</span>
+            <div class="node hot">nuvem<br><span class="tp">T1078</span></div>
+            <span class="arrow">→</span>
+            <div class="node hot">lateral<br><span class="tp">T1210</span></div>
+            <span class="arrow">→</span>
+            <div class="node hot">dados<br><span class="tp">T1530</span></div>
+          </div>
+          <div class="verdict"><span class="ic" style="background:rgba(229,51,59,.2)">◎</span><b>Ataque confirmado</b><span class="sc">94/100</span></div>
+          <div class="chips" style="margin-top:12px"><span class="chip">kill chain 5/5</span><span class="chip">0 falso positivo</span></div>
+        </div>
+
+        <!-- 4 -->
+        <div class="screen" data-i="3">
+          <div class="s-head">Você recebe o fix no PR</div>
+          <div class="s-sub">com a prova anexada · decisão sua</div>
+          <div class="diff">
+            <div class="cap">app/config.py · corta o caminho na origem</div>
+            <div class="ln del"><span class="s">-</span>DATABASE_URL = "postgres://admin:S3nh4@…"</div>
+            <div class="ln add"><span class="s">+</span>DATABASE_URL = os.environ["DATABASE_URL"]</div>
+          </div>
+          <div class="merge"><span class="lock">🔒</span> Merge bloqueado · aguardando aprovação humana</div>
+          <div class="chips" style="margin-top:12px"><span class="chip">code suggestion</span><span class="chip">evidência anexada</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="tour-steps">
+      <div class="step-label" id="stepLabel"><span>01</span>Um PR chega no seu repositório</div>
+      <div class="bars" id="bars">
+        <div class="b" data-i="0"><i></i></div>
+        <div class="b" data-i="1"><i></i></div>
+        <div class="b" data-i="2"><i></i></div>
+        <div class="b" data-i="3"><i></i></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- FORMULÁRIO -->
+  <section class="form-side">
+    <div class="card">
+      <a class="back" href="index.html">← Voltar ao site</a>
+      <div class="head">
+        <h1>Criar conta</h1>
+        <p>Já tem uma conta? <a href="login.html">Entrar</a></p>
+      </div>
+
+      <button type="button" class="btn-google" id="googleBtn">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continuar com Google
+      </button>
+
+      <div class="divisor">ou cadastre-se com e-mail</div>
+
+      <form id="signupForm" novalidate>
+        <div class="field" id="f-nome">
+          <label for="nome">Nome completo</label>
+          <div class="control"><input id="nome" name="nome" type="text" autocomplete="name" placeholder="Seu nome" required></div>
+          <div class="err">Informe seu nome.</div>
+        </div>
+        <div class="field" id="f-email">
+          <label for="email">E-mail de trabalho</label>
+          <div class="control"><input id="email" name="email" type="email" autocomplete="email" placeholder="voce@empresa.com" required></div>
+          <div class="err">Informe um e-mail válido.</div>
+        </div>
+        <div class="field" id="f-senha">
+          <label for="senha">Senha</label>
+          <div class="control">
+            <input id="senha" name="senha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required minlength="8">
+            <button type="button" class="toggle" id="toggleSenha" aria-label="Mostrar senha">mostrar</button>
+          </div>
+          <div class="hint">Use ao menos 8 caracteres.</div>
+          <div class="err">A senha precisa de pelo menos 8 caracteres.</div>
+        </div>
+        <label class="terms">
+          <input type="checkbox" id="terms" required>
+          <span>Concordo com os <a href="#">Termos de Uso</a> e a <a href="#">Política de Privacidade</a>.</span>
+        </label>
+        <button type="submit" class="btn-primary">Criar conta →</button>
+      </form>
+
+      <div class="notice" id="notice"></div>
+      <p class="foot-note">Ao se cadastrar, você inicia no plano gratuito. Sem cartão de crédito.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     WALKTHROUGH (esquerda) — avança sozinho em loop, tipo vídeo.
+     Para trocar por screenshots reais/vídeo depois: substitua o
+     conteúdo de cada .screen por <img> ou troque .win por <video>.
+     ============================================================ */
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var STEPS = [
+    "Um PR chega no seu repositório",
+    "Scanners varrem código, deps e nuvem",
+    "A IA correlaciona e a emulação prova",
+    "Você recebe o fix como Pull Request"
+  ];
+  var DUR = 3600;
+  var screens = [].slice.call(document.querySelectorAll(".screen"));
+  var bars = [].slice.call(document.querySelectorAll("#bars .b"));
+  var label = document.getElementById("stepLabel");
+  var cur = -1, timer = null;
+
+  function show(i){
+    cur = i;
+    screens.forEach(function(s,k){ s.classList.toggle("active", k===i); });
+    bars.forEach(function(b,k){
+      b.classList.remove("active","done");
+      if (k<i) b.classList.add("done");
+      else if (k===i){ b.style.setProperty("--dur", DUR+"ms"); void b.offsetWidth; b.classList.add("active"); }
+    });
+    label.innerHTML = '<span>'+String(i+1).padStart(2,"0")+'</span>'+STEPS[i];
+    if (i===1) animateCount();
+  }
+  function next(){ show((cur+1) % screens.length); }
+  function play(){ if(timer) clearInterval(timer); if(!reduce) timer = setInterval(next, DUR); }
+
+  /* contador de findings (tela 2) */
+  function animateCount(){
+    if (reduce) return;
+    var el = document.getElementById("cnt");
+    var start=null, from=0, to=147;
+    function frame(ts){ if(!start)start=ts; var p=Math.min((ts-start)/900,1);
+      el.firstChild.nodeValue = Math.round(from+(to-from)*p);
+      if(p<1) requestAnimationFrame(frame); }
+    requestAnimationFrame(frame);
+  }
+
+  /* clicar numa barra pula pro passo */
+  bars.forEach(function(b){ b.addEventListener("click", function(){ show(+b.dataset.i); play(); }); });
+
+  show(0); play();
+
+  /* ============================================================
+     CONFIG · preencha para ativar o cadastro de verdade
+     ============================================================ */
+  var CONFIG = {
+    GOOGLE_CLIENT_ID: "",
+    GOOGLE_REDIRECT_URI: location.origin + "/auth/google/callback",
+    SIGNUP_ENDPOINT: ""
+  };
+  var notice = document.getElementById("notice");
+  function showNotice(msg, kind){ notice.className = "notice show " + (kind||"info"); notice.textContent = msg; }
+
+  document.getElementById("googleBtn").addEventListener("click", function(){
+    if (!CONFIG.GOOGLE_CLIENT_ID){ showNotice("Cadastro com Google pronto na interface — falta configurar o GOOGLE_CLIENT_ID no código para ativar.", "info"); return; }
+    var params = new URLSearchParams({ client_id:CONFIG.GOOGLE_CLIENT_ID, redirect_uri:CONFIG.GOOGLE_REDIRECT_URI, response_type:"code", scope:"openid email profile", access_type:"offline", prompt:"select_account" });
+    window.location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString();
+  });
+
+  var form = document.getElementById("signupForm");
+  function setInvalid(id, bad){ document.getElementById(id).classList.toggle("invalid", bad); }
+  var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var nome=document.getElementById("nome").value.trim(), email=document.getElementById("email").value.trim(), senha=document.getElementById("senha").value, terms=document.getElementById("terms").checked;
+    var okN=nome.length>=2, okE=emailRe.test(email), okS=senha.length>=8;
+    setInvalid("f-nome",!okN); setInvalid("f-email",!okE); setInvalid("f-senha",!okS);
+    if(!terms){ showNotice("Aceite os Termos de Uso para continuar.","info"); return; }
+    if(!(okN&&okE&&okS)) return;
+    if(!CONFIG.SIGNUP_ENDPOINT){ showNotice("Conta validada na interface! Configure o SIGNUP_ENDPOINT para gravar no seu backend.","ok"); form.reset(); return; }
+    fetch(CONFIG.SIGNUP_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nome:nome,email:email,senha:senha})})
+      .then(function(r){ if(r.ok) window.location.href="/dashboard"; else showNotice("Não foi possível criar a conta. Tente novamente.","info"); })
+      .catch(function(){ showNotice("Falha de conexão. Tente novamente.","info"); });
+  });
+  ["nome","email","senha"].forEach(function(id){ document.getElementById(id).addEventListener("input", function(){ document.getElementById("f-"+id).classList.remove("invalid"); }); });
+  var senhaEl = document.getElementById("senha");
+  document.getElementById("toggleSenha").addEventListener("click", function(){ var show=senhaEl.type==="password"; senhaEl.type=show?"text":"password"; this.textContent=show?"ocultar":"mostrar"; });
+})();
+</script>
+</body>
+</html>
