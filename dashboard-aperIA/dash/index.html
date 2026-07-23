@@ -53,7 +53,7 @@ function toggleTheme(){var el=document.documentElement;var isLight=el.getAttribu
 --accent:#d81f2a;--accent-hover:#b81620;--accent-tint:rgba(225,29,42,.16);--sel:rgba(225,29,42,.28);--card-shadow:none;
 }
 [data-theme="light"]{
---bg-page:#F4F6FA;--bg-surface:#FFFFFF;--bg-surface-raised:#FFFFFF;--bg-hover:#EEF1F6;
+--bg-page:#F2F0E9;--bg-surface:#FFFFFF;--bg-surface-raised:#FFFFFF;--bg-hover:#EDE9DF;
 --border-subtle:#EDF0F6;--border-default:#E6E9F0;--divider:#EDF0F6;--border-mid:#E6E9F0;--border-strong:#D7DBE6;
 --text-primary:#0E1525;--text-hi:#2A3346;--text-secondary:#465063;--text-muted:#6B7488;--text-dim:#6B7488;--text-faint:#98A1B3;
 --gauge-track:#E8ECF2;--chart-track:#EDF0F6;--chart-grid:#EDF0F6;
@@ -71,9 +71,12 @@ html{transition:background-color .2s ease,color .2s ease;}
 [data-theme="light"] .dtbl th{border-bottom:1px solid #CBD2DE;}
 [data-theme="light"] .ov-idx{color:#B7BECD;}
 [data-theme="light"] .sev-fx{color:#0E1525!important;}
-[data-theme="light"] header{background:#FFFFFF!important;border-bottom:1px solid #E6E9F0;box-shadow:0 1px 2px rgba(14,21,37,.04);}
-[data-theme="light"] #sb,[data-theme="light"] .sb-header-inner,[data-theme="light"] #sb-ws-footer{background:#FFFFFF!important;}
-[data-theme="light"] #sb{border-right:1px solid #E6E9F0!important;}
+[data-theme="light"] header{background:#F3DFD8!important;border-bottom:1px solid #E4C9BF;box-shadow:0 1px 2px rgba(58,46,42,.05);}
+[data-theme="light"] #sb,[data-theme="light"] .sb-header-inner,[data-theme="light"] #sb-ws-footer{background:#F3DFD8!important;}
+[data-theme="light"] #sb{border-right:1px solid #E4C9BF!important;}
+[data-theme="light"] #sb-ws-footer{border-top:1px solid #E4C9BF!important;}
+[data-theme="light"] .sb-item{color:#5A4A44;}
+[data-theme="light"] .sb-item:hover{color:#3A2E2A;background:rgba(58,46,42,.06);}
 [data-theme="light"] .sb-item{color:#465063;}
 [data-theme="light"] .sb-item:hover{color:#0E1525;}
 [data-theme="light"] .sb-item.active{color:#C4101A;background:rgba(196,16,26,.07);box-shadow:inset 3px 0 0 #C4101A;}
@@ -1367,14 +1370,15 @@ function chartCategoryBody(list){
   const maxT=Math.max(1,...data.map(d=>d.total));
   if(!data.length)return emptyChart('Sem dados para os filtros aplicados');
   const hasSel=FF.categorias.length>0;
-  return `<div class="catbars${hasSel?' has-sel':''}" style="display:flex;flex-direction:column;gap:15px;">`+data.map(d=>{
-    const col=CHART_SEV[d.pred];const glow=d.pred==='critical'?'box-shadow:0 0 6px rgba(225,16,27,.35);':'';
+  const CAT_PALETTE=['#E1101B','#F2600C','#E8B004','#2ECC8B','#2F86E0','#8B5CF6','#EC4899','#14B8A6'];
+  return `<div class="catbars${hasSel?' has-sel':''}" style="display:flex;flex-direction:column;gap:15px;">`+data.map((d,i)=>{
+    const col=CAT_PALETTE[i%CAT_PALETTE.length];const glow='';
     const brk=SEV_STACK.filter(s=>d.bySev[s]>0).map(s=>`${s} ${d.bySev[s]}`).join(' · ');
     const sel=FF.categorias.includes(d.c);
     return `<div class="catrow${sel?' sel':''}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="Categoria ${d.c}, ${d.total} findings${sel?', selecionado':''}" title="${d.c}, ${brk}" style="--rowc:${col};display:flex;align-items:center;gap:12px;" onclick="onDimClick(event,'categorias','${d.c.replace(/'/g,"\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();onDimClick(event,'categorias','${d.c.replace(/'/g,"\\'")}');}">
       <span style="width:132px;flex-shrink:0;text-align:right;font-size:12px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.c}</span>
       <div style="flex:1;height:16px;background:var(--chart-track);border-radius:2px;overflow:hidden;"><div class="bar-in" style="width:${(d.total/maxT*100).toFixed(1)}%;height:100%;background:${col};border-radius:2px;${glow}"></div></div>
-      <span class="disp" style="width:26px;font-size:16px;font-weight:900;color:#fff;text-align:right;font-variant-numeric:tabular-nums;">${d.total}</span>
+      <span class="disp" style="width:26px;font-size:16px;font-weight:900;color:var(--text-primary);text-align:right;font-variant-numeric:tabular-nums;">${d.total}</span>
     </div>`;
   }).join('')+`</div>`;
 }
