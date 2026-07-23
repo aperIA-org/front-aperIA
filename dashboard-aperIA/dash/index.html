@@ -443,6 +443,10 @@ svg:hover .evo-pt{opacity:1;}
         <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><circle cx="12" cy="12" r="3.2"/><path d="M15.4 15.4L18 18"/></svg></span>
         <span class="sb-lbl">Scans</span>
       </a>
+      <a class="sb-item" data-screen="reports" onclick="navigate('reports')" title="Relatórios">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5v4h4"/><path d="M9 12h6M9 15.5h6M9 8.5h2"/></svg></span>
+        <span class="sb-lbl">Relatórios</span>
+      </a>
       <a class="sb-item" data-screen="attack" onclick="openInsights(null)" title="AI insights">
         <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l1.4 4L18 8l-4.6 1.5L12 14l-1.4-4.5L6 8l4.6-1.5L12 2.5z"/><path d="M16.5 13.5l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6.6-1.7z"/></svg></span>
         <span class="sb-lbl">AI insights</span>
@@ -473,7 +477,7 @@ svg:hover .evo-pt{opacity:1;}
 
   <div class="flex flex-col" style="height:100vh;overflow-y:scroll;scrollbar-gutter:stable;background:var(--bg-page);">
     <header class="h-14 border-b border-line sticky top-0 z-10" style="background:var(--bg-page);flex:0 0 56px;min-height:56px;"><div class="h-full max-w-[1440px] mx-auto flex items-center gap-4 relative" style="padding:0 32px;">
-      <div class="flex items-center gap-2 text-[13px] text-fg-dim">
+      <div id="breadcrumb-wrap" class="flex items-center gap-2 text-[13px] text-fg-dim">
         <span class="text-fg-mute">Acme</span>
         <span class="text-ink-400">/</span>
         <span id="breadcrumb" class="text-fg">Início</span>
@@ -980,10 +984,10 @@ function initCountUps(){
 /* ═══════════════════════ ROUTER ═══════════════════════ */
 let currentScreen='home';
 let appConnected=localStorage.getItem('aperia-connected')==='true';
-const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',remediations:'Remediações',attack:'AI Insights',inventory:'Inventário',integrations:'Integrações',team:'Time'};
+const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',reports:'Relatórios',remediations:'Remediações',attack:'AI Insights',inventory:'Inventário',integrations:'Integrações',team:'Time'};
 
 function navigate(screen){
-  const dataScreens=['findings','inventory','pipelines','attack','remediations'];
+  const dataScreens=['findings','inventory','pipelines','reports','attack','remediations'];
   if(!appConnected&&dataScreens.includes(screen))return; /* locked during onboarding */
   currentScreen=screen;
   document.querySelectorAll('.sb-item').forEach(a=>{
@@ -991,9 +995,10 @@ function navigate(screen){
   });
   syncSidebarState();
   document.getElementById('breadcrumb').textContent=SCREEN_LABELS[screen]||screen;
+  const bcw=document.getElementById('breadcrumb-wrap'); if(bcw) bcw.style.display=(screen==='home')?'none':'flex';
   const main=document.getElementById('app-main');
   main.innerHTML='';
-  const screens={home:renderHome,findings:renderFindings,pipelines:renderPipelines,remediations:renderRemediations,attack:renderAttack,inventory:renderInventory,integrations:renderIntegrations,team:renderTeam,repos:renderReposManage};
+  const screens={home:renderHome,findings:renderFindings,pipelines:renderPipelines,reports:renderReports,remediations:renderRemediations,attack:renderAttack,inventory:renderInventory,integrations:renderIntegrations,team:renderTeam,repos:renderReposManage};
   if(screens[screen]) main.innerHTML=screens[screen]();
   bindScreenEvents(screen);
   initCountUps();
@@ -1004,7 +1009,7 @@ function navigate(screen){
 }
 /* During onboarding (no GitHub connection) data tabs have nothing to show, disable them */
 function syncSidebarState(){
-  const dataScreens=['findings','inventory','pipelines','attack','remediations'];
+  const dataScreens=['findings','inventory','pipelines','reports','attack','remediations'];
   const locked=!appConnected;
   document.querySelectorAll('.sb-item').forEach(a=>{
     if(dataScreens.includes(a.dataset.screen)) a.classList.toggle('sb-disabled',locked);
@@ -1142,7 +1147,7 @@ function renderHome(){
 
   const lastJobHtml=`
   <div class="stat-card col-8 card-link" style="padding:0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;" onclick="openInsights('${lastJob.id}')">
-    <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;justify-content:space-between;"><h2 class="text-[16px] font-bold" style="white-space:nowrap;">Último Scan</h2><span class="tb-idx">05</span></div>
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;justify-content:space-between;"><h2 class="text-[16px] font-bold" style="white-space:nowrap;">Último Scan</h2></div>
     <div style="padding:20px;flex:1;display:flex;gap:24px;align-items:stretch;">
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:18px;">
         <div>
@@ -1187,28 +1192,24 @@ function renderHome(){
     <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);"><h2 class="text-[16px] font-bold">Visão Geral</h2></div>
     <div class="ov-grid">
       <div class="ov-tile" style="--ov-accent:#d81f2a;" onclick="goFindings()">
-        <span class="ov-idx">01</span>
         <div class="ov-mark" style="background:var(--text-primary);"></div>
         <div class="ov-lbl">Total de Findings</div>
         <div class="ov-num" data-count-to="${total}">${total}</div>
         <div class="ov-sub">em ${getMonitored().length} ${getMonitored().length===1?'repositório':'repositórios'}</div>
       </div>
       <div class="ov-tile" style="--ov-accent:var(--sev-critical);" onclick="goFindings({sev:'critical'})">
-        <span class="ov-idx">02</span>
         <div class="ov-mark"></div>
         <div class="ov-lbl">Critical</div>
         <div class="ov-num is-crit" data-count-to="${critCount}">${critCount}</div>
         <div class="ov-sub">requerem ação imediata</div>
       </div>
       <div class="ov-tile" style="--ov-accent:var(--sev-high);" onclick="goFindings({sev:'high'})">
-        <span class="ov-idx">03</span>
         <div class="ov-mark"></div>
         <div class="ov-lbl">High</div>
         <div class="ov-num is-high" data-count-to="${highCount}">${highCount}</div>
         <div class="ov-sub">alta prioridade</div>
       </div>
       <div class="ov-tile" style="--ov-accent:#d81f2a;" onclick="navigate('remediations')">
-        <span class="ov-idx">04</span>
         <div class="ov-mark" style="background:#d81f2a;"></div>
         <div class="ov-lbl">Remediações</div>
         <div class="ov-num" data-count-to="${openRem}">${openRem}</div>
@@ -1220,7 +1221,7 @@ function renderHome(){
   <div class="row-12 mb-6">
     ${lastJobHtml}
     <div class="stat-card col-4" style="padding:0;overflow:hidden;display:flex;flex-direction:column;">
-      <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;justify-content:space-between;"><h2 class="text-[16px] font-bold" style="white-space:nowrap;">Distribuição por Severidade</h2><span class="tb-idx">06</span></div>
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;justify-content:space-between;"><h2 class="text-[16px] font-bold" style="white-space:nowrap;">Distribuição por Severidade</h2></div>
       <div style="padding:16px 20px;flex:1;display:flex;align-items:center;gap:26px;">
         ${sevDonut(sevCounts,total)}
         <div class="flex flex-col" style="flex:1;min-width:0;justify-content:center;gap:1px;">
@@ -1232,7 +1233,7 @@ function renderHome(){
 
   <div class="stat-card" style="padding:0;overflow:hidden;">
     <div class="flex items-center justify-between" style="padding:12px 20px;border-bottom:1px solid var(--border-default);">
-      <div class="flex items-center gap-2.5"><h2 class="text-[16px] font-bold" style="white-space:nowrap;">Scans Recentes</h2><span class="tb-idx">07</span></div>
+      <div class="flex items-center gap-2.5"><h2 class="text-[16px] font-bold" style="white-space:nowrap;">Scans Recentes</h2></div>
       <button class="btn btn-sm btn-ghost" onclick="navigate('pipelines')">Ver todos →</button>
     </div>
     ${recentRows}
@@ -2271,7 +2272,6 @@ function renderIntegrations(){
       <div class="text-fg-dim text-[12.5px] mt-1">Instalado ${timeAgo(ghInstalledAt())} · ${monCount} ${monCount===1?'repositório monitorado':'repositórios monitorados'}</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <button class="btn btn-sm btn-ghost" onclick="openRepoManager()">Gerenciar repositórios</button>
       <button onclick="openDisconnectModal()" style="background:none;border:none;color:var(--text-dim);font-size:12.5px;cursor:pointer;padding:6px;text-decoration:underline;">Desconectar</button>
     </div>
   </div>`:`<div class="stat-card mb-2" style="display:flex;align-items:center;gap:16px;">
@@ -2301,11 +2301,93 @@ function renderIntegrations(){
 
   <div style="height:1px;background:var(--border-default);margin:24px 0;"></div>
 
-  <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-fg-mute mb-3">Scanners &amp; Engines</div>
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">${cards}</div>
+  <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-fg-mute mb-3">Gerenciar repositórios</div>
+  ${connected?`<p class="text-fg-dim text-[13px] mb-3" style="margin-top:-4px;">Selecione os repositórios do GitHub para rodar os scans do aperIA.</p>
+  <div style="background:var(--bg-surface);border:1px solid var(--border-default);border-radius:10px;overflow:hidden;">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;justify-content:flex-end;gap:10px;">
+      <button class="chip chip-clear" onclick="scanSelectAllRepos()">Selecionar todos</button>
+      <button class="chip chip-clear" onclick="scanClearRepos()">Limpar</button>
+    </div>
+    <div id="scan-repo-list" style="max-height:460px;overflow-y:auto;padding:6px;">${scanListHtml()}</div>
+    <div id="scan-repo-footer" style="padding:14px 16px;border-top:1px solid var(--border-default);display:flex;align-items:center;justify-content:space-between;gap:12px;">${scanFooterHtml()}</div>
+  </div>`:`<div class="stat-card">${emptyState({title:'Conecte o GitHub',body:'Conecte sua conta do GitHub para listar e selecionar os repositórios que serão escaneados.',action:`<button class="btn btn-md btn-primary" onclick="goConnect()">Conectar GitHub</button>`})}</div>`}
 </div>`;
 }
 function goConnect(){onboardingStep=1;navigate('home');}
+
+/* ═══════════════════════ SCREEN: RELATÓRIOS (histórico de scans) ═══════════════════════ */
+function renderReports(){
+  if(!appConnected) return `<div class="page-wrap"><div class="mb-6"><h1 class="text-[24px] font-bold">Relatórios de Scans</h1></div><div class="stat-card">${emptyState({title:'Conecte o GitHub',body:'Conecte um repositório para começar a gerar relatórios de scans.',action:`<button class="btn btn-md btn-primary" onclick="goConnect()">Conectar GitHub</button>`})}</div></div>`;
+  const jobs=SCAN_JOBS;
+  const rows=jobs.map(j=>{
+    const band=j.final_risk_score?riskColor(j.final_risk_score):'var(--divider)';
+    const running=[j.tier1_status,j.tier2_status,j.tier3_status].includes('running');
+    return `<div class="tbl-row sr-row" style="grid-template-columns:14px 1fr 130px 110px 24px;gap:16px;align-items:center;cursor:pointer;" onclick="openInsights('${j.id}')">
+      <span style="width:7px;height:7px;border-radius:50%;background:${band};flex-shrink:0;"></span>
+      <div style="min-width:0;">
+        <div class="text-sm font-medium text-fg lnk">${j.repo_full_name} <span class="mono text-fg-dim" style="font-size:12px;">#${j.pr_number}</span></div>
+        <div class="mt-0.5" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);">${shortSha(j.commit_sha)} · ${timeTag(j.created_at)}</div>
+      </div>
+      <div style="display:flex;justify-content:center;">${tierStepperCompact(j)}</div>
+      <div class="flex items-center gap-1.5 justify-end">${j.final_risk_score?`${miniGauge(j.final_risk_score)}<span class="mono" style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:${riskColor(j.final_risk_score)}">${j.final_risk_score}</span>`:(running?`<span class="mono" style="font-size:11px;color:var(--text-dim);">em análise…</span>`:`<span class="mono" style="font-size:14px;color:var(--border-mid);">–</span>`)}</div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-fg-dim" style="justify-self:end;"><path d="M9 6l6 6-6 6"/></svg>
+    </div>`;}).join('');
+  return `<div class="page-wrap">
+    <div class="mb-6">
+      <h1 class="text-[24px] font-bold">Relatórios de Scans</h1>
+      <p class="text-fg-dim text-[13px] mt-1">Histórico de execuções · ${jobs.length} ${jobs.length===1?'relatório':'relatórios'}</p>
+    </div>
+    <div class="stat-card" style="padding:0;overflow:hidden;">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);"><h2 class="text-[16px] font-bold">Execuções</h2></div>
+      <div>${rows||emptyState({title:'Nenhum relatório ainda',body:'Selecione repositórios na aba Integrações e rode um scan para gerar o primeiro relatório.',action:`<button class="btn btn-md btn-primary" onclick="navigate('integrations')">Ir para Integrações</button>`})}</div>
+    </div>
+  </div>`;
+}
+
+/* ═══ Gerenciar repositórios: seleção livre p/ rodar scans (Integrações) ═══ */
+let scanSel=null;
+function ensureScanSel(){ if(scanSel===null) scanSel=new Set(getMonitored()); }
+function scanRepoRowHtml(rp){
+  ensureScanSel();
+  const on=scanSel.has(rp.name);
+  const lastJob=SCAN_JOBS.find(j=>j.repo_full_name===GH_ORG+'/'+rp.name);
+  const lastTag=lastJob?`último scan ${timeAgo(lastJob.created_at)}`:'nunca escaneado';
+  return `<button class="repo-row" onclick="scanToggle('${rp.name}')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-radius:8px;background:transparent;border:1px solid transparent;cursor:pointer;text-align:left;transition:background .1s;">
+    <span style="display:flex;align-items:center;gap:11px;min-width:0;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="8" r="2.3"/><path d="M6 8.3v7.4M18 10.3c0 4-6 3-12 5"/></svg>
+      <span style="min-width:0;">
+        <span style="font-size:13.5px;font-weight:500;color:var(--text-primary);display:block;">${GH_ORG}/${rp.name}</span>
+        <span style="display:flex;align-items:center;gap:8px;margin-top:2px;font-size:11px;color:var(--text-dim);">
+          <span style="display:inline-flex;align-items:center;gap:3px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>${rp.private?'Privado':'Público'}</span>
+          <span>·</span><span>${rp.lang}</span><span>·</span><span>${lastTag}</span>
+        </span>
+      </span>
+    </span>
+    <span class="repo-sw" style="width:36px;height:20px;border-radius:100px;background:${on?'#c22f3d':'var(--divider)'};position:relative;flex-shrink:0;transition:background .15s;"><span style="position:absolute;top:2px;left:${on?'18px':'2px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;"></span></span>
+  </button>`;
+}
+function scanListHtml(){ return INSTALLATION_REPOS.map(scanRepoRowHtml).join(''); }
+function scanFooterHtml(){
+  ensureScanSel();
+  const n=scanSel.size,tot=INSTALLATION_REPOS.length;
+  return `<span style="font-size:13px;color:var(--text-secondary);">${n} de ${tot} repositórios selecionados</span>
+    <button class="btn btn-md btn-primary" ${n===0?'disabled style="opacity:.45;cursor:not-allowed;" title="Selecione ao menos um repositório"':''} onclick="${n===0?'':'runScans()'}" style="gap:7px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>Rodar scan${n?` (${n})`:''}</button>`;
+}
+function scanRefresh(){ const l=document.getElementById('scan-repo-list'); if(l)l.innerHTML=scanListHtml(); const f=document.getElementById('scan-repo-footer'); if(f)f.innerHTML=scanFooterHtml(); }
+function scanToggle(name){ ensureScanSel(); if(scanSel.has(name))scanSel.delete(name); else scanSel.add(name); scanRefresh(); }
+function scanSelectAllRepos(){ ensureScanSel(); INSTALLATION_REPOS.forEach(r=>scanSel.add(r.name)); scanRefresh(); }
+function scanClearRepos(){ ensureScanSel(); scanSel.clear(); scanRefresh(); }
+function runScans(){
+  ensureScanSel();
+  if(!scanSel.size) return;
+  const now=new Date().toISOString();
+  const picked=[...scanSel];
+  picked.forEach((name,i)=>{
+    SCAN_JOBS.unshift({id:'run_'+Date.now()+'_'+i,commit_sha:Math.random().toString(16).slice(2,12).padEnd(10,'0'),repo_full_name:GH_ORG+'/'+name,pr_number:Math.floor(Math.random()*80)+20,tier1_status:'running',tier2_status:null,tier3_status:null,blocked_at_tier:null,final_risk_score:null,final_risk_level:null,created_at:now,t1_dur:null,t2_dur:null,t3_dur:null});
+  });
+  setMonitored(picked);
+  navigate('reports');
+}
 
 /* ═══════════════════════ SCREEN: TEAM ═══════════════════════ */
 const TEAM = [
