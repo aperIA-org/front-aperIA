@@ -456,9 +456,9 @@ svg:hover .evo-pt{opacity:1;}
         <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></span>
         <span class="sb-lbl">Remediações</span>
       </a>
-      <a class="sb-item" data-screen="integrations" onclick="navigate('integrations')" title="Integrações">
-        <span class="sb-ico"><svg width="17" height="17" viewBox="-2 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h13l-5.5 7v4.5l-3 1.5V12L3 5z"/></svg></span>
-        <span class="sb-lbl">Integrações</span>
+      <a class="sb-item" data-screen="integrations" onclick="navigate('integrations')" title="Repositórios">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <span class="sb-lbl">Repositórios</span>
       </a>
       <a class="sb-item" data-screen="team" onclick="navigate('team')" title="Time">
         <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><path d="M16 5.5a3 3 0 010 6M17.5 14.2c2.2.4 3.5 2.1 3.5 4.3"/></svg></span>
@@ -984,7 +984,7 @@ function initCountUps(){
 /* ═══════════════════════ ROUTER ═══════════════════════ */
 let currentScreen='home';
 let appConnected=localStorage.getItem('aperia-connected')==='true';
-const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',reports:'Relatórios',remediations:'Remediações',attack:'AI Insights',inventory:'Inventário',integrations:'Integrações',team:'Time'};
+const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',reports:'Relatórios',remediations:'Remediações',attack:'AI Insights',inventory:'Inventário',integrations:'Repositórios',team:'Time'};
 
 function navigate(screen){
   const dataScreens=['findings','inventory','pipelines','reports','attack','remediations'];
@@ -2292,8 +2292,8 @@ function renderIntegrations(){
 
   return`<div class="page-wrap">
   <div class="mb-6">
-    <h1 class="text-[24px] font-bold tracking-tight">Integrações</h1>
-    <p class="text-fg-dim text-[13px] mt-1">Conexões e scanners do aperIA</p>
+    <h1 class="text-[24px] font-bold tracking-tight">Repositórios</h1>
+    <p class="text-fg-dim text-[13px] mt-1">Conexões e repositórios do aperIA</p>
   </div>
 
   <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-fg-mute mb-3">Conexões</div>
