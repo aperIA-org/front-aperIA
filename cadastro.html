@@ -39,7 +39,7 @@
 <div data-page="" style="display:grid;grid-template-columns:minmax(0,0.94fr) minmax(0,1fr);min-height:100vh;background:#f2f0e9">
 
   <!-- ══ LEFT · dashboard real (light) rolando ══ -->
-  <aside style="position:relative;overflow:hidden;background:linear-gradient(155deg,#f2f0e9 0%,#e7e3d9 100%);display:flex;flex-direction:column;padding:34px 34px 44px">
+  <aside ref="{{ asideRef }}" style="position:relative;overflow:hidden;background:linear-gradient(155deg,#f2f0e9 0%,#e7e3d9 100%);display:flex;flex-direction:column;padding:34px 34px 44px">
 
     <div style="position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column">
       <div style="position:relative;flex:1;min-height:0;border-radius:15px;overflow:hidden;background:#fff;border:1px solid #dfe2e7;box-shadow:0 30px 80px -42px rgba(20,24,31,.55);transition:opacity .55s ease,transform .55s ease;{{ winStyle }}">
@@ -48,7 +48,7 @@
 
       <!-- intro (antes do dash aparecer) -->
       <div style="position:absolute;inset:0;z-index:3;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;transition:opacity .7s ease;{{ introOn }}">
-        <div style="font-family:'Electro Garden','Space Grotesk',sans-serif;font-weight:400;font-size:40px;line-height:1.08;text-transform:uppercase;letter-spacing:-.01em;background:linear-gradient(115deg,transparent 34%,rgba(255,226,228,.95) 49%,transparent 64%) -140% 0/240% 100% no-repeat,linear-gradient(180deg,#ff9095,#d81f2a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(216,31,42,.35));animation:shineSweep 2.8s linear infinite">{{ introText }}</div>
+        <div style="font-family:'Electro Garden','Space Grotesk',sans-serif;font-weight:400;font-size:clamp(42px,4.8vw,60px);line-height:1.06;letter-spacing:-.01em;color:#181a1d">Bem-vindo ao aper<span style="color:#d81f2a">IA</span></div>
         <div style="width:46px;height:3px;border-radius:999px;background:#d81f2a;margin-top:22px;box-shadow:0 0 12px rgba(216,31,42,.6)"></div>
       </div>
 
@@ -140,9 +140,21 @@ class Component extends DCLogic {
 
   componentDidMount(){
     if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-    this._iv = setInterval(() => this.setState(s => ({ active: (s.active + 1) % this.STEPS.length })), 4600);
+    // o carrossel avanca sozinho a cada 4.6s; o tick respeita a flag _paused (TAREFA 6)
+    this._iv = setInterval(() => { if(this._paused) return; this.setState(s => ({ active: (s.active + 1) % this.STEPS.length })); }, 4600);
   }
-  componentWillUnmount(){ clearInterval(this._iv); if(this._appFit) window.removeEventListener('resize', this._appFit); }
+  componentWillUnmount(){ clearInterval(this._iv); if(this._appFit) window.removeEventListener('resize', this._appFit); if(this._asideEl){ this._asideEl.removeEventListener('mouseenter', this._pause); this._asideEl.removeEventListener('mouseleave', this._resume); } }
+
+  // TAREFA 6 · pausa/retoma no hover via addEventListener (nativo) num ref — evita atributos
+  // on* que o runtime do DC nao reconhece e que quebravam a hidratacao do componente.
+  _pause = () => { this._paused = true; };
+  _resume = () => { this._paused = false; };
+  asideRef = (el) => {
+    if(!el || this._asideEl === el) return;
+    this._asideEl = el;
+    el.addEventListener('mouseenter', this._pause);
+    el.addEventListener('mouseleave', this._resume);
+  };
 
   appRef = (el) => {
     if(!el || this._appEl === el) return;
@@ -268,6 +280,7 @@ class Component extends DCLogic {
       noticeText: this.state.notice,
       onSubmit: this._submit,
       onGoogle: this._google,
+      asideRef: this.asideRef,
     };
   }
 }
