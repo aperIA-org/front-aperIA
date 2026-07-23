@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="icon" href="assets/mark.svg">
+<title>aperIA · From Attack to Defense</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  [data-page]{font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  [data-page] h1,[data-page] h2,[data-page] h3{font-family:'Space Grotesk',sans-serif}
+  [data-page] a{color:inherit;text-decoration:none}
+  [data-page] ::selection{background:rgba(229,51,59,.32);color:#fff}
+  @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:.18}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  [data-page] a:focus-visible,[data-page] button:focus-visible,[data-page] input:focus-visible{outline:2px solid #ff8e8a;outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){[data-page] *{animation:none !important}[data-page] [data-anim]{opacity:1 !important}}
+  @media (max-width:820px){
+    [data-chain-label]{display:none !important}
+  }
+</style>
+</helmet>
+
+<div data-page style="--surface:#090a0e;--surface-1:#12141b;--surface-2:#1a1d26;--fg:#f4f5f7;--fg-mute:#b0b5bf;--fg-dim:#7b818c;--line:#252932;--accent:#e5333b;--accent-bright:#ff4d54;--safe:#2ecc8b;position:relative;width:100%;min-height:100vh;background:var(--surface);color:var(--fg);overflow-x:clip">
+
+  <!-- HEADER -->
+  <header style="position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(16px);background:color-mix(in srgb,var(--surface) 78%,transparent);border-bottom:1px solid var(--line)">
+    <div style="max-width:1140px;margin:0 auto;padding:0 32px;height:72px;display:flex;align-items:center;justify-content:space-between">
+      <a href="#top" style="display:flex;align-items:center;gap:12px">
+        <img src="assets/mark.svg" alt="aperIA" style="display:block;height:48px;width:auto">
+        <span style="font-family:'Space Grotesk';font-weight:700;font-size:17px;line-height:1">aper<span style="color:var(--accent-bright)">IA</span></span>
+      </a>
+      <a href="#cadastro" style="font-size:14px;font-weight:600;padding:9px 20px;border-radius:100px;background:var(--accent);color:#fff;transition:transform .15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">Cadastrar</a>
+    </div>
+  </header>
+
+  <!-- HERO minimal -->
+  <section id="top" data-screen-label="Hero" style="position:relative;z-index:1">
+    <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(46% 42% at 50% -6%,color-mix(in srgb,var(--accent) 15%,transparent),transparent 62%)"></div>
+    <div style="position:relative;max-width:820px;margin:0 auto;padding:180px 32px 130px;text-align:center;display:flex;flex-direction:column;align-items:center">
+      <h1 data-anim style="font-size:clamp(42px,5.4vw,70px);line-height:1.02;font-weight:700;letter-spacing:-.03em;margin:0 0 22px;animation:fadeUp .6s ease .05s both">From Attack <span style="color:var(--accent-bright)">to Defense.</span></h1>
+      <p data-anim style="font-size:18px;line-height:1.6;color:var(--fg-mute);max-width:540px;margin:0 0 36px;animation:fadeUp .6s ease .15s both">Correlação por I.A. Emulação real de adversário. O caminho até a invasão, provado — para você fechá-lo.</p>
+      <a data-anim href="#cadastro" style="font-size:15px;font-weight:600;padding:14px 30px;border-radius:100px;background:var(--accent);color:#fff;box-shadow:0 12px 32px -12px rgba(229,51,59,.7);transition:transform .15s;animation:fadeUp .6s ease .25s both" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Criar conta e acessar →</a>
+      <div data-anim style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.14em;color:var(--fg-dim);margin-top:56px;animation:fadeUp .6s ease .35s both">ROLE · O PIPELINE RODA COM VOCÊ ▼</div>
+    </div>
+  </section>
+
+  <!-- SCROLLYTELLING STAGE -->
+  <section data-screen-label="Pipeline" ref="{{ apRef }}" style="position:relative;z-index:1;height:520vh;border-top:1px solid var(--line)">
+    <div style="position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;overflow:hidden">
+      <!-- glow que intensifica com o progresso -->
+      <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(44% 40% at 50% 46%,color-mix(in srgb,var(--accent) {{ glowPct }},transparent),transparent 68%);transition:background .3s"></div>
+
+      <div style="position:relative;max-width:900px;margin:0 auto;padding:0 32px;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center">
+        <!-- anel de progresso -->
+        <div style="position:relative;width:190px;height:190px;margin-bottom:36px">
+          <svg viewBox="0 0 190 190" style="position:absolute;inset:0;transform:rotate(-90deg)">
+            <circle cx="95" cy="95" r="84" fill="none" stroke="var(--surface-2)" stroke-width="5"></circle>
+            <circle cx="95" cy="95" r="84" fill="none" stroke="url(#gradA)" stroke-width="5" stroke-linecap="round" stroke-dasharray="527.8" stroke-dashoffset="{{ ringOffset }}" style="transition:stroke-dashoffset .12s linear;filter:drop-shadow(0 0 8px rgba(229,51,59,.6))"></circle>
+            <defs><linearGradient id="gradA" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e5333b"></stop><stop offset="100%" stop-color="#ff4d54"></stop></linearGradient></defs>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+            <div style="font-family:'Space Grotesk';font-weight:700;font-size:46px;letter-spacing:-.03em;line-height:1">{{ conf }}<span style="color:var(--accent-bright);font-size:.55em">%</span></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:var(--fg-dim)">VALIDADO</div>
+          </div>
+        </div>
+
+        <!-- estágio atual -->
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.22em;color:var(--accent-bright);margin-bottom:14px;min-height:16px">{{ stageKicker }}</div>
+        <h2 style="font-size:clamp(30px,4vw,52px);line-height:1.05;font-weight:700;letter-spacing:-.025em;margin:0 0 14px;min-height:1.1em">{{ stageTitle }}</h2>
+        <p style="font-size:16px;line-height:1.6;color:var(--fg-mute);max-width:520px;margin:0;min-height:52px">{{ stageDesc }}</p>
+
+        <!-- cadeia do attack path -->
+        <div style="display:flex;align-items:center;gap:0;margin-top:56px;width:100%;max-width:760px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0">
+            <span style="width:13px;height:13px;border-radius:50%;background:{{ n1bg }};box-shadow:{{ n1sh }};transition:background .3s,box-shadow .3s"></span>
+            <span data-chain-label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:{{ n1c }};transition:color .3s;white-space:nowrap">web-edge</span>
+          </div>
+          <span style="flex:1;height:2px;margin:0 6px 22px;background:linear-gradient(90deg,var(--accent-bright) {{ f1 }},var(--surface-2) {{ f1 }});transition:background .2s"></span>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0">
+            <span style="width:13px;height:13px;border-radius:50%;background:{{ n2bg }};box-shadow:{{ n2sh }};transition:background .3s,box-shadow .3s"></span>
+            <span data-chain-label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:{{ n2c }};transition:color .3s;white-space:nowrap">internal-api</span>
+          </div>
+          <span style="flex:1;height:2px;margin:0 6px 22px;background:linear-gradient(90deg,var(--accent-bright) {{ f2 }},var(--surface-2) {{ f2 }});transition:background .2s"></span>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0">
+            <span style="width:13px;height:13px;border-radius:50%;background:{{ n3bg }};box-shadow:{{ n3sh }};transition:background .3s,box-shadow .3s"></span>
+            <span data-chain-label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:{{ n3c }};transition:color .3s;white-space:nowrap">ci-runner</span>
+          </div>
+          <span style="flex:1;height:2px;margin:0 6px 22px;background:linear-gradient(90deg,var(--accent-bright) {{ f3 }},var(--surface-2) {{ f3 }});transition:background .2s"></span>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0">
+            <span style="width:13px;height:13px;border-radius:50%;background:{{ n4bg }};box-shadow:{{ n4sh }};transition:background .3s,box-shadow .3s"></span>
+            <span data-chain-label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:{{ n4c }};transition:color .3s;white-space:nowrap">secrets-vault</span>
+          </div>
+          <span style="flex:1;height:2px;margin:0 6px 22px;background:linear-gradient(90deg,var(--accent-bright) {{ f4 }},var(--surface-2) {{ f4 }});transition:background .2s"></span>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid {{ n5b }};box-shadow:{{ n5sh }};transition:border-color .3s,box-shadow .3s"><span style="width:8px;height:8px;border-radius:50%;background:{{ n5bg }};transition:background .3s"></span></span>
+            <span data-chain-label style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:{{ n5c }};transition:color .3s;white-space:nowrap">domain-admin</span>
+          </div>
+        </div>
+
+        <div style="display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-dim);margin-top:34px">{{ caption }}<span style="color:var(--accent-bright);animation:blink 1s steps(1) infinite">_</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cadastro" data-screen-label="CTA" style="position:relative;z-index:1;border-top:1px solid var(--line);overflow:hidden">
+    <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:700px;height:380px;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--accent) 15%,transparent),transparent 65%);filter:blur(24px);pointer-events:none"></div>
+    <div style="position:relative;max-width:680px;margin:0 auto;padding:110px 32px 100px;text-align:center">
+      <h2 style="font-size:clamp(30px,3.8vw,48px);line-height:1.06;font-weight:700;letter-spacing:-.025em;margin:0 0 18px">Priorize por <span style="color:var(--accent-bright)">evidência</span>.</h2>
+      <p style="font-size:16px;line-height:1.6;color:var(--fg-mute);max-width:460px;margin:0 auto 36px">Cadastre-se, conecte seu GitHub e veja o primeiro attack path validado.</p>
+      <sc-if value="{{ notSignedUp }}" hint-placeholder-val="{{ true }}">
+        <form onSubmit="{{ onSignup }}" style="display:flex;gap:10px;max-width:440px;margin:0 auto;flex-wrap:wrap;justify-content:center">
+          <input type="email" required placeholder="seu@email.com" style="flex:1;min-width:210px;padding:14px 18px;border-radius:100px;border:1px solid var(--line);background:var(--surface-1);color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:14px;outline:none;text-align:center" onfocus="this.style.borderColor='#e5333b'" onblur="this.style.borderColor=''">
+          <button type="submit" style="padding:14px 28px;border:none;border-radius:100px;background:var(--accent);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 10px 30px -12px rgba(229,51,59,.7);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Criar conta →</button>
+        </form>
+      </sc-if>
+      <sc-if value="{{ signedUp }}" hint-placeholder-val="{{ false }}">
+        <div style="display:inline-flex;align-items:center;gap:12px;padding:16px 24px;border:1px solid rgba(46,204,139,.4);border-radius:100px;background:rgba(46,204,139,.08);font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--safe)"><span style="width:8px;height:8px;border-radius:50%;background:var(--safe);animation:blink 1s steps(1) infinite"></span>conta criada · redirecionando…</div>
+      </sc-if>
+    </div>
+  </section>
+
+  <footer style="position:relative;z-index:1;border-top:1px solid var(--line)">
+    <div style="max-width:1140px;margin:0 auto;padding:22px 32px;display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-dim)">
+      <img src="assets/mark.svg" alt="" style="height:22px;width:auto;opacity:.8">© 2026 aperIA
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { p: 0, signedUp: false };
+  _reduce(){ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  componentDidMount(){ this._alive = true; }
+  componentWillUnmount(){
+    this._alive = false;
+    if (this._raf) cancelAnimationFrame(this._raf);
+    if (this._onScroll){ window.removeEventListener('scroll', this._onScroll); window.removeEventListener('resize', this._onScroll); }
+  }
+  apRef = (el)=>{
+    if (!el) return;
+    this._el = el;
+    if (this._reduce()){ this.setState({p:1}); return; }
+    if (!this._bound){
+      this._bound = true;
+      this._onScroll = ()=>{ if (this._raf) return; this._raf = requestAnimationFrame(()=>{ this._raf = 0; this._upd(); }); };
+      window.addEventListener('scroll', this._onScroll, {passive:true});
+      window.addEventListener('resize', this._onScroll, {passive:true});
+    }
+    this._upd();
+  };
+  _upd(){
+    if (!this._alive || !this._el || this._reduce()) return;
+    const r = this._el.getBoundingClientRect();
+    const vh = window.innerHeight || 1;
+    const span = r.height - vh;
+    const p = span > 0 ? (-r.top) / span : (r.top < 0 ? 1 : 0);
+    const c = Math.max(0, Math.min(1, p));
+    if (Math.abs(c - this.state.p) > 0.002) this.setState({p: c});
+  }
+  renderVals(){
+    const p = this.state.p;
+    const cl = (x)=>Math.max(0, Math.min(1, x));
+    const CIRC = 527.8;
+    const stages = [
+      { k:'TIER 01 · TRIAGEM',  t:'Sinais coletados no diff',        d:'Secrets verificados e análise estática do que mudou. Rápido, cirúrgico, sem ruído.' },
+      { k:'TIER 02 · ANÁLISE',  t:'A I.A. correlaciona',             d:'Dependências, nuvem, código. Evidências dispersas viram uma hipótese de ataque coerente.' },
+      { k:'TIER 03 · EMULAÇÃO', t:'O adversário roda em sandbox',    d:'Isolada, sem rota de saída. A hipótese deixa de ser teoria e vira prova empírica.' },
+      { k:'ATTACK PATH',        t:'O caminho é percorrido, hop a hop', d:'Do web-edge ao alvo: cada salto reproduzido e confirmado pela emulação.' },
+      { k:'◎ ALVO ALCANÇADO',   t:'domain-admin · kill chain provada', d:'Controle total do domínio, demonstrado em sandbox. A remediação chega como Pull Request.' }
+    ];
+    const idx = Math.min(4, Math.floor(p * 5));
+    const s = stages[idx];
+    // chain fills through the whole scroll (last two stages accelerate it)
+    const chain = cl(p * 1.15);
+    const nodeAt = [0, 0.25, 0.5, 0.75, 0.98];
+    const out = {
+      apRef: this.apRef,
+      conf: Math.round(p * 94),
+      ringOffset: (CIRC * (1 - p * 0.94)).toFixed(1),
+      glowPct: (6 + p * 12).toFixed(1) + '%',
+      stageKicker: s.k, stageTitle: s.t, stageDesc: s.d,
+      caption: idx < 4 ? ('estágio ' + (idx+1) + '/5 · validando…') : 'caminho confirmado · risco 94/100',
+      signedUp: this.state.signedUp,
+      notSignedUp: !this.state.signedUp,
+      onSignup: (e)=>{ e.preventDefault(); this.setState({signedUp:true}); }
+    };
+    for (let i = 0; i < 4; i++){
+      out['f'+(i+1)] = (cl((chain - nodeAt[i]) / 0.25) * 100).toFixed(0) + '%';
+    }
+    for (let i = 0; i < 5; i++){
+      const on = chain >= nodeAt[i] - 0.01;
+      const n = i + 1;
+      out['n'+n+'bg'] = on ? 'var(--accent-bright)' : 'var(--surface-2)';
+      out['n'+n+'c']  = on ? '#ffffff' : 'var(--fg-dim)';
+      out['n'+n+'sh'] = on ? '0 0 12px rgba(255,77,84,.7)' : 'none';
+    }
+    out.n5b = chain >= 0.97 ? 'var(--accent-bright)' : 'var(--line)';
+    return out;
+  }
+}
+</script>
+</body>
+</html>

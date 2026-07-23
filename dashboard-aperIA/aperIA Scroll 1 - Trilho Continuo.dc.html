@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="icon" href="assets/mark.svg">
+<title>aperIA · From Attack to Defense</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  [data-page]{font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  [data-page] h1,[data-page] h2,[data-page] h3{font-family:'Space Grotesk',sans-serif}
+  [data-page] a{color:inherit;text-decoration:none}
+  [data-page] ::selection{background:rgba(229,51,59,.32);color:#fff}
+  @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:.18}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes markerGlow{0%,100%{box-shadow:0 0 12px #ff4d54,0 0 30px rgba(255,77,84,.4)}50%{box-shadow:0 0 22px #ff4d54,0 0 50px rgba(255,77,84,.6)}}
+  [data-page] a:focus-visible,[data-page] button:focus-visible,[data-page] input:focus-visible{outline:2px solid #ff8e8a;outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){[data-page] *{animation:none !important}[data-page] [data-anim]{opacity:1 !important}}
+  @media (max-width:980px){
+    [data-journey]{grid-template-columns:1fr !important}
+    [data-sticky-col]{position:static !important}
+    [data-nav]{display:none !important}
+  }
+</style>
+</helmet>
+
+<div data-page style="--surface:#0a0b0f;--surface-1:#12141b;--surface-2:#1a1d26;--fg:#f4f5f7;--fg-mute:#b0b5bf;--fg-dim:#7b818c;--line:#262a33;--accent:#e5333b;--accent-bright:#ff4d54;--safe:#2ecc8b;position:relative;width:100%;min-height:100vh;background:var(--surface);color:var(--fg);overflow-x:clip">
+
+  <div style="position:absolute;inset:0 0 auto 0;height:900px;z-index:0;pointer-events:none;background:radial-gradient(50% 40% at 70% -8%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 62%)"></div>
+
+  <!-- HEADER -->
+  <header style="position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);background:color-mix(in srgb,var(--surface) 82%,transparent);border-bottom:1px solid var(--line)">
+    <div style="max-width:1140px;margin:0 auto;padding:0 32px;height:74px;display:flex;align-items:center;justify-content:space-between">
+      <a href="#top" style="display:flex;align-items:center;gap:12px">
+        <img src="assets/mark.svg" alt="aperIA" style="display:block;height:50px;width:auto">
+        <span style="font-family:'Space Grotesk';font-weight:700;font-size:17px;line-height:1">aper<span style="color:var(--accent-bright)">IA</span></span>
+      </a>
+      <a href="#cadastro" style="font-size:14px;font-weight:600;padding:9px 20px;border-radius:8px;background:var(--accent);color:#fff;transition:transform .15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">Cadastrar</a>
+    </div>
+  </header>
+
+  <!-- HERO minimal -->
+  <section id="top" data-screen-label="Hero" style="position:relative;z-index:1">
+    <div style="max-width:860px;margin:0 auto;padding:120px 32px 110px;text-align:center;display:flex;flex-direction:column;align-items:center">
+      <h1 data-anim style="font-size:clamp(42px,5.4vw,70px);line-height:1.02;font-weight:700;letter-spacing:-.03em;margin:0 0 22px;animation:fadeUp .6s ease .05s both">From Attack <span style="color:var(--accent-bright)">to Defense.</span></h1>
+      <p data-anim style="font-size:18px;line-height:1.6;color:var(--fg-mute);max-width:560px;margin:0 0 36px;animation:fadeUp .6s ease .15s both">A aperIA correlaciona evidências com I.A. e prova, com emulação real de adversário, o caminho até a invasão.</p>
+      <div data-anim style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;animation:fadeUp .6s ease .25s both">
+        <a href="#cadastro" style="font-size:15px;font-weight:600;padding:14px 28px;border-radius:8px;background:var(--accent);color:#fff;box-shadow:0 12px 32px -12px rgba(229,51,59,.7);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Criar conta e acessar →</a>
+        <a href="#jornada" style="font-size:15px;font-weight:500;padding:14px 26px;border-radius:8px;border:1px solid var(--line);color:var(--fg-mute)">Ver o caminho ↓</a>
+      </div>
+      <div data-anim style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.14em;color:var(--fg-dim);margin-top:48px;animation:fadeUp .6s ease .35s both">ROLE PARA ACOMPANHAR A VALIDAÇÃO ▼</div>
+    </div>
+  </section>
+
+  <!-- JORNADA: trilho contínuo scroll-driven -->
+  <section id="jornada" data-screen-label="Trilho" ref="{{ apRef }}" style="position:relative;z-index:1;border-top:1px solid var(--line)">
+    <div style="max-width:1140px;margin:0 auto;padding:110px 32px 130px;display:grid;grid-template-columns:minmax(0,0.85fr) minmax(0,1.15fr);gap:72px;align-items:start" data-journey>
+
+      <!-- HUD sticky -->
+      <div data-sticky-col style="position:sticky;top:120px">
+        <h2 style="font-size:clamp(28px,3.2vw,42px);line-height:1.08;font-weight:700;letter-spacing:-.022em;margin:0 0 16px;max-width:400px">O caminho se prova enquanto você desce.</h2>
+        <p style="font-size:15.5px;line-height:1.6;color:var(--fg-mute);max-width:400px;margin:0 0 36px">Três tiers de análise, um attack path validado hop a hop. Cada etapa acende quando o pipeline a percorre.</p>
+        <div style="font-family:'Space Grotesk';font-weight:700;font-size:clamp(60px,7vw,92px);line-height:.85;letter-spacing:-.03em">{{ conf }}<span style="color:var(--accent-bright)">%</span></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.06em;color:var(--fg-dim);margin:12px 0 18px">validado por emulação</div>
+        <div style="height:4px;max-width:260px;border-radius:4px;background:var(--surface-2);overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-bright));width:{{ conf }}%;transition:width .12s linear"></div></div>
+        <div style="display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--fg-mute);margin-top:20px">{{ caption }}<span style="color:var(--accent-bright);animation:blink 1s steps(1) infinite">_</span></div>
+      </div>
+
+      <!-- rail -->
+      <div style="position:relative;height:1440px">
+        <div style="position:absolute;left:12px;top:1%;bottom:2%;width:2px;background:var(--surface-2);transform:translateX(-50%)"></div>
+        <div style="position:absolute;left:12px;top:1%;width:2px;height:{{ railFill }};background:linear-gradient(180deg,var(--accent),var(--accent-bright));box-shadow:0 0 16px var(--accent);transform:translateX(-50%);transition:height .12s linear;border-radius:2px"></div>
+        <div style="position:absolute;left:12px;top:{{ markerTop }};transform:translate(-50%,-50%);z-index:5;transition:top .12s linear">
+          <span style="position:relative;display:block;width:14px;height:14px;border-radius:50%;background:var(--accent-bright);animation:markerGlow 1.6s ease-in-out infinite"></span>
+        </div>
+
+        <!-- nó 1 · TIER 01 -->
+        <div style="position:absolute;left:0;top:4%;transform:translateY(-50%);display:flex;align-items:center;gap:28px;width:100%;opacity:{{ lit1 }};transition:opacity .4s">
+          <span style="width:24px;flex-shrink:0"></span>
+          <div style="flex:1;transform:translateX({{ sh1 }});transition:transform .5s ease">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.18em;color:{{ c1 }};transition:color .4s;margin-bottom:6px">TIER 01 · TRIAGEM</div>
+            <div style="font-family:'Space Grotesk';font-weight:700;font-size:22px;letter-spacing:-.01em">Sinais no diff</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-dim);margin-top:5px">secrets verificados · análise estática do que mudou</div>
+          </div>
+        </div>
+
+        <!-- nó 2 · TIER 02 -->
+        <div style="position:absolute;left:0;top:17%;transform:translateY(-50%);display:flex;align-items:center;gap:28px;width:100%;opacity:{{ lit2 }};transition:opacity .4s">
+          <span style="width:24px;flex-shrink:0"></span>
+          <div style="flex:1;transform:translateX({{ sh2 }});transition:transform .5s ease">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.18em;color:{{ c2 }};transition:color .4s;margin-bottom:6px">TIER 02 · ANÁLISE</div>
+            <div style="font-family:'Space Grotesk';font-weight:700;font-size:22px;letter-spacing:-.01em">A I.A. correlaciona</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-dim);margin-top:5px">dependências · nuvem · evidências viram hipótese de ataque</div>
+          </div>
+        </div>
+
+        <!-- nó 3 · TIER 03 -->
+        <div style="position:absolute;left:0;top:30%;transform:translateY(-50%);display:flex;align-items:center;gap:28px;width:100%;opacity:{{ lit3 }};transition:opacity .4s">
+          <span style="width:24px;flex-shrink:0"></span>
+          <div style="flex:1;transform:translateX({{ sh3 }});transition:transform .5s ease">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.18em;color:{{ c3 }};transition:color .4s;margin-bottom:6px">TIER 03 · EMULAÇÃO</div>
+            <div style="font-family:'Space Grotesk';font-weight:700;font-size:22px;letter-spacing:-.01em">O adversário roda em sandbox</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-dim);margin-top:5px">isolada, sem rota de saída · a hipótese vira prova</div>
+          </div>
+        </div>
+
+        <!-- divisor attack path -->
+        <div style="position:absolute;left:0;top:41%;transform:translateY(-50%);display:flex;align-items:center;gap:28px;width:100%;opacity:{{ lit4 }};transition:opacity .4s">
+          <span style="width:24px;flex-shrink:0"></span>
+          <div style="flex:1;display:flex;align-items:center;gap:14px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.2em;color:{{ c4 }};transition:color .4s">ATTACK PATH CONFIRMADO</span>
+            <span style="flex:1;height:1px;background:var(--line)"></span>
+          </div>
+        </div>
+
+        <!-- hops -->
+        <div style="position:absolute;left:0;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:28px;width:100%;opacity:{{ lit5 }};transition:opacity .4s">
+          <span style="width:24px;flex-shrink:0"></span>
+          <div style="flex:1;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;transform:translateX({{ sh5 }});transition:transform .5s ease">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:{{ h5 }};transition:color .4s">web-edge</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--fg-dim)">SSRF · T1190 → rede interna</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;top:59%;transform:translateY(-50%);display:flex;align-items:center;gap:28px;width:100%;opacity:{{ lit6 }};transition:opacity .4s">
+          <span style="width:24px;flex-shrink:0"></span>
+          <div style="flex:1;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;transform:translateX({{ sh6 }});transition:transform .5s ease">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:{{ h6 }};transition:color .4s">internal-api</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--fg-dim)">token exposto · T1552 → service token</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;top:68%;transform:translateY(-50%);display:flex;align-items:center;gap:28px;width:100%;opacity:{{ lit7 }};transition:opacity .4s">
+          <span style="width:24px;flex-shrink:0"></span>
+          <div style="flex:1;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;transform:translateX({{ sh7 }});transition:transform .5s ease">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:{{ h7 }};transition:color .4s">ci-runner</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--fg-dim)">secret no pipeline · T1078 → registry creds</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;top:77%;transform:translateY(-50%);display:flex;align-items:center;gap:28px;width:100%;opacity:{{ lit8 }};transition:opacity .4s">
+          <span style="width:24px;flex-shrink:0"></span>
+          <div style="flex:1;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;transform:translateX({{ sh8 }});transition:transform .5s ease">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:{{ h8 }};transition:color .4s">secrets-vault</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--fg-dim)">IAM permissiva · T1555 → admin key</span>
+          </div>
+        </div>
+
+        <!-- alvo -->
+        <div style="position:absolute;left:0;top:90%;transform:translateY(-50%);display:flex;align-items:center;gap:28px;width:100%;opacity:{{ lit9 }};transition:opacity .4s">
+          <span style="width:24px;flex-shrink:0"></span>
+          <div style="flex:1;max-width:480px;border:1px solid {{ tgB }};border-radius:12px;background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 12%,var(--surface-1)),var(--surface-1));padding:22px 24px;box-shadow:0 0 {{ tgGlow }} -14px var(--accent);transition:border-color .4s,box-shadow .5s;transform:translateX({{ sh9 }})">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.2em;color:var(--accent-bright);margin-bottom:8px">◎ ALVO ALCANÇADO</div>
+            <div style="font-family:'Space Grotesk';font-weight:700;font-size:26px;letter-spacing:-.015em;color:#fff">domain-admin</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-mute);margin-top:6px">controle total do domínio · kill chain provada em sandbox</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cadastro" data-screen-label="CTA" style="position:relative;z-index:1;border-top:1px solid var(--line);overflow:hidden">
+    <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:700px;height:380px;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--accent) 15%,transparent),transparent 65%);filter:blur(24px);pointer-events:none"></div>
+    <div style="position:relative;max-width:680px;margin:0 auto;padding:110px 32px 100px;text-align:center">
+      <h2 style="font-size:clamp(30px,3.8vw,48px);line-height:1.06;font-weight:700;letter-spacing:-.025em;margin:0 0 18px">Priorize por <span style="color:var(--accent-bright)">evidência</span>.</h2>
+      <p style="font-size:16px;line-height:1.6;color:var(--fg-mute);max-width:460px;margin:0 auto 36px">Cadastre-se, conecte seu GitHub e veja o primeiro attack path validado.</p>
+      <sc-if value="{{ notSignedUp }}" hint-placeholder-val="{{ true }}">
+        <form onSubmit="{{ onSignup }}" style="display:flex;gap:10px;max-width:440px;margin:0 auto;flex-wrap:wrap;justify-content:center">
+          <input type="email" required placeholder="seu@email.com" style="flex:1;min-width:210px;padding:14px 18px;border-radius:8px;border:1px solid var(--line);background:var(--surface-1);color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:14px;outline:none" onfocus="this.style.borderColor='#e5333b'" onblur="this.style.borderColor=''">
+          <button type="submit" style="padding:14px 26px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 10px 30px -12px rgba(229,51,59,.7);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Criar conta →</button>
+        </form>
+      </sc-if>
+      <sc-if value="{{ signedUp }}" hint-placeholder-val="{{ false }}">
+        <div style="display:inline-flex;align-items:center;gap:12px;padding:16px 24px;border:1px solid rgba(46,204,139,.4);border-radius:8px;background:rgba(46,204,139,.08);font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--safe)"><span style="width:8px;height:8px;border-radius:50%;background:var(--safe);animation:blink 1s steps(1) infinite"></span>conta criada · redirecionando…</div>
+      </sc-if>
+    </div>
+  </section>
+
+  <footer style="position:relative;z-index:1;border-top:1px solid var(--line)">
+    <div style="max-width:1140px;margin:0 auto;padding:22px 32px;display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-dim)">
+      <img src="assets/mark.svg" alt="" style="height:22px;width:auto;opacity:.8">© 2026 aperIA
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { p: 0, signedUp: false };
+  _reduce(){ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  componentDidMount(){ this._alive = true; }
+  componentWillUnmount(){
+    this._alive = false;
+    if (this._raf) cancelAnimationFrame(this._raf);
+    if (this._onScroll){ window.removeEventListener('scroll', this._onScroll); window.removeEventListener('resize', this._onScroll); }
+  }
+  apRef = (el)=>{
+    if (!el) return;
+    this._el = el;
+    if (this._reduce()){ this.setState({p:1}); return; }
+    if (!this._bound){
+      this._bound = true;
+      this._onScroll = ()=>{ if (this._raf) return; this._raf = requestAnimationFrame(()=>{ this._raf = 0; this._upd(); }); };
+      window.addEventListener('scroll', this._onScroll, {passive:true});
+      window.addEventListener('resize', this._onScroll, {passive:true});
+    }
+    this._upd();
+  };
+  _upd(){
+    if (!this._alive || !this._el || this._reduce()) return;
+    const r = this._el.getBoundingClientRect();
+    const vh = window.innerHeight || 1;
+    const span = r.height - vh * 0.45;
+    const p = span > 0 ? (vh * 0.6 - r.top) / span : (r.top < vh ? 1 : 0);
+    const c = Math.max(0, Math.min(1, p));
+    if (Math.abs(c - this.state.p) > 0.002) this.setState({p: c});
+  }
+  renderVals(){
+    const p = this.state.p;
+    const T0 = 1, T1 = 92;                    // rail % range
+    const tops = [4, 17, 30, 41, 50, 59, 68, 77, 90]; // node positions
+    const markerPct = T0 + p * (T1 - T0);
+    const cl = (x)=>Math.max(0, Math.min(1, x));
+    const out = {
+      apRef: this.apRef,
+      conf: Math.round(p * 94),
+      markerTop: markerPct.toFixed(2) + '%',
+      railFill: (p * (T1 - T0)).toFixed(2) + '%',
+      signedUp: this.state.signedUp,
+      notSignedUp: !this.state.signedUp,
+      onSignup: (e)=>{ e.preventDefault(); this.setState({signedUp:true}); }
+    };
+    tops.forEach((t, i)=>{
+      const n = i + 1;
+      const L = cl((markerPct - t) / 5 + 1);
+      out['lit'+n] = 0.35 + 0.65 * L;
+      out['sh'+n] = L >= 0.5 ? '0px' : '10px';
+      out['c'+n] = L >= 0.5 ? 'var(--accent-bright)' : 'var(--fg-dim)';
+      out['h'+n] = L >= 0.5 ? '#ffffff' : 'var(--fg-dim)';
+    });
+    out.tgB = p > 0.93 ? 'var(--accent)' : 'var(--line)';
+    out.tgGlow = p > 0.93 ? '64px' : '0px';
+    let cap;
+    if (p < 0.05) cap = 'iniciando pipeline…';
+    else if (markerPct < 34) cap = 'triando e correlacionando…';
+    else if (markerPct < 44) cap = 'emulando adversário…';
+    else if (markerPct < 86) cap = 'percorrendo o attack path…';
+    else cap = 'kill chain confirmada';
+    out.caption = cap;
+    return out;
+  }
+}
+</script>
+</body>
+</html>

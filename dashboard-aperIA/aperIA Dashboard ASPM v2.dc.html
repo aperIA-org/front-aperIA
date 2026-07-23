@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@700;800&family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Open Sans','Helvetica Neue',Arial,sans-serif;background:#0c0d0f;color:#f2f2f2;-webkit-font-smoothing:antialiased;}
+a{color:#ff5a63;text-decoration:none;}
+a:hover{color:#ff8a90;}
+select,input,button{font-family:'Geist',sans-serif;outline:none;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:#26272a;border-radius:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.dot-live{animation:pulse 1.4s ease-in-out infinite;}
+.spin{animation:spin 1s linear infinite;transform-origin:center;}
+.tabfade{animation:fadein .25s ease;}
+.rowh:hover{background:#1f2023 !important;}
+.nodeh:hover{border-color:#ff6a3d !important;box-shadow:0 0 0 1px rgba(255,106,61,.5),0 10px 26px -10px rgba(0,0,0,.8) !important;}
+.btnh:hover{background:#1f2023 !important;color:#f2f2f2 !important;}
+.prh:hover{background:#1a1b1e !important;}
+</style>
+</helmet>
+<div style="display:grid;grid-template-columns:256px 1fr;height:100vh;background:#0c0d0f;overflow:hidden;">
+
+  <aside style="background:#0c0d0f;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;height:100vh;overflow:hidden;">
+    <div style="flex-shrink:0;padding:14px;display:flex;align-items:center;gap:12px;background:#0f1012;border-bottom:1px solid rgba(255,255,255,.06);">
+      <img src="uploads/1.png" alt="aperIA" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;display:block;" />
+      <div style="min-width:0;overflow:hidden;white-space:nowrap;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:21px;font-weight:700;letter-spacing:-.015em;color:#ffffff;line-height:1;">aper<span style="color:#e11d2a;">IA</span></div>
+        <div style="margin-top:3px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1.5px;color:#707070;">ATTACK PATH VALIDATION</div>
+      </div>
+    </div>
+    <nav style="flex:1;overflow-y:auto;padding:8px 10px 20px;display:flex;flex-direction:column;">
+      <a onClick="{{ goOverview }}" style="{{ navSt.overview }}">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="6" height="6" rx="1.2"></rect><rect x="10.5" y="2.5" width="6" height="6" rx="1.2"></rect><rect x="2.5" y="10.5" width="6" height="6" rx="1.2"></rect><rect x="10.5" y="10.5" width="6" height="6" rx="1.2"></rect></svg></span>
+        <span style="flex:1;overflow:hidden;">Overview</span>
+      </a>
+      <a onClick="{{ goPaths }}" style="{{ navSt.paths }}">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2.5"></circle><circle cx="19" cy="6" r="2.5"></circle><circle cx="12" cy="18" r="2.5"></circle><path d="M7 7.5l3.5 8M17 7.5l-3.5 8M7.5 6h9"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Attack Paths</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e11d2a;color:#ffffff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 0 8px rgba(225,29,42,.4);">3</span>
+      </a>
+      <a onClick="{{ goFindings }}" style="{{ navSt.findings }}">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.2l6.5 2.3v4.5c0 4-2.7 6.8-6.5 7.8-3.8-1-6.5-3.8-6.5-7.8V4.5L12 2.2z"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Findings</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e11d2a;color:#ffffff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 0 8px rgba(225,29,42,.4);">14</span>
+      </a>
+      <a onClick="{{ goExec }}" style="{{ navSt.exec }}">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2"></path><path d="M17 3h2a2 2 0 012 2v2"></path><path d="M21 17v2a2 2 0 01-2 2h-2"></path><path d="M7 21H5a2 2 0 01-2-2v-2"></path><circle cx="12" cy="12" r="3.2"></circle><path d="M15.4 15.4L18 18"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Executions</span>
+      </a>
+      <a onClick="{{ goPrs }}" style="{{ navSt.prs }}">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"></circle><circle cx="6" cy="18" r="2.5"></circle><circle cx="18" cy="18" r="2.5"></circle><path d="M6 8.5v7M18 15.5V11a4 4 0 00-4-4h-2"></path><path d="M14.5 4.5L12 7l2.5 2.5"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Pull Requests</span>
+      </a>
+      <div style="height:1px;background:rgba(255,255,255,.08);margin:6px 4px;"></div>
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;color:rgba(255,255,255,.72);" style-hover="background:rgba(255,255,255,.06);color:#ffffff;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="-2 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h13l-5.5 7v4.5l-3 1.5V12L3 5z"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Integrações</span>
+      </a>
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;color:rgba(255,255,255,.72);" style-hover="background:rgba(255,255,255,.06);color:#ffffff;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"></circle><path d="M3.5 19.5c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"></path><path d="M16 5.5a3 3 0 010 6M17.5 14.2c2.2.4 3.5 2.1 3.5 4.3"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Time</span>
+      </a>
+    </nav>
+    <div style="flex-shrink:0;padding:6px 10px;border-top:1px solid rgba(255,255,255,.08);background:#0c0d0f;">
+      <button style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;cursor:pointer;width:100%;background:transparent;border:none;" style-hover="background:rgba(255,255,255,.06);">
+        <div style="width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.10);color:rgba(255,255,255,.78);font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;display:grid;place-items:center;flex-shrink:0;">A</div>
+        <div style="flex:1;text-align:left;overflow:hidden;white-space:nowrap;font-family:'Geist',sans-serif;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.88);">Acme · Pessoal</div>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:rgba(255,255,255,.28);"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"></path></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div style="display:flex;flex-direction:column;height:100vh;overflow-y:scroll;background:#0c0d0f;">
+    <header style="position:sticky;top:0;z-index:10;flex:0 0 56px;min-height:56px;background:#0c0d0f;border-bottom:1px solid #202124;">
+      <div style="height:100%;max-width:1600px;margin:0 auto;display:flex;align-items:center;gap:16px;position:relative;padding:0 32px;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+          <span style="color:#a1a1a1;">Acme</span>
+          <span style="color:#707070;">/</span>
+          <span style="color:#f2f2f2;">{{ tabLabel }}</span>
+        </div>
+        <div style="position:absolute;left:50%;transform:translateX(-50%);width:100%;max-width:400px;padding:0 16px;">
+          <div style="position:relative;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#707070" stroke-width="1.5" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.5-4.5"></path></svg>
+            <input type="text" placeholder="Buscar… (⌘K)" style="width:100%;background:#0c0d0f;border:1px solid #202124;border-radius:8px;color:#f2f2f2;font-size:13px;padding:8px 44px 8px 32px;" />
+            <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:'Geist Mono',monospace;font-size:10px;color:#707070;border:1px solid #202124;padding:2px 6px;border-radius:3px;background:#1f2023;">⌘K</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;margin-left:auto;">
+          <div style="display:flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:11px;color:#2ecc8b;background:rgba(46,204,139,.08);border:1px solid rgba(46,204,139,.25);padding:5px 10px;border-radius:999px;">
+            <span class="dot-live" style="width:6px;height:6px;border-radius:50%;background:#2ecc8b;"></span>SCAN ATIVO
+          </div>
+          <button style="position:relative;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#a1a1a1;background:transparent;border:none;cursor:pointer;" style-hover="background:#17181a;color:#f2f2f2;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 18V11a6 6 0 1112 0v7M4 18h16M10 21a2 2 0 004 0"></path></svg>
+            <span style="position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:#c22f3d;"></span>
+          </button>
+          <div style="height:28px;width:1px;background:#202124;"></div>
+          <button style="display:flex;align-items:center;gap:10px;padding:4px 6px 4px 4px;border-radius:10px;background:transparent;border:none;cursor:pointer;" style-hover="background:#17181a;">
+            <div style="width:28px;height:28px;border-radius:50%;background:#202124;display:grid;place-items:center;font-size:11px;font-weight:600;font-family:'Geist Mono',monospace;color:#f2f2f2;">MA</div>
+            <span style="font-size:14px;color:#f2f2f2;">Marina</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#707070" stroke-width="1.8"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main style="flex:1;background:#0c0d0f;">
+      <div style="max-width:1600px;margin:0 auto;padding:26px 32px 48px;">{{ activeView }}</div>
+    </main>
+  </div>
+</div>
+<div>{{ overlayEl }}</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    tab: 'overview', runProg: 8,
+    selectedNode: null, hoverNode: null, zoom: 1,
+    sortKey: 'score', sortDir: 'desc', fSev: 'Todas', fHost: 'Todos', fTier: 'Todos', page: 0, expF: null,
+    expJob: 's2', selPR: 'pr1',
+  };
+
+  C = { base:'#0c0d0f', surf:'#17181a', elev:'#1f2023', line:'#202124', fg:'#f2f2f2', mute:'#a1a1a1', dim:'#707070', brand:'#e11d2a', red:'#ff5a63', green:'#2ecc8b', blue:'#4aa3ff', purple:'#a371f7' };
+  SEV = { critical:{c:'#ff2d3d',l:'Critical'}, high:{c:'#ff6a3d',l:'High'}, medium:{c:'#f5a524',l:'Medium'}, low:{c:'#f5d524',l:'Low'}, info:{c:'#4aa3ff',l:'Info'} };
+  MONO = "'Geist Mono',monospace";
+  GEIST = "'Geist',sans-serif";
+
+  FINDINGS = [
+    {id:'f1', sev:'critical', title:'AWS Access Key exposta no código-fonte', cve:'—', host:'payments-api', tier:1, score:9.8, cwe:'CWE-312', file:'src/config.py:42', detected:'há 2h', rem:'Rotacionar chave imediatamente e mover para AWS Secrets Manager.'},
+    {id:'f2', sev:'high', title:'SQL Injection via raw query em ORM', cve:'CVE-2024-38856', host:'web-checkout', tier:2, score:8.9, cwe:'CWE-89', file:'app/repositories/user_repo.py:87', detected:'há 2h', rem:'Usar bind parameters (SQLAlchemy select + where).'},
+    {id:'f3', sev:'critical', title:'Log4Shell RCE em dependência transitiva', cve:'CVE-2021-44228', host:'aws-prod', tier:2, score:10.0, cwe:'CWE-400', file:'pom.xml:234', detected:'há 3h', rem:'Atualizar log4j-core para ≥ 2.17.'},
+    {id:'f4', sev:'high', title:'Path traversal em upload de arquivos', cve:'—', host:'auth-service', tier:1, score:7.6, cwe:'CWE-22', file:'api/upload_handler.py:156', detected:'há 1d', rem:'Sanitizar filename com basename + allowlist de extensões.'},
+    {id:'f5', sev:'high', title:'CORS misconfiguration permite origem arbitrária', cve:'—', host:'auth-service', tier:3, score:7.1, cwe:'CWE-346', file:'api/middleware/cors.py:23', detected:'há 1d', rem:'Restringir Access-Control-Allow-Origin a domínios confiáveis.'},
+    {id:'f6', sev:'medium', title:'Bucket S3 com ACL pública habilitada', cve:'—', host:'s3-dumps', tier:2, score:6.4, cwe:'CWE-284', file:'infra/terraform/s3.tf:18', detected:'há 3h', rem:'Habilitar Block Public Access no bucket.'},
+    {id:'f7', sev:'medium', title:'Logging de dados de cartão em produção', cve:'—', host:'payments-api', tier:1, score:5.9, cwe:'CWE-532', file:'app/services/payment_service.py:201', detected:'há 5h', rem:'Mascarar PAN/CVV antes de logar (PCI-DSS).'},
+    {id:'f8', sev:'medium', title:'OpenSSL 3.0.7 — DoS via certificado X.509', cve:'CVE-2022-3786', host:'auth-service', tier:2, score:5.3, cwe:'CWE-119', file:'requirements.txt:12', detected:'há 6h', rem:'Atualizar OpenSSL para ≥ 3.0.8.'},
+    {id:'f9', sev:'low', title:'Hash MD5 sem salt para senha de usuário', cve:'—', host:'user-service', tier:1, score:3.7, cwe:'CWE-327', file:'services/auth/password.py:67', detected:'há 2d', rem:'Migrar para bcrypt (work factor ≥ 12) ou Argon2id.'},
+    {id:'f10', sev:'info', title:'Token de API de teste detectado', cve:'—', host:'user-service', tier:1, score:1.2, cwe:'—', file:'tests/fixtures/test_config.py:8', detected:'há 2d', rem:'Remover token das fixtures.'},
+    {id:'f11', sev:'high', title:'SSRF em webhook de notificação', cve:'CVE-2023-44487', host:'notifications', tier:2, score:8.1, cwe:'CWE-918', file:'webhook/client.go:44', detected:'há 8h', rem:'Validar URL de destino contra allowlist de hosts.'},
+    {id:'f12', sev:'medium', title:'JWT aceito sem verificação de assinatura', cve:'—', host:'auth-service', tier:2, score:6.8, cwe:'CWE-347', file:'auth/jwt.py:29', detected:'há 1d', rem:'Verificar assinatura com chave pública (RS256).'},
+    {id:'f13', sev:'critical', title:'Container executa como root com runc vulnerável', cve:'CVE-2024-21626', host:'aws-prod', tier:3, score:9.1, cwe:'CWE-250', file:'Dockerfile:3', detected:'há 4h', rem:'Definir USER não-root e runAsNonRoot no manifest.'},
+    {id:'f14', sev:'low', title:'Header X-Frame-Options ausente', cve:'—', host:'web-checkout', tier:1, score:2.9, cwe:'CWE-1021', file:'nginx.conf:15', detected:'há 2d', rem:'Adicionar X-Frame-Options: DENY.'},
+  ];
+
+  NODES = [
+    {id:'internet', label:'Internet', type:'Entrypoint', x:20, y:140, entry:true, findings:[]},
+    {id:'web-checkout', label:'web-checkout', type:'Repository', x:220, y:140, findings:['f2','f14']},
+    {id:'auth-service', label:'auth-service', type:'Repository', x:220, y:270, findings:['f4','f5','f8','f12']},
+    {id:'payments-api', label:'payments-api', type:'Repository', x:430, y:140, findings:['f1','f7']},
+    {id:'user-service', label:'user-service', type:'Repository', x:430, y:270, findings:['f9','f10']},
+    {id:'aws-prod', label:'aws-prod', type:'Cloud · ECS', x:640, y:140, findings:['f3','f13']},
+    {id:'s3-dumps', label:'s3-dumps', type:'Cloud · S3', x:850, y:140, target:true, findings:['f6']},
+  ];
+  EDGES = [
+    {s:'internet', t:'web-checkout', ttp:'T1190', lbl:'SQLi'},
+    {s:'web-checkout', t:'payments-api', ttp:'T1552', lbl:'Creds'},
+    {s:'web-checkout', t:'auth-service', ttp:'T1210', lbl:'Exploit'},
+    {s:'auth-service', t:'user-service', ttp:'T1078', lbl:'Account'},
+    {s:'payments-api', t:'aws-prod', ttp:'T1210', lbl:'Log4Shell'},
+    {s:'aws-prod', t:'s3-dumps', ttp:'T1567', lbl:'Exfil'},
+  ];
+
+  PATHS = [
+    {name:'Exfiltração de dados de clientes', chain:['Internet','web-checkout','payments-api','aws-prod','s3-dumps'], sev:'critical', conf:96, time:'há 2h'},
+    {name:'RCE em produção via Log4Shell', chain:['payments-api','aws-prod'], sev:'critical', conf:93, time:'há 3h'},
+    {name:'Comprometimento de contas via auth', chain:['Internet','web-checkout','auth-service','user-service'], sev:'high', conf:88, time:'há 1d'},
+  ];
+
+  JOBS = [
+    {id:'s2', repo:'auth-service', pr:31, commit:'b7e9f2a1c3', t1:'done', t2:'done', t3:'running', d1:'2m 41s', d2:'7m 12s', d3:null, score:null, level:null, created:'há 20 min', running:true},
+    {id:'s1', repo:'payments-api', pr:47, commit:'a3f8c1d2e4', t1:'done', t2:'done', t3:'done', d1:'2m 12s', d2:'4m 05s', d3:'38m 20s', score:847, level:'critical', created:'há 2h'},
+    {id:'s3', repo:'payments-api', pr:46, commit:'c9a1b3e5d7', t1:'done', t2:'done', t3:'skipped', d1:'2m 55s', d2:'8m 30s', d3:null, score:312, level:'medium', created:'há 3d'},
+    {id:'s4', repo:'payments-api', pr:45, commit:'e5a9b7c1d3', t1:'done', t2:'failed', t3:null, d1:'3m 01s', d2:null, d3:null, score:null, level:'blocked', created:'há 4d'},
+    {id:'s5', repo:'user-service', pr:22, commit:'d2c4e6a8b0', t1:'done', t2:'done', t3:'skipped', d1:'2m 20s', d2:'6m 44s', d3:null, score:156, level:'low', created:'há 5d'},
+  ];
+  TIERS = [
+    {k:'t1', d:'d1', name:'Tier 1 · Triagem rápida', sla:'≤ 3 min', desc:'SAST, secrets, SCA'},
+    {k:'t2', d:'d2', name:'Tier 2 · Correlação por IA', sla:'≤ 10 min', desc:'Claude correlaciona findings'},
+    {k:'t3', d:'d3', name:'Tier 3 · Emulação Caldera', sla:'30–60 min', desc:'Sandbox adversarial MITRE'},
+  ];
+
+  PRS = [
+    {id:'pr1', repo:'OCR-aperIA/payments-api', num:47, title:'fix(security): rotacionar AWS key e parametrizar query de usuários', status:'open', author:'aperia-bot', time:'há 2h', sev:'critical', path:['Internet','web-checkout','payments-api','aws-prod','s3-dumps'], evidence:'Attack path validado em sandbox: SQLi (T1190) → credencial AWS exposta (T1552) → RCE Log4Shell (T1210) → exfiltração S3 (T1567). Kill chain completa confirmada pelo Caldera.', diff:[
+      {t:'meta', x:'src/config.py'},
+      {t:'del', x:'AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"'},
+      {t:'del', x:'AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCY"'},
+      {t:'add', x:'AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]'},
+      {t:'add', x:'AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]'},
+      {t:'meta', x:'app/repositories/user_repo.py'},
+      {t:'del', x:"query = f\"SELECT * FROM users WHERE email = '{email}'\""},
+      {t:'del', x:'result = db.execute(query)'},
+      {t:'add', x:'result = db.execute('},
+      {t:'add', x:'    select(User).where(User.email == email)'},
+      {t:'add', x:').scalars().first()'},
+    ]},
+    {id:'pr2', repo:'OCR-aperIA/auth-service', num:31, title:'fix(security): sanitizar upload e restringir CORS', status:'open', author:'aperia-bot', time:'há 1d', sev:'high', path:['Internet','web-checkout','auth-service'], evidence:'Path traversal (CWE-22) combinado com CORS permissivo permite leitura de arquivos e requests autenticados cross-origin. Validado em Tier 3.', diff:[
+      {t:'meta', x:'api/upload_handler.py'},
+      {t:'del', x:'filepath = os.path.join(UPLOAD_DIR, filename)'},
+      {t:'add', x:'safe_name = os.path.basename(filename)'},
+      {t:'add', x:'if not safe_name.endswith(ALLOWED_EXTENSIONS):'},
+      {t:'add', x:'    raise ValueError("Extensão não permitida")'},
+      {t:'add', x:'filepath = os.path.join(UPLOAD_DIR, safe_name)'},
+      {t:'meta', x:'api/middleware/cors.py'},
+      {t:'del', x:'response.headers["Access-Control-Allow-Origin"] = "*"'},
+      {t:'add', x:'response.headers["Access-Control-Allow-Origin"] = settings.FRONTEND_ORIGIN'},
+    ]},
+    {id:'pr3', repo:'OCR-aperIA/payments-api', num:46, title:'fix(pci): mascarar dados de cartão nos logs', status:'merged', author:'aperia-bot', time:'há 3d', sev:'medium', path:['payments-api'], evidence:'Campos PAN e CVV logados em texto plano — violação PCI-DSS 3.4. Sem kill chain, mas exposição direta a quem tem acesso ao Datadog.', diff:[
+      {t:'meta', x:'app/services/payment_service.py'},
+      {t:'del', x:'logger.info("payment_processed", card_number=card_number, cvv=cvv)'},
+      {t:'add', x:'logger.info("payment_processed", card_last4=card_number[-4:], masked=True)'},
+    ]},
+    {id:'pr4', repo:'OCR-aperIA/user-service', num:22, title:'chore(security): migrar hashing de senha para bcrypt', status:'closed', author:'aperia-bot', time:'há 5d', sev:'low', path:['user-service'], evidence:'MD5 sem salt vulnerável a rainbow tables. Fechado: time optou por Argon2id em PR separado.', diff:[
+      {t:'meta', x:'services/auth/password.py'},
+      {t:'del', x:'import hashlib'},
+      {t:'del', x:'hashed = hashlib.md5(password.encode()).hexdigest()'},
+      {t:'add', x:'from passlib.hash import bcrypt'},
+      {t:'add', x:'hashed = bcrypt.hash(password, rounds=12)'},
+    ]},
+  ];
+
+  componentDidMount() {
+    this._iv = setInterval(() => {
+      this.setState(s => s.runProg >= 100 ? null : { runProg: Math.min(100, s.runProg + 2.5) });
+    }, 420);
+  }
+  componentWillUnmount() { clearInterval(this._iv); }
+
+  hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }
+
+  pill(sev, small) {
+    const e = React.createElement, s = this.SEV[sev];
+    return e('span', { style: { display:'inline-flex', alignItems:'center', gap:6, fontSize: small?10.5:11.5, fontWeight:600, fontFamily:this.GEIST, padding: small?'2px 8px':'3px 10px', borderRadius:999, background:this.hexA(s.c,.13), color:s.c, border:`1px solid ${this.hexA(s.c,.3)}`, whiteSpace:'nowrap' } },
+      e('span',{style:{width:6,height:6,borderRadius:2,background:s.c}}), s.l);
+  }
+
+  card(extra, ...kids) {
+    const e = React.createElement;
+    return e('div', { style: Object.assign({ background:this.C.surf, border:`1px solid ${this.C.line}`, borderRadius:12, boxShadow:'0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5)' }, extra) }, ...kids);
+  }
+
+  cardTitle(t, sub, right) {
+    const e = React.createElement;
+    return e('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12, flexWrap:'wrap' } },
+      e('div', null,
+        e('div', { style:{ fontSize:14, fontWeight:600, color:this.C.fg } }, t),
+        sub ? e('div', { style:{ marginTop:2, fontSize:11.5, color:this.C.dim } }, sub) : null),
+      right || null);
+  }
+
+  pageHead(title, sub, right) {
+    const e = React.createElement;
+    return e('div', { style:{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', gap:20, flexWrap:'wrap', marginBottom:22 } },
+      e('div', null,
+        e('div', { style:{ display:'flex', alignItems:'center', gap:10 } },
+          e('div', { style:{ width:9, height:9, borderRadius:'50%', background:this.C.brand, boxShadow:'0 0 10px rgba(225,29,42,.6)' } }),
+          e('h1', { style:{ margin:0, fontSize:22, fontWeight:700, letterSpacing:'-.4px', color:this.C.fg } }, title)),
+        e('p', { style:{ margin:'6px 0 0 19px', fontSize:13.5, color:this.C.mute } }, sub)),
+      right || null);
+  }
+
+  chainChips(chain, sev) {
+    const e = React.createElement, col = this.SEV[sev].c;
+    const out = [];
+    chain.forEach((h, i) => {
+      out.push(e('span', { key:'h'+i, style:{ fontFamily:this.MONO, fontSize:11, color:this.C.fg, background:this.C.elev, border:`1px solid ${this.C.line}`, padding:'3px 8px', borderRadius:6, whiteSpace:'nowrap' } }, h));
+      if (i < chain.length-1) out.push(e('svg', { key:'a'+i, width:14, height:10, viewBox:'0 0 14 10', style:{flexShrink:0} }, e('path', { d:'M0 5h10M7 1l4 4-4 4', stroke:col, strokeWidth:1.5, fill:'none' })));
+    });
+    return e('div', { style:{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' } }, ...out);
+  }
+
+  tierStatus(job, prog) {
+    const st = { t1: job.t1, t2: job.t2, t3: job.t3 };
+    if (job.running && prog >= 100) st.t3 = 'done';
+    return st;
+  }
+
+  tierIcon(status) {
+    const e = React.createElement;
+    if (status === 'done') return e('div', { style:{ width:22, height:22, borderRadius:'50%', background:this.hexA(this.C.green,.15), border:`1.5px solid ${this.C.green}`, display:'grid', placeItems:'center', flexShrink:0 } }, e('svg',{width:11,height:11,viewBox:'0 0 24 24',fill:'none',stroke:this.C.green,strokeWidth:3,strokeLinecap:'round',strokeLinejoin:'round'},e('path',{d:'M4 12l5 5L20 7'})));
+    if (status === 'running') return e('div', { style:{ width:22, height:22, borderRadius:'50%', background:this.hexA('#ff6a3d',.15), border:'1.5px solid #ff6a3d', display:'grid', placeItems:'center', flexShrink:0 } }, e('svg',{className:'spin',width:11,height:11,viewBox:'0 0 24 24',fill:'none',stroke:'#ff6a3d',strokeWidth:3,strokeLinecap:'round'},e('path',{d:'M12 3a9 9 0 019 9'})));
+    if (status === 'failed') return e('div', { style:{ width:22, height:22, borderRadius:'50%', background:this.hexA('#ff2d3d',.15), border:'1.5px solid #ff2d3d', display:'grid', placeItems:'center', flexShrink:0 } }, e('svg',{width:10,height:10,viewBox:'0 0 24 24',fill:'none',stroke:'#ff2d3d',strokeWidth:3,strokeLinecap:'round'},e('path',{d:'M6 6l12 12M18 6L6 18'})));
+    if (status === 'skipped') return e('div', { style:{ width:22, height:22, borderRadius:'50%', background:this.C.elev, border:`1.5px solid #4a4b4d`, display:'grid', placeItems:'center', flexShrink:0 } }, e('svg',{width:10,height:10,viewBox:'0 0 24 24',fill:'none',stroke:'#707070',strokeWidth:3,strokeLinecap:'round'},e('path',{d:'M5 12h14'})));
+    return e('div', { style:{ width:22, height:22, borderRadius:'50%', background:'transparent', border:'1.5px dashed #3a3b3d', flexShrink:0 } });
+  }
+
+  tierTimeline(job) {
+    const e = React.createElement, prog = this.state.runProg;
+    const st = this.tierStatus(job, prog);
+    const rows = this.TIERS.map((t, i) => {
+      const status = st[t.k] || 'pending';
+      const isRun = status === 'running';
+      const statusTxt = { done:'concluído', running:'executando', failed:'falhou · gate bloqueado', skipped:'não atingiu o gate', pending:'aguardando' }[status];
+      const statusCol = { done:this.C.green, running:'#ff6a3d', failed:'#ff2d3d', skipped:this.C.dim, pending:this.C.dim }[status];
+      return e('div', { key:t.k, style:{ display:'flex', gap:14, position:'relative' } },
+        e('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center' } },
+          this.tierIcon(status),
+          i < 2 ? e('div', { style:{ width:1.5, flex:1, minHeight:18, background: status==='done' ? this.hexA(this.C.green,.4) : '#2a2b2e' } }) : null),
+        e('div', { style:{ flex:1, paddingBottom: i<2 ? 16 : 0, minWidth:0 } },
+          e('div', { style:{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap' } },
+            e('span', { style:{ fontSize:13, fontWeight:600, color: status==='pending' ? this.C.dim : this.C.fg, fontFamily:this.GEIST } }, t.name),
+            e('span', { style:{ fontFamily:this.MONO, fontSize:10.5, color:this.C.dim } }, t.sla)),
+          e('div', { style:{ marginTop:2, fontSize:11.5, color:this.C.dim } }, t.desc, ' · ', e('span', { style:{ color:statusCol, fontWeight:600 } }, statusTxt), job[t.d] ? e('span', { style:{ fontFamily:this.MONO, color:this.C.mute } }, '  ·  ' + job[t.d]) : null),
+          isRun ? e('div', { style:{ marginTop:8, maxWidth:420 } },
+            e('div', { style:{ display:'flex', justifyContent:'space-between', fontFamily:this.MONO, fontSize:10.5, color:this.C.mute, marginBottom:4 } },
+              e('span', null, 'emulação adversarial em sandbox'), e('span', { style:{ color:'#ff6a3d' } }, Math.round(prog) + '%')),
+            e('div', { style:{ height:6, background:this.C.elev, borderRadius:4, overflow:'hidden' } },
+              e('div', { style:{ height:'100%', width: prog + '%', background:'linear-gradient(90deg,#d81f2a,#ff6a3d)', borderRadius:4, transition:'width .4s ease' } }))) : null,
+          (t.k==='t3' && job.running && prog>=100) ? e('div', { style:{ marginTop:8, display:'inline-flex', alignItems:'center', gap:8, background:this.hexA(this.C.green,.1), border:`1px solid ${this.hexA(this.C.green,.3)}`, borderRadius:8, padding:'6px 12px' } },
+            e('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:this.C.green,strokeWidth:2},e('circle',{cx:6,cy:6,r:2.5}),e('circle',{cx:6,cy:18,r:2.5}),e('circle',{cx:18,cy:18,r:2.5}),e('path',{d:'M6 8.5v7M18 15.5V11a4 4 0 00-4-4h-2M14.5 4.5L12 7l2.5 2.5'})),
+            e('span', { style:{ fontFamily:this.MONO, fontSize:11.5, color:this.C.green } }, `PR #${job.pr} gerado em OCR-aperIA/${job.repo}`)) : null));
+    });
+    return e('div', null, ...rows);
+  }
+
+  /* ─── OVERVIEW ─── */
+  viewOverview() {
+    const e = React.createElement;
+    const kpi = (label, val, sub, col) => this.card({ padding:'16px 18px', flex:1, minWidth:170 },
+      e('div', { style:{ fontSize:11, fontWeight:600, letterSpacing:.6, textTransform:'uppercase', color:this.C.mute } }, label),
+      e('div', { style:{ marginTop:10, fontFamily:this.GEIST, fontSize:32, fontWeight:800, letterSpacing:-1, lineHeight:1, color: col || this.C.fg } }, val),
+      e('div', { style:{ marginTop:8, fontSize:11.5, color:this.C.dim } }, sub));
+    const running = this.JOBS[0];
+    return e('div', { className:'tabfade', key:'overview' },
+      this.pageHead('Overview', 'Postura de segurança e validação de attack paths · ASPM'),
+      e('div', { style:{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:16 } },
+        kpi('Scans executados', '342', 'últimos 30 dias'),
+        kpi('Attack paths validados', '47', '3 kill chains completas', '#ff2d3d'),
+        kpi('Findings críticos', '37', 'de 1.284 issues abertas', '#ff2d3d'),
+        kpi('PRs gerados', '38', '29 merged · 7 abertos', this.C.green),
+        kpi('MTTR', '6,2d', '↓ 18% vs período anterior')),
+      e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(420px,1fr))', gap:16 } },
+        this.card({ padding:'20px 22px' },
+          this.cardTitle('Scan em execução', `OCR-aperIA/${running.repo} · PR #${running.pr} · commit ${running.commit}`,
+            e('div', { style:{ display:'flex', alignItems:'center', gap:7, fontFamily:this.MONO, fontSize:10.5, color:'#ff6a3d' } },
+              e('span', { className:'dot-live', style:{ width:6, height:6, borderRadius:'50%', background:'#ff6a3d' } }), 'LIVE')),
+          e('div', { style:{ marginTop:18 } }, this.tierTimeline(running))),
+        this.card({ padding:'20px 22px' },
+          this.cardTitle('Últimos attack paths confirmados', 'kill chains provadas em sandbox',
+            e('a', { onClick:()=>this.setState({tab:'paths'}), style:{ fontSize:12, fontWeight:600, cursor:'pointer' } }, 'Ver grafo →')),
+          e('div', { style:{ marginTop:16, display:'flex', flexDirection:'column', gap:10 } },
+            ...this.PATHS.map((p, i) => e('div', { key:i, className:'rowh', onClick:()=>this.setState({tab:'paths'}), style:{ padding:'12px 14px', border:`1px solid ${this.C.line}`, borderRadius:10, cursor:'pointer', background:this.C.base } },
+              e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, flexWrap:'wrap' } },
+                e('div', { style:{ display:'flex', alignItems:'center', gap:10 } },
+                  this.pill(p.sev, true),
+                  e('span', { style:{ fontSize:13, fontWeight:600, color:this.C.fg, fontFamily:this.GEIST } }, p.name)),
+                e('span', { style:{ fontFamily:this.MONO, fontSize:10.5, color:this.C.dim } }, `confiança ${p.conf}% · ${p.time}`)),
+              e('div', { style:{ marginTop:10 } }, this.chainChips(p.chain, p.sev)))))),
+        this.card({ padding:'20px 22px' },
+          this.cardTitle('Findings por severidade', 'backlog aberto'),
+          e('div', { style:{ marginTop:18, display:'flex', flexDirection:'column', gap:12 } },
+            ...[['critical',37],['high',128],['medium',561],['low',558],['info',212]].map(([k,v]) => {
+              const s = this.SEV[k];
+              return e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:12 } },
+                e('div', { style:{ width:70 } }, this.pill(k, true)),
+                e('div', { style:{ flex:1, height:8, background:this.C.elev, borderRadius:5, overflow:'hidden' } },
+                  e('div', { style:{ height:'100%', width:(v/561*100)+'%', maxWidth:'100%', background:s.c, opacity:.85, borderRadius:5 } })),
+                e('div', { style:{ width:44, textAlign:'right', fontFamily:this.MONO, fontSize:12.5, fontWeight:600, color:this.C.fg } }, v));
+            })))));
+  }
+
+  /* ─── ATTACK PATHS ─── */
+  nodeById(id) { return this.NODES.find(n => n.id === id); }
+
+  viewPaths() {
+    const e = React.createElement, { zoom, hoverNode, selectedNode } = this.state;
+    const NW = 158, NH = 62;
+    const edges = this.EDGES.map((ed, i) => {
+      const s = this.nodeById(ed.s), t = this.nodeById(ed.t);
+      const sx = s.x + NW, sy = s.y + NH/2, tx = t.x, ty = t.y + NH/2;
+      const hot = hoverNode === ed.s || hoverNode === ed.t || selectedNode === ed.s || selectedNode === ed.t;
+      const mx = (sx+tx)/2, my = (sy+ty)/2;
+      return e('g', { key:i },
+        e('path', { d:`M${sx} ${sy} C ${sx+55} ${sy}, ${tx-55} ${ty}, ${tx} ${ty}`, fill:'none', stroke: hot ? '#ff6a3d' : '#3a3b3e', strokeWidth: hot ? 2 : 1.5, markerEnd:'url(#arr)' }),
+        e('rect', { x:mx-34, y:my-19, width:68, height:16, rx:4, fill:'#0c0d0f', stroke: hot ? this.hexA('#ff6a3d',.5) : this.C.line }),
+        e('text', { x:mx, y:my-7.5, textAnchor:'middle', fill: hot ? '#ff6a3d' : this.C.dim, fontSize:8.5, fontFamily:'Geist Mono,monospace' }, `${ed.ttp} · ${ed.lbl}`));
+    });
+    const nodes = this.NODES.map(n => {
+      const sel = selectedNode === n.id;
+      const crit = n.findings.some(f => this.FINDINGS.find(x=>x.id===f)?.sev === 'critical');
+      const border = sel ? '#ff6a3d' : (n.entry ? '#4aa3ff' : n.target ? '#ff2d3d' : this.C.line);
+      return e('div', { key:n.id, className:'nodeh', onClick:()=>this.setState({selectedNode:n.id}), onMouseEnter:()=>this.setState({hoverNode:n.id}), onMouseLeave:()=>this.setState({hoverNode:null}),
+        style:{ position:'absolute', left:n.x, top:n.y, width:NW, height:NH, background:this.C.surf, border:`1.5px solid ${border}`, borderRadius:10, cursor:'pointer', display:'flex', alignItems:'center', gap:10, padding:'0 12px', boxShadow: sel ? '0 0 0 2px rgba(255,106,61,.35),0 10px 26px -10px rgba(0,0,0,.8)' : '0 4px 14px -6px rgba(0,0,0,.6)', transition:'border-color .12s, box-shadow .12s' } },
+        e('svg', { width:26, height:26, viewBox:'0 0 32 32', style:{flexShrink:0} },
+          e('path', { d:'M16 3 28 9.5v13L16 29 4 22.5v-13L16 3z', fill:'#1f2023', stroke: n.entry ? '#4aa3ff' : n.target ? '#ff2d3d' : '#4a4b4d', strokeWidth:1.4 }),
+          e('path', { d:'M4 9.5 16 16l12-6.5M16 16v13', fill:'none', stroke: n.entry ? '#4aa3ff' : n.target ? '#ff2d3d' : '#4a4b4d', strokeWidth:1.1, opacity:.8 })),
+        e('div', { style:{ minWidth:0 } },
+          e('div', { style:{ fontFamily:this.MONO, fontSize:12, fontWeight:600, color:this.C.fg, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, n.label),
+          e('div', { style:{ fontSize:10, color:this.C.dim, marginTop:1 } }, n.type)),
+        n.findings.length ? e('span', { style:{ marginLeft:'auto', flexShrink:0, fontFamily:this.MONO, fontSize:10, fontWeight:600, minWidth:18, height:18, padding:'0 5px', borderRadius:999, display:'grid', placeItems:'center', background: crit ? this.hexA('#ff2d3d',.18) : this.C.elev, color: crit ? '#ff2d3d' : this.C.mute, border:`1px solid ${crit ? this.hexA('#ff2d3d',.4) : '#3a3b3d'}` } }, n.findings.length) : null);
+    });
+    const zbtn = (lbl, fn) => e('button', { className:'btnh', onClick:fn, style:{ width:30, height:30, borderRadius:8, background:this.C.surf, border:`1px solid ${this.C.line}`, color:this.C.mute, cursor:'pointer', fontSize:15, fontWeight:600, display:'grid', placeItems:'center' } }, lbl);
+    
+
+    const selNode = selectedNode ? this.nodeById(selectedNode) : null;
+    const selF = selNode ? selNode.findings.map(id => this.FINDINGS.find(f => f.id === id)).filter(Boolean) : [];
+    const legend = e('div', { style:{ position:'absolute', left:14, bottom:12, display:'flex', gap:14, alignItems:'center', fontFamily:this.MONO, fontSize:10, color:this.C.dim, zIndex:2 } },
+      e('span', { style:{ display:'inline-flex', alignItems:'center', gap:5 } }, e('span',{style:{width:8,height:8,borderRadius:2,border:'1.5px solid #4aa3ff'}}), 'entrypoint'),
+      e('span', { style:{ display:'inline-flex', alignItems:'center', gap:5 } }, e('span',{style:{width:8,height:8,borderRadius:2,border:'1.5px solid #ff2d3d'}}), 'alvo'),
+      e('span', { style:{ display:'inline-flex', alignItems:'center', gap:5 } }, e('span',{style:{width:14,height:2,background:'#ff6a3d'}}), 'edge ativa'));
+    return e('div', { className:'tabfade', key:'paths' },
+      this.pageHead('Attack Paths', 'Grafo de kill chains validadas por emulação adversarial (Caldera · MITRE ATT&CK)',
+        e('div', { style:{ display:'flex', gap:8 } },
+          zbtn('−', ()=>this.setState(s=>({zoom:Math.max(.6, +(s.zoom-.15).toFixed(2))}))),
+          zbtn('+', ()=>this.setState(s=>({zoom:Math.min(1.6, +(s.zoom+.15).toFixed(2))}))),
+          zbtn('⟲', ()=>this.setState({zoom:1, selectedNode:null})))),
+      e('div', { style:{ display:'grid', gridTemplateColumns: selNode ? 'minmax(0,1fr) 330px' : 'minmax(0,1fr)', gap:16, alignItems:'stretch', marginBottom:16 } },
+        this.card({ position:'relative', height:470, overflow:'hidden' },
+          e('div', { style:{ position:'absolute', inset:0, backgroundImage:'radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px)', backgroundSize:'22px 22px' } }),
+          legend,
+          e('div', { style:{ position:'absolute', left:24, top:36, width:1030, height:380, transform:`scale(${zoom})`, transformOrigin:'0 0' } },
+            e('svg', { width:1030, height:380, style:{ position:'absolute', left:0, top:0, overflow:'visible' } },
+              e('defs', null, e('marker', { id:'arr', viewBox:'0 0 10 10', refX:9, refY:5, markerWidth:7, markerHeight:7, orient:'auto-start-reverse' }, e('path', { d:'M0 0L10 5L0 10z', fill:'#3a3b3e' }))),
+              ...edges),
+            ...nodes)),
+        selNode ? this.card({ padding:'18px 20px', overflowY:'auto', maxHeight:470 },
+          e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 } },
+            e('div', null,
+              e('div', { style:{ fontFamily:this.MONO, fontSize:14, fontWeight:600, color:this.C.fg } }, selNode.label),
+              e('div', { style:{ marginTop:2, fontSize:11.5, color:this.C.dim } }, selNode.type)),
+            e('button', { className:'btnh', onClick:()=>this.setState({selectedNode:null}), style:{ width:26, height:26, borderRadius:7, background:'transparent', border:`1px solid ${this.C.line}`, color:this.C.dim, cursor:'pointer', display:'grid', placeItems:'center', fontSize:13 } }, '✕')),
+          e('div', { style:{ marginTop:14, fontSize:11, fontWeight:600, letterSpacing:.6, textTransform:'uppercase', color:this.C.mute } }, `Findings neste nó · ${selF.length}`),
+          selF.length ? e('div', { style:{ marginTop:10, display:'flex', flexDirection:'column', gap:8 } },
+            ...selF.map(f => e('div', { key:f.id, className:'rowh', onClick:()=>this.setState({tab:'findings', fSev:'Todas', fHost:f.host, fTier:'Todos', page:0, expF:f.id}), style:{ padding:'10px 12px', border:`1px solid ${this.C.line}`, borderRadius:9, cursor:'pointer', background:this.C.base } },
+              e('div', { style:{ display:'flex', alignItems:'center', gap:8, justifyContent:'space-between' } }, this.pill(f.sev, true), e('span', { style:{ fontFamily:this.MONO, fontSize:11, color:this.C.dim } }, f.score.toFixed(1))),
+              e('div', { style:{ marginTop:7, fontSize:12.5, fontWeight:600, color:this.C.fg, fontFamily:this.GEIST } }, f.title),
+              e('div', { style:{ marginTop:4, fontFamily:this.MONO, fontSize:10.5, color:this.C.dim } }, f.file))))
+            : e('div', { style:{ marginTop:10, fontSize:12.5, color:this.C.dim } }, 'Nenhum finding aberto neste nó.')) : null),
+      this.card({ padding:'20px 22px' },
+        this.cardTitle('Kill chains confirmadas', 'caminhos completos provados em sandbox'),
+        e('div', { style:{ marginTop:16, display:'flex', flexDirection:'column', gap:10 } },
+          ...this.PATHS.map((p, i) => e('div', { key:i, style:{ padding:'12px 14px', border:`1px solid ${this.C.line}`, borderRadius:10, background:this.C.base } },
+            e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, flexWrap:'wrap' } },
+              e('div', { style:{ display:'flex', alignItems:'center', gap:10 } }, this.pill(p.sev, true), e('span', { style:{ fontSize:13, fontWeight:600, color:this.C.fg, fontFamily:this.GEIST } }, p.name)),
+              e('span', { style:{ fontFamily:this.MONO, fontSize:10.5, color:this.C.dim } }, `confiança ${p.conf}% · ${p.time}`)),
+            e('div', { style:{ marginTop:10 } }, this.chainChips(p.chain, p.sev)))))));
+  }
+
+  /* ─── FINDINGS ─── */
+  viewFindings() {
+    const e = React.createElement, { sortKey, sortDir, fSev, fHost, fTier, page, expF } = this.state;
+    const hosts = ['Todos', ...Array.from(new Set(this.FINDINGS.map(f => f.host)))];
+    const sevOrder = { critical:0, high:1, medium:2, low:3, info:4 };
+    let rows = this.FINDINGS.filter(f =>
+      (fSev === 'Todas' || f.sev === fSev) && (fHost === 'Todos' || f.host === fHost) && (fTier === 'Todos' || String(f.tier) === fTier));
+    const dir = sortDir === 'desc' ? -1 : 1;
+    rows = rows.slice().sort((a, b) => {
+      let A = a[sortKey], B = b[sortKey];
+      if (sortKey === 'sev') { A = sevOrder[a.sev]; B = sevOrder[b.sev]; }
+      return (A > B ? 1 : A < B ? -1 : 0) * dir;
+    });
+    const PAGE = 8, pages = Math.max(1, Math.ceil(rows.length / PAGE)), pg = Math.min(page, pages - 1);
+    const shown = rows.slice(pg * PAGE, pg * PAGE + PAGE);
+    const sel = (label, val, opts, key) => e('label', { style:{ display:'flex', alignItems:'center', gap:7, fontSize:11.5, color:this.C.dim } }, label,
+      e('select', { value:val, onChange:ev=>this.setState({ [key]:ev.target.value, page:0 }), style:{ background:this.C.surf, border:`1px solid ${this.C.line}`, borderRadius:8, color:this.C.fg, fontSize:12.5, padding:'7px 10px', cursor:'pointer' } },
+        ...opts.map(o => e('option', { key:o, value:o }, o))));
+    const th = (lbl, key, w) => e('div', { onClick: key ? ()=>this.setState(s=>({ sortKey:key, sortDir: s.sortKey===key && s.sortDir==='desc' ? 'asc' : 'desc' })) : null,
+      style:{ width:w, flex: w ? '0 0 auto' : 1, minWidth: w ? undefined : 0, fontSize:10.5, fontWeight:600, letterSpacing:.6, textTransform:'uppercase', color: sortKey===key ? this.C.fg : this.C.dim, cursor: key ? 'pointer' : 'default', whiteSpace:'nowrap', userSelect:'none' } },
+      lbl, sortKey===key ? (sortDir==='desc' ? ' ↓' : ' ↑') : '');
+    const scoreCol = sc => sc >= 9 ? '#ff2d3d' : sc >= 7 ? '#ff6a3d' : sc >= 4 ? '#f5a524' : this.C.mute;
+    return e('div', { className:'tabfade', key:'findings' },
+      this.pageHead('Findings', `${this.FINDINGS.length} issues correlacionadas · SAST, secrets, SCA e cloud`,
+        e('div', { style:{ display:'flex', gap:12, flexWrap:'wrap' } },
+          sel('Severidade', fSev, ['Todas','critical','high','medium','low','info'], 'fSev'),
+          sel('Host', fHost, hosts, 'fHost'),
+          sel('Tier', fTier, ['Todos','1','2','3'], 'fTier'))),
+      this.card({ overflow:'hidden' },
+        e('div', { style:{ display:'flex', alignItems:'center', gap:14, padding:'11px 18px', borderBottom:`1px solid ${this.C.line}`, background:this.C.base } },
+          th('Sev', 'sev', 92), th('Finding', 'title'), th('Host', 'host', 118), th('Tier', 'tier', 46), th('Score', 'score', 56), th('Detecção', null, 72)),
+        ...shown.map(f => {
+          const open = expF === f.id;
+          return e('div', { key:f.id },
+            e('div', { className:'rowh', onClick:()=>this.setState({ expF: open ? null : f.id }), style:{ display:'flex', alignItems:'center', gap:14, padding:'11px 18px', borderBottom:`1px solid ${this.C.line}`, cursor:'pointer', background: open ? this.C.elev : 'transparent' } },
+              e('div', { style:{ width:92, flexShrink:0 } }, this.pill(f.sev, true)),
+              e('div', { style:{ flex:1, minWidth:0 } },
+                e('div', { style:{ fontSize:13, fontWeight:600, color:this.C.fg, fontFamily:this.GEIST, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, f.title),
+                f.cve !== '—' ? e('div', { style:{ marginTop:2, fontFamily:this.MONO, fontSize:10.5, color:this.C.dim } }, f.cve) : null),
+              e('div', { style:{ width:118, flexShrink:0, fontFamily:this.MONO, fontSize:11.5, color:this.C.mute, overflow:'hidden', textOverflow:'ellipsis' } }, f.host),
+              e('div', { style:{ width:46, flexShrink:0, fontFamily:this.MONO, fontSize:11.5, color:this.C.dim } }, 'T' + f.tier),
+              e('div', { style:{ width:56, flexShrink:0, fontFamily:this.MONO, fontSize:12.5, fontWeight:600, color:scoreCol(f.score) } }, f.score.toFixed(1)),
+              e('div', { style:{ width:72, flexShrink:0, fontSize:11.5, color:this.C.dim, textAlign:'right' } }, f.detected)),
+            open ? e('div', { style:{ padding:'16px 18px 18px', borderBottom:`1px solid ${this.C.line}`, background:this.C.base, display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:16 } },
+              e('div', null,
+                e('div', { style:{ fontSize:10.5, fontWeight:600, letterSpacing:.6, textTransform:'uppercase', color:this.C.dim } }, 'Localização'),
+                e('div', { style:{ marginTop:6, fontFamily:this.MONO, fontSize:12, color:this.C.fg, background:this.C.elev, border:`1px solid ${this.C.line}`, borderRadius:7, padding:'7px 10px', display:'inline-block' } }, f.file),
+                e('div', { style:{ marginTop:8, fontFamily:this.MONO, fontSize:11, color:this.C.dim } }, `${f.cwe}${f.cve !== '—' ? ' · ' + f.cve : ''}`)),
+              e('div', null,
+                e('div', { style:{ fontSize:10.5, fontWeight:600, letterSpacing:.6, textTransform:'uppercase', color:this.C.dim } }, 'Remediação sugerida'),
+                e('div', { style:{ marginTop:6, fontSize:12.5, lineHeight:1.55, color:this.C.mute } }, f.rem),
+                e('button', { onClick:()=>this.setState({ tab:'prs' }), style:{ marginTop:10, display:'inline-flex', alignItems:'center', gap:7, height:30, padding:'0 12px', fontSize:12, fontWeight:600, fontFamily:this.GEIST, background:this.C.brand, color:'#fff', border:'none', borderRadius:7, cursor:'pointer' } }, 'Gerar PR de correção'))) : null);
+        }),
+        e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 18px' } },
+          e('span', { style:{ fontFamily:this.MONO, fontSize:11, color:this.C.dim } }, `${rows.length} resultados · página ${pg + 1}/${pages}`),
+          e('div', { style:{ display:'flex', gap:8 } },
+            e('button', { className:'btnh', disabled: pg === 0, onClick:()=>this.setState({ page: Math.max(0, pg - 1) }), style:{ height:28, padding:'0 12px', borderRadius:7, background:this.C.surf, border:`1px solid ${this.C.line}`, color: pg === 0 ? '#4a4b4d' : this.C.mute, cursor: pg === 0 ? 'default' : 'pointer', fontSize:12 } }, '← Anterior'),
+            e('button', { className:'btnh', disabled: pg >= pages - 1, onClick:()=>this.setState({ page: Math.min(pages - 1, pg + 1) }), style:{ height:28, padding:'0 12px', borderRadius:7, background:this.C.surf, border:`1px solid ${this.C.line}`, color: pg >= pages - 1 ? '#4a4b4d' : this.C.mute, cursor: pg >= pages - 1 ? 'default' : 'pointer', fontSize:12 } }, 'Próxima →')))));
+  }
+
+  /* ─── EXECUTIONS ─── */
+  viewExec() {
+    const e = React.createElement, { expJob, runProg } = this.state;
+    const lvlPill = job => {
+      if (job.running) return e('span', { style:{ display:'inline-flex', alignItems:'center', gap:6, fontFamily:this.MONO, fontSize:10.5, color:'#ff6a3d' } }, e('span', { className:'dot-live', style:{ width:6, height:6, borderRadius:'50%', background:'#ff6a3d' } }), 'EXECUTANDO');
+      if (job.level === 'blocked') return e('span', { style:{ fontFamily:this.MONO, fontSize:10.5, fontWeight:600, color:'#ff2d3d', background:this.hexA('#ff2d3d',.12), border:`1px solid ${this.hexA('#ff2d3d',.3)}`, padding:'3px 9px', borderRadius:999 } }, 'GATE BLOQUEADO');
+      const c = { critical:'#ff2d3d', medium:'#f5a524', low:'#f5d524' }[job.level] || this.C.mute;
+      return e('span', { style:{ fontFamily:this.MONO, fontSize:11.5, fontWeight:600, color:c } }, `score ${job.score}`);
+    };
+    return e('div', { className:'tabfade', key:'exec' },
+      this.pageHead('Executions', 'Pipeline de validação em 3 tiers · triagem → correlação por IA → emulação Caldera'),
+      e('div', { style:{ display:'flex', flexDirection:'column', gap:10 } },
+        ...this.JOBS.map(job => {
+          const open = expJob === job.id;
+          const st = this.tierStatus(job, runProg);
+          return this.card({ overflow:'hidden' },
+            e('div', { className:'rowh', onClick:()=>this.setState({ expJob: open ? null : job.id }), style:{ display:'flex', alignItems:'center', gap:16, padding:'14px 20px', cursor:'pointer', flexWrap:'wrap' } },
+              e('div', { style:{ display:'flex', alignItems:'center', gap:12, flex:1, minWidth:220 } },
+                e('svg', { width:16, height:16, viewBox:'0 0 24 24', fill:'none', stroke:this.C.dim, strokeWidth:1.6, style:{ flexShrink:0, transform: open ? 'rotate(90deg)' : 'none', transition:'transform .15s' } }, e('path', { d:'M9 6l6 6-6 6' })),
+                e('div', null,
+                  e('div', { style:{ fontSize:13.5, fontWeight:600, color:this.C.fg, fontFamily:this.GEIST } }, `OCR-aperIA/${job.repo} · PR #${job.pr}`),
+                  e('div', { style:{ marginTop:2, fontFamily:this.MONO, fontSize:10.5, color:this.C.dim } }, `commit ${job.commit} · ${job.created}`))),
+              e('div', { style:{ display:'flex', alignItems:'center', gap:8 } },
+                ...this.TIERS.map(t => e('div', { key:t.k, title:t.name, style:{ display:'flex', alignItems:'center', gap:5 } },
+                  this.tierIcon(st[t.k] || 'pending'),
+                  e('span', { style:{ fontFamily:this.MONO, fontSize:10, color:this.C.dim } }, t.k.toUpperCase())))),
+              e('div', { style:{ width:150, textAlign:'right' } }, lvlPill(job))),
+            open ? e('div', { style:{ padding:'6px 20px 20px 48px', borderTop:`1px solid ${this.C.line}`, background:this.C.base } },
+              e('div', { style:{ paddingTop:16 } }, this.tierTimeline(job))) : null);
+        })));
+  }
+
+  /* ─── PULL REQUESTS ─── */
+  viewPrs() {
+    const e = React.createElement, { selPR } = this.state;
+    const pr = this.PRS.find(p => p.id === selPR) || this.PRS[0];
+    const stBadge = s => {
+      const m = { open:{ c:this.C.green, l:'Open' }, merged:{ c:'#a371f7', l:'Merged' }, closed:{ c:this.C.dim, l:'Closed' } }[s];
+      return e('span', { style:{ display:'inline-flex', alignItems:'center', gap:6, fontSize:11, fontWeight:600, fontFamily:this.GEIST, padding:'3px 10px', borderRadius:999, background:this.hexA(m.c === this.C.dim ? '#707070' : m.c, .13), color:m.c, border:`1px solid ${this.hexA(m.c === this.C.dim ? '#707070' : m.c, .3)}` } },
+        e('svg', { width:11, height:11, viewBox:'0 0 24 24', fill:'none', stroke:m.c, strokeWidth:2.2, strokeLinecap:'round', strokeLinejoin:'round' }, s==='merged' ? e('path',{d:'M6 3v12a6 6 0 006 6M6 9a3 3 0 100-6 3 3 0 000 6zM18 21a3 3 0 100-6 3 3 0 000 6z'}) : s==='closed' ? e('path',{d:'M6 6l12 12M18 6L6 18'}) : e('path',{d:'M6 3v18M6 9a3 3 0 100-6 3 3 0 000 6zM18 15v6M18 21a3 3 0 100-6 3 3 0 000 6zM18 15a9 9 0 00-9-9'})),
+        m.l);
+    };
+    return e('div', { className:'tabfade', key:'prs' },
+      this.pageHead('Pull Requests', 'Correções geradas automaticamente com evidência de kill chain'),
+      e('div', { style:{ display:'grid', gridTemplateColumns:'minmax(280px,340px) minmax(0,1fr)', gap:16, alignItems:'start' } },
+        this.card({ overflow:'hidden' },
+          ...this.PRS.map(p => e('div', { key:p.id, className:'prh', onClick:()=>this.setState({ selPR:p.id }), style:{ padding:'13px 16px', borderBottom:`1px solid ${this.C.line}`, cursor:'pointer', background: p.id === pr.id ? this.C.elev : 'transparent', borderLeft: p.id === pr.id ? `2.5px solid ${this.C.brand}` : '2.5px solid transparent' } },
+            e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 } }, stBadge(p.status), this.pill(p.sev, true)),
+            e('div', { style:{ marginTop:8, fontSize:12.5, fontWeight:600, color:this.C.fg, fontFamily:this.GEIST, lineHeight:1.4 } }, p.title),
+            e('div', { style:{ marginTop:5, fontFamily:this.MONO, fontSize:10.5, color:this.C.dim } }, `${p.repo} #${p.num} · ${p.time}`)))),
+        this.card({ padding:'22px 24px' },
+          e('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:14, flexWrap:'wrap' } },
+            e('div', { style:{ minWidth:0 } },
+              e('div', { style:{ fontFamily:this.MONO, fontSize:11.5, color:this.C.dim } }, `${pr.repo} · #${pr.num} · por ${pr.author} · ${pr.time}`),
+              e('h2', { style:{ margin:'8px 0 0', fontSize:17, fontWeight:700, letterSpacing:'-.3px', color:this.C.fg, fontFamily:this.GEIST } }, pr.title)),
+            e('div', { style:{ display:'flex', gap:8, alignItems:'center' } }, stBadge(pr.status), this.pill(pr.sev, true))),
+          e('div', { style:{ marginTop:18, padding:'14px 16px', background:this.C.base, border:`1px solid ${this.C.line}`, borderRadius:10 } },
+            e('div', { style:{ fontSize:10.5, fontWeight:600, letterSpacing:.6, textTransform:'uppercase', color:'#ff6a3d', marginBottom:8 } }, 'Evidência · Tier 3'),
+            e('div', { style:{ fontSize:12.5, lineHeight:1.6, color:this.C.mute } }, pr.evidence),
+            e('div', { style:{ marginTop:12 } }, this.chainChips(pr.path, pr.sev))),
+          e('div', { style:{ marginTop:16 } },
+            e('div', { style:{ fontSize:10.5, fontWeight:600, letterSpacing:.6, textTransform:'uppercase', color:this.C.dim, marginBottom:8 } }, 'Diff proposto'),
+            e('div', { style:{ background:'#0a0b0d', border:`1px solid ${this.C.line}`, borderRadius:10, overflow:'hidden', fontFamily:this.MONO, fontSize:11.5, lineHeight:1.7 } },
+              ...pr.diff.map((d, i) => d.t === 'meta'
+                ? e('div', { key:i, style:{ padding:'6px 14px', background:this.C.surf, color:this.C.mute, borderTop: i ? `1px solid ${this.C.line}` : 'none', borderBottom:`1px solid ${this.C.line}`, fontWeight:600 } }, d.x)
+                : e('div', { key:i, style:{ padding:'1px 14px', whiteSpace:'pre-wrap', color: d.t === 'add' ? '#22c55e' : '#ef4444', background: d.t === 'add' ? 'rgba(34,197,94,.07)' : 'rgba(239,68,68,.08)' } }, (d.t === 'add' ? '+ ' : '− ') + d.x)))),
+          pr.status === 'open' ? e('div', { style:{ marginTop:16, display:'flex', gap:10 } },
+            e('button', { style:{ display:'inline-flex', alignItems:'center', gap:7, height:34, padding:'0 16px', fontSize:12.5, fontWeight:600, fontFamily:this.GEIST, background:this.C.brand, color:'#fff', border:'none', borderRadius:8, cursor:'pointer' } }, 'Aprovar e mergear'),
+            e('button', { className:'btnh', style:{ display:'inline-flex', alignItems:'center', gap:7, height:34, padding:'0 16px', fontSize:12.5, fontWeight:600, fontFamily:this.GEIST, background:this.C.surf, color:this.C.mute, border:`1px solid ${this.C.line}`, borderRadius:8, cursor:'pointer' } }, 'Abrir no GitHub ↗')) : null)));
+  }
+
+  renderVals() {
+    const { tab } = this.state;
+    const base = { display:'flex', alignItems:'center', gap:10, padding:'9px 10px', borderRadius:7, fontFamily:this.GEIST, fontSize:13.5, fontWeight:500, cursor:'pointer', whiteSpace:'nowrap', color:'rgba(255,255,255,.72)', textDecoration:'none' };
+    const act = Object.assign({}, base, { background:'rgba(225,29,42,.16)', boxShadow:'inset 2.5px 0 0 #e11d2a', borderRadius:'0 7px 7px 0', color:'#ff5a63', fontWeight:600 });
+    const navSt = {}; ['overview','paths','findings','exec','prs'].forEach(k => navSt[k] = tab === k ? act : base);
+    const labels = { overview:'Overview', paths:'Attack Paths', findings:'Findings', exec:'Executions', prs:'Pull Requests' };
+    const go = k => () => this.setState({ tab:k });
+    const views = { overview:()=>this.viewOverview(), paths:()=>this.viewPaths(), findings:()=>this.viewFindings(), exec:()=>this.viewExec(), prs:()=>this.viewPrs() };
+    return { navSt, tabLabel: labels[tab], activeView: views[tab](), overlayEl: null,
+      goOverview: go('overview'), goPaths: go('paths'), goFindings: go('findings'), goExec: go('exec'), goPrs: go('prs') };
+  }
+}</script>
+</body>
+</html>

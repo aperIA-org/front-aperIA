@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="icon" href="assets/mark.svg">
+<title>aperIA · From Attack to Defense</title>
+<meta name="description" content="Attack Path Validation: correlação por I.A. + emulação real de adversário.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  [data-page]{font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  [data-page] h1,[data-page] h2,[data-page] h3{font-family:'Space Grotesk',sans-serif}
+  [data-page] a{color:inherit;text-decoration:none}
+  [data-page] ::selection{background:rgba(229,51,59,.32);color:#fff}
+  @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:.18}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes marq{to{transform:translateX(-50%)}}
+  [data-page] a:focus-visible,[data-page] button:focus-visible,[data-page] input:focus-visible{outline:2px solid #ff8e8a;outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){[data-page] *{animation:none !important}[data-page] [data-anim]{opacity:1 !important}[data-marquee]{animation:none !important}}
+  @media (max-width:980px){
+    [data-hero]{grid-template-columns:1fr !important;gap:48px !important}
+    [data-steps],[data-feat],[data-feat-rev]{grid-template-columns:1fr !important;gap:32px !important}
+    [data-stats]{grid-template-columns:1fr 1fr !important}
+    [data-nav]{display:none !important}
+  }
+  @media (max-width:560px){[data-stats]{grid-template-columns:1fr !important}}
+</style>
+</helmet>
+
+<div data-page style="--surface:#0a0b0f;--surface-1:#12141b;--surface-2:#1a1d26;--surface-deep:#08090c;--fg:#f4f5f7;--fg-mute:#b0b5bf;--fg-dim:#7b818c;--line:#242832;--line-hi:#333844;--accent:#e5333b;--accent-bright:#ff4d54;--safe:#2ecc8b;--sev-high:#ff6a3d;--sev-medium:#f5a524;position:relative;width:100%;min-height:100vh;background:var(--surface);color:var(--fg);overflow-x:clip">
+
+  <div style="position:absolute;inset:0 0 auto 0;height:1000px;z-index:0;pointer-events:none;background:radial-gradient(52% 40% at 76% -6%,color-mix(in srgb,var(--accent) 18%,transparent),transparent 60%),radial-gradient(40% 30% at 20% 0%,color-mix(in srgb,var(--accent) 8%,transparent),transparent 62%)"></div>
+
+  <!-- HEADER -->
+  <header style="position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);background:color-mix(in srgb,var(--surface) 82%,transparent);border-bottom:1px solid var(--line)">
+    <div style="max-width:1200px;margin:0 auto;padding:0 32px;height:72px;display:flex;align-items:center;gap:38px">
+      <a href="#top" style="display:flex;align-items:center;gap:12px">
+        <img src="assets/mark.svg" alt="aperIA" style="display:block;height:48px;width:auto">
+        <span style="font-family:'Space Grotesk';font-weight:700;font-size:17px;line-height:1">aper<span style="color:var(--accent-bright)">IA</span></span>
+      </a>
+      <nav data-nav style="display:flex;align-items:center;gap:28px;font-size:14px;color:var(--fg-mute)">
+        <a href="#plataforma" onmouseover="this.style.color='#f4f5f7'" onmouseout="this.style.color=''">Plataforma</a>
+        <a href="#como" onmouseover="this.style.color='#f4f5f7'" onmouseout="this.style.color=''">Como funciona</a>
+        <a href="#entrega" onmouseover="this.style.color='#f4f5f7'" onmouseout="this.style.color=''">Entrega</a>
+      </nav>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <a href="#cadastro" style="font-size:14px;font-weight:500;padding:9px 16px;border-radius:8px;border:1px solid var(--line-hi);color:var(--fg-mute);transition:color .2s,border-color .2s" onmouseover="this.style.color='#f4f5f7';this.style.borderColor='#4a505c'" onmouseout="this.style.color='';this.style.borderColor=''">Falar com o time</a>
+        <a href="#cadastro" style="font-size:14px;font-weight:600;padding:9px 18px;border-radius:8px;background:var(--accent);color:#fff;transition:transform .15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">Cadastrar</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section id="top" data-screen-label="Hero" style="position:relative;z-index:1">
+    <div style="max-width:1200px;margin:0 auto;padding:92px 32px 80px;display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,0.98fr);gap:60px;align-items:center" data-hero>
+      <div>
+        <h1 data-anim style="font-size:clamp(42px,5.2vw,68px);line-height:1.02;font-weight:700;letter-spacing:-.03em;margin:0 0 22px;animation:fadeUp .6s ease .1s both">From Attack <span style="color:var(--accent-bright)">to Defense.</span></h1>
+        <p data-anim style="font-size:18px;line-height:1.6;color:var(--fg-mute);max-width:500px;margin:0 0 34px;animation:fadeUp .6s ease .18s both">A camada de inteligência ofensiva acima dos seus scanners. A aperIA correlaciona evidências com I.A. e prova, com emulação real de adversário, o caminho até a invasão, para você fechá-lo.</p>
+        <div data-anim style="display:flex;flex-wrap:wrap;gap:12px;animation:fadeUp .6s ease .26s both">
+          <a href="#cadastro" style="font-size:15px;font-weight:600;padding:14px 28px;border-radius:8px;background:var(--accent);color:#fff;box-shadow:0 12px 34px -12px rgba(229,51,59,.7);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Criar conta e acessar →</a>
+          <a href="#como" style="font-size:15px;font-weight:500;padding:14px 26px;border-radius:8px;border:1px solid var(--line-hi);color:var(--fg-mute);transition:color .2s,border-color .2s" onmouseover="this.style.color='#f4f5f7';this.style.borderColor='#4a505c'" onmouseout="this.style.color='';this.style.borderColor=''">Ver como funciona</a>
+        </div>
+      </div>
+
+      <!-- proof panel -->
+      <div data-anim style="animation:fadeUp .7s ease .3s both">
+        <div style="border:1px solid var(--line-hi);border-radius:12px;background:var(--surface-1);overflow:hidden;box-shadow:0 40px 90px -50px rgba(0,0,0,.9);font-family:'JetBrains Mono',monospace">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;background:var(--surface-2);border-bottom:1px solid var(--line)">
+            <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--fg)"><svg width="13" height="13" viewBox="0 0 16 16" fill="var(--fg-dim)"><path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 12.25 16h-8.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25V6H9.75A1.75 1.75 0 0 1 8 4.25V1.5Zm5.75.56v2.19c0 .138.112.25.25.25h2.19L9.5 2.06Z"></path></svg>aperIA.verdict</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--fg-mute)"><span style="width:7px;height:7px;border-radius:50%;background:var(--safe);box-shadow:0 0 8px var(--safe)"></span>{{ heroStatus }}</span>
+          </div>
+          <div style="padding:16px 0 12px;font-size:12.5px;line-height:2">
+            <div style="display:flex;padding:2px 16px 2px 0"><span style="display:inline-block;width:34px;text-align:right;padding-right:14px;color:var(--fg-dim);border-right:1px solid var(--line);margin-right:14px;user-select:none">1</span><span style="color:var(--fg-dim)">// 3 dos 247 findings se encadeiam</span></div>
+            <div style="display:flex;align-items:center;padding:2px 16px 2px 0"><span style="display:inline-block;width:34px;text-align:right;padding-right:14px;color:var(--fg-dim);border-right:1px solid var(--line);margin-right:14px;user-select:none">2</span><span style="color:var(--fg-mute)"><span style="color:var(--accent-bright)">①</span> ssrf-candidate <span style="color:var(--fg-dim)">→</span> internal-api</span></div>
+            <div style="display:flex;align-items:center;padding:2px 16px 2px 0"><span style="display:inline-block;width:34px;text-align:right;padding-right:14px;color:var(--fg-dim);border-right:1px solid var(--line);margin-right:14px;user-select:none">3</span><span style="color:var(--fg-mute)"><span style="color:var(--accent-bright)">②</span> hardcoded-secret <span style="color:var(--fg-dim)">→</span> secrets-vault</span></div>
+            <div style="display:flex;align-items:center;padding:2px 16px 2px 0"><span style="display:inline-block;width:34px;text-align:right;padding-right:14px;color:var(--fg-dim);border-right:1px solid var(--line);margin-right:14px;user-select:none">4</span><span style="color:var(--fg-mute)"><span style="color:var(--accent-bright)">③</span> token-reuse <span style="color:var(--fg-dim)">→</span> domain-admin</span></div>
+            <div style="display:flex;align-items:center;padding:8px 16px 4px 0"><span style="display:inline-block;width:34px;text-align:right;padding-right:14px;color:var(--fg-dim);border-right:1px solid var(--line);margin-right:14px;user-select:none">5</span><span style="display:inline-flex;align-items:center;gap:8px"><span style="display:inline-block;min-width:78px;text-align:center;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.05em;background:var(--safe);color:var(--surface-deep)">VALIDADO</span><span style="color:var(--fg-mute)">em sandbox isolada</span></span></div>
+          </div>
+          <div style="padding:16px 18px;border-top:1px solid var(--line)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:10.5px;letter-spacing:.1em;color:var(--fg-dim)"><span>CONFIANÇA DE EXPLORABILIDADE</span><span style="color:var(--fg);font-size:15px;letter-spacing:0">{{ conf }}<span style="color:var(--fg-dim)">%</span></span></div>
+            <div style="height:6px;border-radius:4px;background:var(--surface-2);overflow:hidden"><div style="height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent-bright));width:{{ conf }}%;transition:width .2s linear"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGO CLOUD -->
+  <section data-screen-label="Ecossistema" style="position:relative;z-index:1;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface-deep)">
+    <div style="max-width:1200px;margin:0 auto;padding:26px 32px;overflow:hidden">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.2em;color:var(--fg-dim);text-align:center;margin-bottom:20px">ORQUESTRA O ECOSSISTEMA QUE VOCÊ JÁ CONFIA</div>
+      <div style="position:relative;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)">
+        <div data-marquee style="display:flex;width:max-content;gap:56px;animation:marq 26s linear infinite;font-family:'Space Grotesk';font-weight:600;font-size:16px;color:var(--fg-dim)">
+          <span>Semgrep</span><span>Trivy</span><span>OWASP ZAP</span><span>Prowler</span><span>TruffleHog</span><span>MITRE Caldera</span><span>MITRE ATT&amp;CK</span><span>OpenCTI</span>
+          <span>Semgrep</span><span>Trivy</span><span>OWASP ZAP</span><span>Prowler</span><span>TruffleHog</span><span>MITRE Caldera</span><span>MITRE ATT&amp;CK</span><span>OpenCTI</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA · 3 passos (Wiz-clean) -->
+  <section id="como" data-screen-label="Como funciona" style="position:relative;z-index:1">
+    <div style="max-width:1200px;margin:0 auto;padding:112px 32px">
+      <div style="max-width:640px;margin-bottom:56px">
+        <h2 style="font-size:clamp(30px,3.4vw,44px);line-height:1.08;font-weight:700;letter-spacing:-.02em;margin:0 0 16px">Do sinal à prova, em três camadas.</h2>
+        <p style="font-size:16.5px;line-height:1.6;color:var(--fg-mute)">A aperIA não compete com seus scanners. Ela vive acima deles e responde à pergunta que eles não respondem: qual é o caminho real até uma invasão?</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch" data-steps>
+        <div style="border:1px solid var(--line);border-radius:8px;background:var(--surface-1);overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--surface-2);border-bottom:1px solid var(--line)">
+            <span style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-mute)"><svg width="13" height="13" viewBox="0 0 16 16" fill="var(--fg-dim)" style="flex-shrink:0"><path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 12.25 16h-8.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25V6H9.75A1.75 1.75 0 0 1 8 4.25V1.5Zm5.75.56v2.19c0 .138.112.25.25.25h2.19L9.5 2.06Z"></path></svg>pipeline/tier-01.yml</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg-dim);letter-spacing:.08em">01 · SINAL</span>
+          </div>
+          <div style="padding:26px 24px;display:flex;flex-direction:column;flex:1">
+            <h3 style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 10px">Scanners coletam evidências</h3>
+            <p style="font-size:14.5px;line-height:1.6;color:var(--fg-mute);margin:0;flex:1">Varreduras em tiers de profundidade crescente normalizam cada finding, preservando o output bruto e o commit de origem.</p>
+          </div>
+        </div>
+        <div style="border:1px solid var(--line);border-radius:8px;background:var(--surface-1);overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--surface-2);border-bottom:1px solid var(--line)">
+            <span style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-mute)"><svg width="13" height="13" viewBox="0 0 16 16" fill="var(--fg-dim)" style="flex-shrink:0"><path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 12.25 16h-8.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25V6H9.75A1.75 1.75 0 0 1 8 4.25V1.5Zm5.75.56v2.19c0 .138.112.25.25.25h2.19L9.5 2.06Z"></path></svg>pipeline/tier-02.yml</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg-dim);letter-spacing:.08em">02 · CORRELAÇÃO</span>
+          </div>
+          <div style="padding:26px 24px;display:flex;flex-direction:column;flex:1">
+            <h3 style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 10px">A I.A. correlaciona</h3>
+            <p style="font-size:14.5px;line-height:1.6;color:var(--fg-mute);margin:0;flex:1">O motor de raciocínio conecta evidências dispersas em hipóteses de ataque, pensando como um adversário, não como um classificador de CVSS.</p>
+          </div>
+        </div>
+        <div style="border:1px solid var(--accent);border-radius:8px;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 8%,var(--surface-1)),var(--surface-1));box-shadow:0 0 40px -20px var(--accent);overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:color-mix(in srgb,var(--accent) 10%,var(--surface-2));border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,var(--line))">
+            <span style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-mute)"><svg width="13" height="13" viewBox="0 0 16 16" fill="var(--accent-bright)" style="flex-shrink:0"><path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 12.25 16h-8.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25V6H9.75A1.75 1.75 0 0 1 8 4.25V1.5Zm5.75.56v2.19c0 .138.112.25.25.25h2.19L9.5 2.06Z"></path></svg>pipeline/tier-03.yml</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-bright);letter-spacing:.08em"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-bright);box-shadow:0 0 6px var(--accent-bright)"></span>03 · VALIDAÇÃO</span>
+          </div>
+          <div style="padding:26px 24px;display:flex;flex-direction:column;flex:1">
+            <h3 style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 10px">A emulação prova a exploração</h3>
+            <p style="font-size:14.5px;line-height:1.6;color:var(--fg-mute);margin:0;flex:1">O adversário real roda em sandbox isolada e demonstra empiricamente que o caminho funciona. "O ataque rodou" pesa mais que "o CVE existe".</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURE 1 · attack path (imagem à direita) -->
+  <section id="plataforma" data-screen-label="Attack Path" style="position:relative;z-index:1;border-top:1px solid var(--line)">
+    <div style="max-width:1200px;margin:0 auto;padding:112px 32px;display:grid;grid-template-columns:minmax(0,0.9fr) minmax(0,1.1fr);gap:64px;align-items:center" data-feat>
+      <div>
+        <h2 style="font-size:clamp(28px,3.2vw,42px);line-height:1.1;font-weight:700;letter-spacing:-.02em;margin:0 0 16px">O caminho real, hop a hop.</h2>
+        <p style="font-size:16px;line-height:1.65;color:var(--fg-mute);margin:0 0 26px">Cada salto é reconstruído com o ativo comprometido, a credencial obtida e a técnica MITRE ATT&amp;CK. Não é um grafo teórico: é a rota que um adversário percorreria, validada pela emulação.</p>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:11px;align-items:center"><span style="color:var(--accent);font-family:'JetBrains Mono',monospace">▸</span><span style="font-size:15px;color:var(--fg-mute)">Ativos e credenciais encadeados, não findings soltos</span></div>
+          <div style="display:flex;gap:11px;align-items:center"><span style="color:var(--accent);font-family:'JetBrains Mono',monospace">▸</span><span style="font-size:15px;color:var(--fg-mute)">Movimentação lateral mapeada para ATT&amp;CK</span></div>
+          <div style="display:flex;gap:11px;align-items:center"><span style="color:var(--accent);font-family:'JetBrains Mono',monospace">▸</span><span style="font-size:15px;color:var(--fg-mute)">Cada hop confirmado pela emulação</span></div>
+        </div>
+      </div>
+      <div style="border:1px solid var(--line-hi);border-radius:12px;background:var(--surface-1);overflow:hidden;box-shadow:0 30px 70px -44px rgba(0,0,0,.9)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;background:var(--surface-2);border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace">
+          <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--fg)"><svg width="13" height="13" viewBox="0 0 16 16" fill="var(--fg-dim)"><path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 12.25 16h-8.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25V6H9.75A1.75 1.75 0 0 1 8 4.25V1.5Zm5.75.56v2.19c0 .138.112.25.25.25h2.19L9.5 2.06Z"></path></svg>kill-chain.map</span>
+          <span style="font-size:11px;color:var(--fg-dim)">5 hops · validados</span>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:0">
+          <div style="display:flex;align-items:center;gap:16px;padding:12px 0"><span style="width:11px;height:11px;border-radius:50%;background:var(--fg-dim);flex-shrink:0"></span><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--fg);min-width:120px">web-edge</span><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--fg-dim)">SSRF · T1190</span></div>
+          <div style="width:1px;height:14px;background:var(--line);margin-left:5px"></div>
+          <div style="display:flex;align-items:center;gap:16px;padding:12px 0"><span style="width:11px;height:11px;border-radius:50%;background:var(--accent);flex-shrink:0"></span><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--fg);min-width:120px">internal-api</span><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--fg-dim)">token exposto · T1552</span></div>
+          <div style="width:1px;height:14px;background:var(--line);margin-left:5px"></div>
+          <div style="display:flex;align-items:center;gap:16px;padding:12px 0"><span style="width:11px;height:11px;border-radius:50%;background:var(--accent);flex-shrink:0"></span><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--fg);min-width:120px">ci-runner</span><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--fg-dim)">secret · T1078</span></div>
+          <div style="width:1px;height:14px;background:var(--line);margin-left:5px"></div>
+          <div style="display:flex;align-items:center;gap:16px;padding:12px 0"><span style="width:11px;height:11px;border-radius:50%;background:var(--accent);flex-shrink:0"></span><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--fg);min-width:120px">secrets-vault</span><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--fg-dim)">IAM · T1555</span></div>
+          <div style="width:1px;height:14px;background:linear-gradient(var(--line),var(--accent));margin-left:5px"></div>
+          <div style="display:flex;align-items:center;gap:16px;padding:14px 16px;margin-top:6px;border:1px solid color-mix(in srgb,var(--accent) 50%,var(--line));border-radius:10px;background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 12%,var(--surface-1)),var(--surface-1));box-shadow:0 0 40px -18px var(--accent)"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:2px solid var(--accent-bright);flex-shrink:0"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-bright)"></span></span><span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#fff;min-width:120px">domain-admin</span><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-bright)">controle total · T1098</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURE 2 · PR (imagem à esquerda) -->
+  <section id="entrega" data-screen-label="Entrega" style="position:relative;z-index:1;border-top:1px solid var(--line);background:var(--surface-deep)">
+    <div style="max-width:1200px;margin:0 auto;padding:112px 32px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,0.9fr);gap:64px;align-items:center" data-feat-rev>
+      <div style="border:1px solid var(--line-hi);border-radius:12px;background:var(--surface-1);overflow:hidden;box-shadow:0 30px 70px -44px rgba(0,0,0,.9);color:var(--fg-mute)">
+        <div style="padding:16px 18px 12px;border-bottom:1px solid var(--line)">
+          <div style="font-size:16px;font-weight:600;color:var(--fg);line-height:1.3;margin-bottom:10px">Remediar attack path validado <span style="color:var(--fg-dim);font-weight:400">#142</span></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:100px;background:var(--safe);color:var(--surface-deep);font-size:12px;font-weight:600">Open</span>
+            <span style="padding:2px 10px;border-radius:100px;font-size:11px;font-weight:500;background:rgba(255,106,61,.15);color:var(--sev-high);border:1px solid rgba(255,106,61,.3)">security</span>
+            <span style="padding:2px 10px;border-radius:100px;font-size:11px;font-weight:500;background:rgba(46,204,139,.14);color:var(--safe);border:1px solid rgba(46,204,139,.3)">validated</span>
+          </div>
+        </div>
+        <div style="padding:16px 18px;border-bottom:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><img src="assets/mark.svg" width="26" height="29" style="border-radius:6px;border:1px solid var(--line)"><span style="font-size:13px;color:var(--fg)"><span style="font-weight:600">aperIA-bot</span> <span style="color:var(--fg-dim)">comentou agora</span></span></div>
+          <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:12px">
+            <div style="padding:6px 14px;background:var(--surface-2);color:var(--fg-dim);border-bottom:1px solid var(--line)">src/config/db.py</div>
+            <div style="display:flex;background:rgba(255,106,61,.13)"><span style="width:28px;text-align:center;color:var(--fg-dim);flex-shrink:0">-</span><span style="color:#ffa198;padding-right:14px">DB_PASSWORD = "S3cr3t!prod-2024"</span></div>
+            <div style="display:flex;background:rgba(46,204,139,.12)"><span style="width:28px;text-align:center;color:var(--fg-dim);flex-shrink:0">+</span><span style="color:var(--safe);padding-right:14px">DB_PASSWORD = os.environ["DB_PASSWORD"]</span></div>
+          </div>
+        </div>
+        <div style="padding:14px 18px;display:flex;flex-direction:column;gap:8px;font-size:12.5px">
+          <div style="display:flex;align-items:center;gap:9px"><span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--safe);color:var(--surface-deep);font-size:9px;font-weight:700">✓</span><span style="font-family:'JetBrains Mono',monospace;color:var(--fg-mute)">adversary-emulation</span><span style="color:var(--fg-dim)">· 5/5 hops</span></div>
+          <div style="display:flex;align-items:center;gap:9px"><span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--safe);color:var(--surface-deep);font-size:9px;font-weight:700">✓</span><span style="font-family:'JetBrains Mono',monospace;color:var(--fg-mute)">risk-score</span><span style="color:var(--fg-dim)">· 94/100</span></div>
+        </div>
+      </div>
+      <div>
+        <h2 style="font-size:clamp(28px,3.2vw,42px);line-height:1.1;font-weight:700;letter-spacing:-.02em;margin:0 0 16px">A prova chega no seu repositório.</h2>
+        <p style="font-size:16px;line-height:1.65;color:var(--fg-mute);margin:0 0 26px">A remediação vem como Pull Request: attack path explicado, passos de reprodução, diff sugerido e os checks da emulação. <span style="color:var(--fg);font-weight:600">A aperIA nunca aplica código autonomamente</span> — o merge fica bloqueado até a aprovação humana.</p>
+        <a href="#cadastro" style="display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--accent-bright)">Ver a experiência completa →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS BAND -->
+  <section ref="{{ evRef }}" data-screen-label="Impacto" style="position:relative;z-index:1;border-top:1px solid var(--line)">
+    <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(50% 70% at 50% 0%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 60%)"></div>
+    <div style="position:relative;max-width:1200px;margin:0 auto;padding:96px 32px">
+      <h2 style="font-size:clamp(26px,3vw,40px);line-height:1.1;font-weight:700;letter-spacing:-.02em;margin:0 0 48px;text-align:center;max-width:640px;margin-left:auto;margin-right:auto">Menos ruído. Prova no lugar de suposição.</h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:14px;background:var(--surface-1);overflow:hidden" data-stats>
+        <div style="padding:34px 28px;border-right:1px solid var(--line)"><div style="font-family:'Space Grotesk';font-weight:700;font-size:clamp(38px,4.4vw,54px);letter-spacing:-.03em;line-height:1">−{{ evNoise }}<span style="font-size:.5em;color:var(--fg-dim)">%*</span></div><div style="font-size:14px;margin-top:12px;font-weight:500">ruído eliminado</div><div style="font-size:12.5px;color:var(--fg-dim);margin-top:4px">só o explorável chega ao time</div></div>
+        <div style="padding:34px 28px;border-right:1px solid var(--line)"><div style="font-family:'Space Grotesk';font-weight:700;font-size:clamp(38px,4.4vw,54px);letter-spacing:-.03em;line-height:1">−{{ evMttr }}<span style="font-size:.5em;color:var(--fg-dim)">%*</span></div><div style="font-size:14px;margin-top:12px;font-weight:500">tempo de remediação</div><div style="font-size:12.5px;color:var(--fg-dim);margin-top:4px">reprodução e patch já na PR</div></div>
+        <div style="padding:34px 28px;border-right:1px solid var(--line)"><div style="font-family:'Space Grotesk';font-weight:700;font-size:clamp(38px,4.4vw,54px);letter-spacing:-.03em;line-height:1;color:var(--accent-bright)">{{ evConf }}<span style="font-size:.5em">%</span></div><div style="font-size:14px;margin-top:12px;font-weight:500">confiança validada</div><div style="font-size:12.5px;color:var(--fg-dim);margin-top:4px">reproduzido em sandbox</div></div>
+        <div style="padding:34px 28px"><div style="font-family:'Space Grotesk';font-weight:700;font-size:clamp(38px,4.4vw,54px);letter-spacing:-.03em;line-height:1">0</div><div style="font-size:14px;margin-top:12px;font-weight:500">patches sem aprovação</div><div style="font-size:12.5px;color:var(--fg-dim);margin-top:4px">garantia arquitetural</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cadastro" data-screen-label="CTA" style="position:relative;z-index:1;border-top:1px solid var(--line);overflow:hidden">
+    <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:720px;height:400px;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--accent) 16%,transparent),transparent 65%);filter:blur(24px);pointer-events:none"></div>
+    <div style="position:relative;max-width:700px;margin:0 auto;padding:110px 32px 100px;text-align:center">
+      <h2 style="font-size:clamp(30px,4vw,52px);line-height:1.06;font-weight:700;letter-spacing:-.025em;margin:0 0 18px">Pare de priorizar por CVSS.<br>Priorize por <span style="color:var(--accent-bright)">evidência</span>.</h2>
+      <p style="font-size:16.5px;line-height:1.6;color:var(--fg-mute);max-width:480px;margin:0 auto 36px">Cadastre-se e acesse o dashboard da aperIA. Conecte seu GitHub e veja o primeiro attack path validado.</p>
+      <sc-if value="{{ notSignedUp }}" hint-placeholder-val="{{ true }}">
+        <form onSubmit="{{ onSignup }}" style="display:flex;gap:10px;max-width:450px;margin:0 auto;flex-wrap:wrap;justify-content:center">
+          <input type="email" required placeholder="seu@email.com" style="flex:1;min-width:210px;padding:14px 18px;border-radius:8px;border:1px solid var(--line-hi);background:var(--surface-1);color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:14px;outline:none" onfocus="this.style.borderColor='#e5333b'" onblur="this.style.borderColor=''">
+          <button type="submit" style="padding:14px 26px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 12px 32px -12px rgba(229,51,59,.7);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Criar conta →</button>
+        </form>
+      </sc-if>
+      <sc-if value="{{ signedUp }}" hint-placeholder-val="{{ false }}">
+        <div style="display:inline-flex;align-items:center;gap:12px;padding:16px 24px;border:1px solid rgba(46,204,139,.4);border-radius:8px;background:rgba(46,204,139,.08);font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--safe)"><span style="width:8px;height:8px;border-radius:50%;background:var(--safe);animation:blink 1s steps(1) infinite"></span>conta criada · redirecionando para o dashboard…</div>
+      </sc-if>
+    </div>
+  </section>
+
+  <footer style="position:relative;z-index:1;border-top:1px solid var(--line)">
+    <div style="max-width:1200px;margin:0 auto;padding:22px 32px;display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-dim)">
+      <img src="assets/mark.svg" alt="" style="height:22px;width:auto;opacity:.8">© 2026 aperIA
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { conf: 0, heroStatus: 'correlacionando…', signedUp: false, evNoise: 0, evMttr: 0, evConf: 0 };
+  _reduce(){ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  componentDidMount(){
+    this._alive = true;
+    if (this._reduce()){ this.setState({conf:94, heroStatus:'caminho validado', evNoise:92, evMttr:68, evConf:94}); return; }
+    setTimeout(()=>{ if(!this._alive) return;
+      const start = performance.now(), dur = 2200;
+      const tick = (now)=>{ if(!this._alive) return;
+        const t = Math.min(1,(now-start)/dur), e = 1-Math.pow(1-t,3);
+        this.setState({conf: Math.round(e*94), heroStatus: t<1?'correlacionando…':'caminho validado'});
+        if(t<1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, 600);
+  }
+  componentWillUnmount(){ this._alive=false; if(this._io) this._io.disconnect(); }
+  evRef = (el)=>{ if(!el||this._evSet) return; this._evSet=true;
+    if(this._reduce()) return;
+    this._io = new IntersectionObserver((es)=>{ es.forEach(en=>{ if(en.isIntersecting){ this._io.disconnect(); this._count(); } }); }, {threshold:0.3});
+    this._io.observe(el);
+  };
+  _count(){
+    const start = performance.now(), dur = 1600;
+    const tick = (now)=>{ if(!this._alive) return;
+      const t = Math.min(1,(now-start)/dur), e = 1-Math.pow(1-t,3);
+      this.setState({evNoise:Math.round(e*92), evMttr:Math.round(e*68), evConf:Math.round(e*94)});
+      if(t<1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  renderVals(){
+    return {
+      conf:this.state.conf, heroStatus:this.state.heroStatus,
+      signedUp:this.state.signedUp, notSignedUp:!this.state.signedUp,
+      onSignup:(e)=>{ e.preventDefault(); this.setState({signedUp:true}); },
+      evRef:this.evRef, evNoise:this.state.evNoise, evMttr:this.state.evMttr, evConf:this.state.evConf
+    };
+  }
+}
+</script>
+</body>
+</html>

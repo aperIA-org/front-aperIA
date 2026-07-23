@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@700;800&family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Open Sans','Helvetica Neue',Arial,sans-serif;background:#0c0d0f;color:#f2f2f2;-webkit-font-smoothing:antialiased;}
+a{color:#ff5a63;text-decoration:none;}
+a:hover{color:#ff8a90;}
+select,input{font-family:'Geist',sans-serif;outline:none;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:#26272a;border-radius:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+</style>
+</helmet>
+<div style="display:grid;grid-template-columns:256px 1fr;height:100vh;background:#0c0d0f;overflow:hidden;">
+
+  <aside style="background:#0c0d0f;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;height:100vh;overflow:hidden;">
+    <div style="flex-shrink:0;padding:14px;display:flex;align-items:center;gap:12px;background:#0f1012;border-bottom:1px solid rgba(255,255,255,.06);">
+      <img src="uploads/1.png" alt="aperIA" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;display:block;" />
+      <div style="min-width:0;overflow:hidden;white-space:nowrap;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:21px;font-weight:700;letter-spacing:-.015em;color:#ffffff;line-height:1;">aper<span style="color:#e11d2a;">IA</span></div>
+      </div>
+    </div>
+    <nav style="flex:1;overflow-y:auto;padding:8px 10px 20px;display:flex;flex-direction:column;">
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px 9px 14px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;background:rgba(225,29,42,.16);box-shadow:inset 2.5px 0 0 #e11d2a;border-radius:0 7px 7px 0;color:#ff5a63;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="6" height="6" rx="1.2"></rect><rect x="10.5" y="2.5" width="6" height="6" rx="1.2"></rect><rect x="2.5" y="10.5" width="6" height="6" rx="1.2"></rect><rect x="10.5" y="10.5" width="6" height="6" rx="1.2"></rect></svg></span>
+        <span style="flex:1;overflow:hidden;">Início</span>
+      </a>
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;color:rgba(255,255,255,.72);" style-hover="background:rgba(255,255,255,.06);color:#ffffff;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.2l6.5 2.3v4.5c0 4-2.7 6.8-6.5 7.8-3.8-1-6.5-3.8-6.5-7.8V4.5L12 2.2z"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Findings</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e11d2a;color:#ffffff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 0 8px rgba(225,29,42,.4);">10</span>
+      </a>
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;color:rgba(255,255,255,.72);" style-hover="background:rgba(255,255,255,.06);color:#ffffff;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3.5 6.5v9L12 20l8.5-4.5v-9L12 2z"></path><path d="M3.5 6.5L12 11l8.5-4.5M12 11v9"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Inventário</span>
+      </a>
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;color:rgba(255,255,255,.72);" style-hover="background:rgba(255,255,255,.06);color:#ffffff;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2"></path><path d="M17 3h2a2 2 0 012 2v2"></path><path d="M21 17v2a2 2 0 01-2 2h-2"></path><path d="M7 21H5a2 2 0 01-2-2v-2"></path><circle cx="12" cy="12" r="3.2"></circle><path d="M15.4 15.4L18 18"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Scans</span>
+      </a>
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;color:rgba(255,255,255,.72);" style-hover="background:rgba(255,255,255,.06);color:#ffffff;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l1.4 4L18 8l-4.6 1.5L12 14l-1.4-4.5L6 8l4.6-1.5L12 2.5z"></path><path d="M16.5 13.5l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6.6-1.7z"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">AI insights</span>
+      </a>
+      <div style="height:1px;background:rgba(255,255,255,.08);margin:6px 4px;"></div>
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;color:rgba(255,255,255,.72);" style-hover="background:rgba(255,255,255,.06);color:#ffffff;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"></circle></svg></span>
+        <span style="flex:1;overflow:hidden;">Remediações</span>
+      </a>
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;color:rgba(255,255,255,.72);" style-hover="background:rgba(255,255,255,.06);color:#ffffff;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="-2 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h13l-5.5 7v4.5l-3 1.5V12L3 5z"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Integrações</span>
+      </a>
+      <a style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:'Geist',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;color:rgba(255,255,255,.72);" style-hover="background:rgba(255,255,255,.06);color:#ffffff;">
+        <span style="display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"></circle><path d="M3.5 19.5c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"></path><path d="M16 5.5a3 3 0 010 6M17.5 14.2c2.2.4 3.5 2.1 3.5 4.3"></path></svg></span>
+        <span style="flex:1;overflow:hidden;">Time</span>
+      </a>
+    </nav>
+    <div style="flex-shrink:0;padding:6px 10px;border-top:1px solid rgba(255,255,255,.08);background:#0c0d0f;">
+      <button style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;cursor:pointer;width:100%;background:transparent;border:none;" style-hover="background:rgba(255,255,255,.06);">
+        <div style="width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.10);color:rgba(255,255,255,.78);font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;display:grid;place-items:center;flex-shrink:0;">A</div>
+        <div style="flex:1;text-align:left;overflow:hidden;white-space:nowrap;font-family:'Geist',sans-serif;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.88);">Acme · Pessoal</div>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:rgba(255,255,255,.28);"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"></path></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div style="display:flex;flex-direction:column;height:100vh;overflow-y:scroll;background:#0c0d0f;">
+    <header style="position:sticky;top:0;z-index:10;flex:0 0 56px;min-height:56px;background:#0c0d0f;border-bottom:1px solid #202124;">
+      <div style="height:100%;max-width:1440px;margin:0 auto;display:flex;align-items:center;gap:16px;position:relative;padding:0 32px;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+          <span style="color:#a1a1a1;">Acme</span>
+          <span style="color:#707070;">/</span>
+          <span style="color:#f2f2f2;">Dashboard</span>
+        </div>
+        <div style="position:absolute;left:50%;transform:translateX(-50%);width:100%;max-width:400px;padding:0 16px;">
+          <div style="position:relative;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#707070" stroke-width="1.5" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.5-4.5"></path></svg>
+            <input type="text" placeholder="Buscar… (⌘K)" style="width:100%;background:#0c0d0f;border:1px solid #202124;border-radius:8px;color:#f2f2f2;font-size:13px;padding:8px 44px 8px 32px;" />
+            <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:'Geist Mono',monospace;font-size:10px;color:#707070;border:1px solid #202124;padding:2px 6px;border-radius:3px;background:#1f2023;">⌘K</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;margin-left:auto;">
+          <button style="position:relative;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#a1a1a1;background:transparent;border:none;cursor:pointer;" style-hover="background:#17181a;color:#f2f2f2;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 18V11a6 6 0 1112 0v7M4 18h16M10 21a2 2 0 004 0"></path></svg>
+            <span style="position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:#c22f3d;"></span>
+          </button>
+          <div style="height:28px;width:1px;background:#202124;"></div>
+          <button style="display:flex;align-items:center;gap:10px;padding:4px 6px 4px 4px;border-radius:10px;background:transparent;border:none;cursor:pointer;" style-hover="background:#17181a;">
+            <div style="width:28px;height:28px;border-radius:50%;background:#202124;display:grid;place-items:center;font-size:11px;font-weight:600;font-family:'Geist Mono',monospace;color:#f2f2f2;">MA</div>
+            <span style="font-size:14px;color:#f2f2f2;">Marina</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#707070" stroke-width="1.8"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main style="flex:1;background:#0c0d0f;">
+      <div style="max-width:1440px;margin:0 auto;padding:28px 32px 48px;">
+
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:24px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:9px;height:9px;border-radius:50%;background:#e11d2a;box-shadow:0 0 10px rgba(225,29,42,.6);"></div>
+              <h1 style="margin:0;font-size:23px;font-weight:700;letter-spacing:-.4px;color:#f2f2f2;">Postura de Segurança</h1>
+            </div>
+            <p style="margin:6px 0 0 19px;font-size:13.5px;color:#a1a1a1;">Visão geral do risco de aplicações · ASPM</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#a1a1a1;background:#17181a;border:1px solid #202124;padding:8px 14px;border-radius:999px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#707070" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+            Últimos <span style="color:#f2f2f2;font-weight:600;">{{ period }}</span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:22px;">
+          <div style="background:#17181a;border:1px solid #202124;border-radius:12px;padding:18px 20px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5);">
+            <div style="font-size:11.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#a1a1a1;">Total de Issues</div>
+            <div style="margin-top:12px;font-family:'Geist',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;color:#f2f2f2;line-height:1;">1.284</div>
+            <div style="margin-top:10px;font-size:12px;color:#707070;">em 48 projetos monitorados</div>
+          </div>
+          <div style="background:#17181a;border:1px solid #202124;border-radius:12px;padding:18px 20px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5);">
+            <div style="font-size:11.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#a1a1a1;">Vulnerabilidades Únicas</div>
+            <div style="margin-top:12px;font-family:'Geist',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;color:#f2f2f2;line-height:1;">342</div>
+            <div style="margin-top:10px;font-size:12px;color:#707070;">CVEs distintos identificados</div>
+          </div>
+          <div style="background:#17181a;border:1px solid #202124;border-radius:12px;padding:18px 20px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5);">
+            <div style="font-size:11.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#a1a1a1;">Projetos Monitorados</div>
+            <div style="margin-top:12px;font-family:'Geist',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;color:#f2f2f2;line-height:1;">48</div>
+            <div style="margin-top:10px;font-size:12px;color:#707070;">repositórios sob varredura</div>
+          </div>
+          <div style="background:#17181a;border:1px solid #202124;border-radius:12px;padding:18px 20px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5);">
+            <div style="font-size:11.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#a1a1a1;">MTTR</div>
+            <div style="margin-top:12px;display:flex;align-items:baseline;gap:10px;">
+              <div style="font-family:'Geist',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;color:#f2f2f2;line-height:1;">6,2<span style="font-size:16px;font-weight:600;color:#707070;margin-left:3px;">dias</span></div>
+              <sc-if value="{{ comparePrevious }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:3px;font-family:'Geist Mono',monospace;font-size:12.5px;font-weight:600;color:#2ecc8b;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2ecc8b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>18%
+                </div>
+              </sc-if>
+            </div>
+            <div style="margin-top:10px;font-size:12px;color:#707070;">tempo médio de correção</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#707070;font-family:'Geist Mono',monospace;">Alertas por severidade</span>
+          <div style="flex:1;height:1px;background:#202124;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:32px;">
+          <div style="background:rgba(255,45,61,.07);border:1px solid rgba(255,45,61,.32);border-radius:12px;padding:18px 20px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:2px;background:#ff2d3d;box-shadow:0 0 8px rgba(255,45,61,.7);"></span><span style="font-size:12.5px;font-weight:600;color:#ff2d3d;">Critical</span></div>
+            <div style="margin-top:12px;font-family:'Geist',sans-serif;font-size:38px;font-weight:800;letter-spacing:-1px;color:#ff2d3d;line-height:1;">37</div>
+            <div style="margin-top:8px;font-size:11.5px;color:#a1a1a1;">exigem ação imediata</div>
+          </div>
+          <div style="background:rgba(255,106,61,.07);border:1px solid rgba(255,106,61,.30);border-radius:12px;padding:18px 20px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:2px;background:#ff6a3d;"></span><span style="font-size:12.5px;font-weight:600;color:#ff6a3d;">High</span></div>
+            <div style="margin-top:12px;font-family:'Geist',sans-serif;font-size:38px;font-weight:800;letter-spacing:-1px;color:#ff6a3d;line-height:1;">128</div>
+            <div style="margin-top:8px;font-size:11.5px;color:#a1a1a1;">priorizar neste ciclo</div>
+          </div>
+          <div style="background:rgba(245,165,36,.06);border:1px solid rgba(245,165,36,.28);border-radius:12px;padding:18px 20px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:2px;background:#f5a524;"></span><span style="font-size:12.5px;font-weight:600;color:#f5a524;">Medium</span></div>
+            <div style="margin-top:12px;font-family:'Geist',sans-serif;font-size:38px;font-weight:800;letter-spacing:-1px;color:#f5a524;line-height:1;">561</div>
+            <div style="margin-top:8px;font-size:11.5px;color:#a1a1a1;">acompanhar tendência</div>
+          </div>
+          <div style="background:rgba(245,213,36,.06);border:1px solid rgba(245,213,36,.26);border-radius:12px;padding:18px 20px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:2px;background:#f5d524;"></span><span style="font-size:12.5px;font-weight:600;color:#f5d524;">Low</span></div>
+            <div style="margin-top:12px;font-family:'Geist',sans-serif;font-size:38px;font-weight:800;letter-spacing:-1px;color:#f5d524;line-height:1;">558</div>
+            <div style="margin-top:8px;font-size:11.5px;color:#a1a1a1;">baixo risco residual</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-bottom:16px;">
+          <div style="background:#17181a;border:1px solid #202124;border-radius:12px;padding:20px 22px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5);">
+            <div style="font-size:14px;font-weight:600;color:#f2f2f2;">Issues por Severidade</div>
+            <div style="margin-top:2px;font-size:11.5px;color:#707070;">distribuição do backlog atual</div>
+            <div style="margin-top:16px;display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;">
+              <div style="height:180px;">{{ donutEl }}</div>
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <div style="display:grid;grid-template-columns:16px 1fr auto auto;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #202124;">
+                  <span style="width:10px;height:10px;border-radius:3px;background:#ff2d3d;"></span><span style="font-size:12.5px;color:#f2f2f2;">Critical</span><span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:#f2f2f2;">37</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#a1a1a1;width:44px;text-align:right;">2,9%</span>
+                </div>
+                <div style="display:grid;grid-template-columns:16px 1fr auto auto;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #202124;">
+                  <span style="width:10px;height:10px;border-radius:3px;background:#ff6a3d;"></span><span style="font-size:12.5px;color:#f2f2f2;">High</span><span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:#f2f2f2;">128</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#a1a1a1;width:44px;text-align:right;">10,0%</span>
+                </div>
+                <div style="display:grid;grid-template-columns:16px 1fr auto auto;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #202124;">
+                  <span style="width:10px;height:10px;border-radius:3px;background:#f5a524;"></span><span style="font-size:12.5px;color:#f2f2f2;">Medium</span><span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:#f2f2f2;">561</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#a1a1a1;width:44px;text-align:right;">43,7%</span>
+                </div>
+                <div style="display:grid;grid-template-columns:16px 1fr auto auto;align-items:center;gap:10px;padding:8px 4px;">
+                  <span style="width:10px;height:10px;border-radius:3px;background:#f5d524;"></span><span style="font-size:12.5px;color:#f2f2f2;">Low</span><span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:#f2f2f2;">558</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#a1a1a1;width:44px;text-align:right;">43,5%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#17181a;border:1px solid #202124;border-radius:12px;padding:20px 22px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5);">
+            <div style="font-size:14px;font-weight:600;color:#f2f2f2;">Top Projetos por Issues</div>
+            <div style="margin-top:2px;font-size:11.5px;color:#707070;">repositórios com maior volume</div>
+            <div style="margin-top:20px;display:flex;flex-direction:column;gap:16px;">
+              <sc-for list="{{ topProjects }}" as="p" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div style="width:120px;font-family:'Geist Mono',monospace;font-size:12px;color:#a1a1a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.name }}</div>
+                  <div style="flex:1;height:10px;background:#1f2023;border-radius:6px;overflow:hidden;"><div style="height:100%;border-radius:6px;background:linear-gradient(90deg,#d81f2a,#ff6a3d);width:{{ p.pct }};"></div></div>
+                  <div style="width:40px;text-align:right;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:#f2f2f2;">{{ p.val }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#17181a;border:1px solid #202124;border-radius:12px;padding:20px 22px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5);">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#f2f2f2;">Janela de Exposição</div>
+                <div style="margin-top:2px;font-size:11.5px;color:#707070;">issues abertas por semana</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#a1a1a1;"><span style="width:8px;height:8px;border-radius:2px;background:#ff6a3d;"></span>abertas</div>
+            </div>
+            <div style="margin-top:18px;height:200px;">{{ exposureEl }}</div>
+          </div>
+
+          <sc-if value="{{ showResolved }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#17181a;border:1px solid #202124;border-radius:12px;padding:20px 22px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5);">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#f2f2f2;">Identificadas vs. Resolvidas</div>
+                <div style="margin-top:2px;font-size:11.5px;color:#707070;">acumulado no período</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px;font-size:11.5px;color:#a1a1a1;">
+                <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:3px;border-radius:2px;background:#4aa3ff;"></span>Identificadas</span>
+                <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:3px;border-radius:2px;background:#2ecc8b;"></span>Resolvidas</span>
+              </div>
+            </div>
+            <div style="margin-top:18px;height:200px;">{{ resolvedEl }}</div>
+          </div>
+          </sc-if>
+        </div>
+
+        <div style="background:#17181a;border:1px solid #202124;border-radius:12px;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 20px;border-bottom:1px solid #202124;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:#f2f2f2;">Detalhe de Issues</div>
+              <div style="margin-top:2px;font-size:11.5px;color:#707070;"><span style="font-family:'Geist Mono',monospace;color:#a1a1a1;">{{ resultCount }}</span> resultados</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <span style="font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#707070;">Status</span>
+                <select value="{{ statusFilter }}" onChange="{{ onStatus }}" style="appearance:none;background:#0c0d0f;border:1px solid #202124;color:#f2f2f2;font-size:13px;padding:8px 30px 8px 12px;border-radius:8px;cursor:pointer;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22none%22 stroke=%22%23707070%22 stroke-width=%222%22><path d=%22M2 4l4 4 4-4%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;">
+                  <option>Todos</option><option>Aberta</option><option>Em análise</option><option>Resolvida</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <span style="font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#707070;">Severidade</span>
+                <select value="{{ sevFilter }}" onChange="{{ onSev }}" style="appearance:none;background:#0c0d0f;border:1px solid #202124;color:#f2f2f2;font-size:13px;padding:8px 30px 8px 12px;border-radius:8px;cursor:pointer;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22none%22 stroke=%22%23707070%22 stroke-width=%222%22><path d=%22M2 4l4 4 4-4%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;">
+                  <option>Todas</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <span style="font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#707070;">Projeto</span>
+                <select value="{{ projFilter }}" onChange="{{ onProj }}" style="appearance:none;background:#0c0d0f;border:1px solid #202124;color:#f2f2f2;font-size:13px;padding:8px 30px 8px 12px;border-radius:8px;cursor:pointer;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22none%22 stroke=%22%23707070%22 stroke-width=%222%22><path d=%22M2 4l4 4 4-4%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;">
+                  <option>Todos</option><option>payments-api</option><option>web-checkout</option><option>auth-service</option><option>mobile-gateway</option><option>data-pipeline</option><option>notifications</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+          <div style="min-width:900px;">
+          <div style="display:grid;grid-template-columns:72px minmax(200px,1fr) 150px 140px 180px 120px;align-items:center;gap:12px;padding:11px 20px;border-bottom:1px solid #202124;font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#707070;">
+            <div>Score</div><div>Vulnerabilidade / CVE</div><div>Projeto</div><div>Maturidade</div><div>Severidades</div><div>Status</div>
+          </div>
+          <sc-for list="{{ filteredRows }}" as="r" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:72px minmax(200px,1fr) 150px 140px 180px 120px;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid #202124;cursor:pointer;min-height:44px;" style-hover="background:#1f2023;">
+              <div><span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:{{ r.scoreColor }};background:{{ r.scoreBg }};padding:2px 8px;border-radius:6px;">{{ r.score }}</span></div>
+              <div style="font-family:'Geist Mono',monospace;font-size:13px;color:#f2f2f2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ r.cve }}</div>
+              <div style="font-family:'Geist Mono',monospace;font-size:12px;color:#a1a1a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ r.project }}</div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:{{ r.matColor }};"><span style="width:7px;height:7px;border-radius:50%;background:{{ r.matColor }};flex-shrink:0;"></span>{{ r.maturity }}</div>
+              <div style="display:flex;gap:5px;">
+                <sc-for list="{{ r.badges }}" as="b" hint-placeholder-count="4">
+                  <span style="display:grid;place-items:center;min-width:28px;height:20px;padding:0 5px;border-radius:5px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;background:{{ b.bg }};color:{{ b.fg }};">{{ b.text }}</span>
+                </sc-for>
+              </div>
+              <div><span style="font-size:11.5px;font-weight:600;padding:3px 11px;border-radius:999px;background:{{ r.statusBg }};color:{{ r.statusFg }};">{{ r.status }}</span></div>
+            </div>
+          </sc-for>
+          </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;period&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;7 dias&quot;,&quot;30 dias&quot;,&quot;90 dias&quot;],&quot;default&quot;:&quot;30 dias&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Período&quot;},&quot;showResolved&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Gráficos&quot;},&quot;comparePrevious&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;KPIs&quot;}}">
+class Component extends DCLogic {
+  state = { statusFilter: 'Todos', sevFilter: 'Todas', projFilter: 'Todos' };
+
+  rows = [
+    { score: 9.8, cve: 'CVE-2024-3094',   project: 'payments-api',    maturity: 'Ativa',   status: 'Aberta',     c: 4, h: 2, m: 0, l: 0 },
+    { score: 9.1, cve: 'CVE-2023-44487',  project: 'web-checkout',    maturity: 'PoC',     status: 'Aberta',     c: 2, h: 6, m: 1, l: 0 },
+    { score: 8.6, cve: 'CVE-2024-21626',  project: 'auth-service',    maturity: 'Ativa',   status: 'Em análise', c: 1, h: 3, m: 2, l: 0 },
+    { score: 7.5, cve: 'CVE-2022-42889',  project: 'data-pipeline',   maturity: 'PoC',     status: 'Aberta',     c: 0, h: 4, m: 5, l: 1 },
+    { score: 6.8, cve: 'CVE-2023-38545',  project: 'mobile-gateway',  maturity: 'Teórica', status: 'Em análise', c: 0, h: 2, m: 8, l: 2 },
+    { score: 5.9, cve: 'CVE-2021-44228',  project: 'notifications',   maturity: 'Ativa',   status: 'Resolvida',  c: 0, h: 1, m: 3, l: 6 },
+    { score: 4.3, cve: 'CVE-2024-27983',  project: 'web-checkout',    maturity: 'Teórica', status: 'Aberta',     c: 0, h: 0, m: 2, l: 9 },
+    { score: 3.1, cve: 'CVE-2023-29491',  project: 'payments-api',    maturity: 'Teórica', status: 'Resolvida',  c: 0, h: 0, m: 0, l: 5 },
+  ];
+
+  SEV = { c: '#ff2d3d', h: '#ff6a3d', m: '#f5a524', l: '#f5d524' };
+
+  hexA(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  }
+
+  scoreStyle(s) {
+    let c = '#f5d524';
+    if (s >= 9) c = '#ff2d3d'; else if (s >= 7) c = '#ff6a3d'; else if (s >= 4) c = '#f5a524';
+    return { color: c, bg: this.hexA(c, 0.14) };
+  }
+
+  matColor(m) { return m === 'Ativa' ? '#ff6a3d' : m === 'PoC' ? '#f5a524' : '#707070'; }
+
+  statusStyle(s) {
+    if (s === 'Aberta') return { fg: '#ff5a63', bg: this.hexA('#ff2d3d', 0.14) };
+    if (s === 'Em análise') return { fg: '#f5a524', bg: this.hexA('#f5a524', 0.14) };
+    return { fg: '#2ecc8b', bg: this.hexA('#2ecc8b', 0.14) };
+  }
+
+  badges(r) {
+    return [['C', r.c, this.SEV.c], ['H', r.h, this.SEV.h], ['M', r.m, this.SEV.m], ['L', r.l, this.SEV.l]].map(([k, n, col]) => ({
+      text: k + n,
+      fg: n > 0 ? col : '#4a4b4d',
+      bg: n > 0 ? this.hexA(col, 0.14) : '#191a1c',
+    }));
+  }
+
+  pts(arr, min, max) {
+    const n = arr.length;
+    return arr.map((v, i) => [10 + (i / (n - 1)) * 300, 130 - ((v - min) / (max - min)) * 110]);
+  }
+
+  buildDonut() {
+    const R = 52, C = 2 * Math.PI * R;
+    const segs = [['#ff2d3d', 37], ['#ff6a3d', 128], ['#f5a524', 561], ['#f5d524', 558]];
+    const total = segs.reduce((a, [, v]) => a + v, 0);
+    let off = 0;
+    const arcs = segs.map(([col, v], i) => {
+      const len = (v / total) * C;
+      const el = React.createElement('circle', { key: i, cx: 70, cy: 70, r: R, fill: 'none', stroke: col, strokeWidth: 15, strokeDasharray: `${len} ${C - len}`, strokeDashoffset: -off, transform: 'rotate(-90 70 70)', strokeLinecap: 'butt' });
+      off += len; return el;
+    });
+    return React.createElement('svg', { viewBox: '0 0 140 140', width: '100%', height: '100%', style: { maxHeight: '180px', display: 'block', margin: '0 auto' } },
+      React.createElement('circle', { cx: 70, cy: 70, r: R, fill: 'none', stroke: '#1f2023', strokeWidth: 15 }),
+      ...arcs,
+      React.createElement('text', { x: 70, y: 66, textAnchor: 'middle', fill: '#f2f2f2', fontSize: 24, fontWeight: 800, fontFamily: 'Geist, sans-serif' }, '1.284'),
+      React.createElement('text', { x: 70, y: 84, textAnchor: 'middle', fill: '#707070', fontSize: 8.5, fontFamily: 'Geist Mono, monospace', letterSpacing: 1.5 }, 'ISSUES')
+    );
+  }
+
+  buildExposure() {
+    const arr = [380, 410, 395, 440, 470, 455, 500, 530, 560, 540, 505, 478];
+    const p = this.pts(arr, 350, 580);
+    const line = p.map(([x, y], i) => (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1)).join(' ');
+    const area = line + ` L${p[p.length - 1][0].toFixed(1)} 135 L${p[0][0].toFixed(1)} 135 Z`;
+    return React.createElement('svg', { viewBox: '0 0 320 140', width: '100%', height: '100%', preserveAspectRatio: 'none', style: { display: 'block' } },
+      React.createElement('defs', null,
+        React.createElement('linearGradient', { id: 'expg', x1: 0, y1: 0, x2: 0, y2: 1 },
+          React.createElement('stop', { offset: '0%', stopColor: '#ff6a3d', stopOpacity: 0.30 }),
+          React.createElement('stop', { offset: '100%', stopColor: '#ff6a3d', stopOpacity: 0 }))),
+      [30, 65, 100].map((y, i) => React.createElement('line', { key: i, x1: 10, y1: y, x2: 310, y2: y, stroke: '#202124', strokeWidth: 1, vectorEffect: 'non-scaling-stroke' })),
+      React.createElement('path', { d: area, fill: 'url(#expg)' }),
+      React.createElement('path', { d: line, fill: 'none', stroke: '#ff6a3d', strokeWidth: 2, strokeLinejoin: 'round', vectorEffect: 'non-scaling-stroke' })
+    );
+  }
+
+  buildResolved() {
+    const idf = [120, 260, 360, 520, 640, 780, 900, 1010, 1120, 1200, 1250, 1284];
+    const rsv = [60, 150, 240, 380, 500, 640, 760, 880, 980, 1060, 1130, 1200];
+    const mk = (arr, col) => {
+      const p = this.pts(arr, 0, 1300);
+      const d = p.map(([x, y], i) => (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1)).join(' ');
+      return React.createElement('path', { key: col, d, fill: 'none', stroke: col, strokeWidth: 2.2, strokeLinejoin: 'round', strokeLinecap: 'round', vectorEffect: 'non-scaling-stroke' });
+    };
+    return React.createElement('svg', { viewBox: '0 0 320 140', width: '100%', height: '100%', preserveAspectRatio: 'none', style: { display: 'block' } },
+      [30, 65, 100].map((y, i) => React.createElement('line', { key: i, x1: 10, y1: y, x2: 310, y2: y, stroke: '#202124', strokeWidth: 1, vectorEffect: 'non-scaling-stroke' })),
+      mk(idf, '#4aa3ff'), mk(rsv, '#2ecc8b'));
+  }
+
+  renderVals() {
+    const { statusFilter, sevFilter, projFilter } = this.state;
+    const sevKey = { Critical: 'c', High: 'h', Medium: 'm', Low: 'l' }[sevFilter];
+    const filtered = this.rows.filter(r =>
+      (statusFilter === 'Todos' || r.status === statusFilter) &&
+      (projFilter === 'Todos' || r.project === projFilter) &&
+      (sevFilter === 'Todas' || r[sevKey] > 0)
+    ).map(r => {
+      const sc = this.scoreStyle(r.score);
+      const st = this.statusStyle(r.status);
+      return {
+        ...r,
+        score: r.score.toFixed(1).replace('.', ','),
+        scoreColor: sc.color, scoreBg: sc.bg,
+        matColor: this.matColor(r.maturity),
+        statusFg: st.fg, statusBg: st.bg,
+        badges: this.badges(r),
+      };
+    });
+
+    const projRaw = [['payments-api', 214], ['web-checkout', 176], ['auth-service', 141], ['mobile-gateway', 98], ['data-pipeline', 73], ['notifications', 51]];
+    const maxP = projRaw[0][1];
+    const topProjects = projRaw.map(([name, val]) => ({ name, val, pct: (val / maxP * 100).toFixed(1) + '%' }));
+
+    return {
+      period: this.props.period ?? '30 dias',
+      showResolved: this.props.showResolved ?? true,
+      comparePrevious: this.props.comparePrevious ?? true,
+      statusFilter, sevFilter, projFilter,
+      onStatus: (e) => this.setState({ statusFilter: e.target.value }),
+      onSev: (e) => this.setState({ sevFilter: e.target.value }),
+      onProj: (e) => this.setState({ projFilter: e.target.value }),
+      filteredRows: filtered,
+      resultCount: filtered.length,
+      topProjects,
+      donutEl: this.buildDonut(),
+      exposureEl: this.buildExposure(),
+      resolvedEl: this.buildResolved(),
+    };
+  }
+}
+</script>
+</body>
+</html>

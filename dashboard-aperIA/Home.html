@@ -1,0 +1,1899 @@
+<!doctype html>
+<html lang="pt-BR" data-screen-label="aperIA Dashboard">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>aperIA · Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    fontFamily: { sans: ['"Open Sans"','"Helvetica Neue"','Arial','sans-serif'], mono: ['"JetBrains Mono"','ui-monospace','monospace'] },
+    extend: {
+      colors: {
+        ink:      {50:'#f2f2f2',100:'#d0d0d0',200:'#a1a1a1',300:'#707070',400:'#707070',500:'#202124',600:'#1f2023',700:'#17181a',800:'#17181a',900:'#0c0d0f'},
+        crimson:  {50:'#fff1f1',100:'#ffd7d7',200:'#ffa3a3',300:'#ff6b6b',400:'#ef3a3a',500:'#d81f2a',600:'#b81620',700:'#8d0e16',800:'#5a070d',900:'#2b0306'},
+        severity: {critical:'#ff2d3d',high:'#ff6a3d',medium:'#f5a524',low:'#f5d524',info:'#4aa3ff',safe:'#2ecc8b'},
+        surface:  {DEFAULT:'#17181a',1:'#17181a',2:'#1f2023',deep:'#0c0d0f'},
+        fg:       {DEFAULT:'#f2f2f2',mute:'#a1a1a1',dim:'#707070'},
+        line:     {DEFAULT:'#202124',strong:'#4a4b4d'},
+        brand:    {DEFAULT:'#d81f2a',hov:'#b81620'},
+      },
+      borderRadius: {xs:'3px',sm:'6px',md:'10px',lg:'12px',xl:'14px'},
+      transitionDuration: {fast:'140ms',base:'220ms'},
+      boxShadow: {
+        'el-1':'0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.5)',
+        'el-2':'0 1px 0 rgba(255,255,255,.04) inset,0 8px 24px -10px rgba(0,0,0,.7)',
+        'el-3':'0 1px 0 rgba(255,255,255,.05) inset,0 24px 48px -18px rgba(0,0,0,.85)',
+        'glow-red':'0 0 0 1px rgba(216,31,42,.4),0 0 32px -4px rgba(216,31,42,.45)',
+        'ring-focus':'0 0 0 2px #d81f2a,0 0 0 4px rgba(216,31,42,.25)',
+      },
+    },
+  },
+};
+</script>
+<style>
+body{font-family:"Open Sans","Helvetica Neue",Arial,sans-serif;}
+.mono{font-family:"Geist Mono",ui-monospace,monospace;}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(239,58,58,.6);}50%{box-shadow:0 0 0 4px rgba(239,58,58,0);}}
+@keyframes pulse-safe{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5);}50%{box-shadow:0 0 0 4px rgba(34,197,94,0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.dot-pulse{animation:pulse-red 2s ease-in-out infinite;}
+.dot-safe{animation:pulse-safe 2s ease-in-out infinite;}
+.spin{animation:spin 1s linear infinite;}
+@keyframes catBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes breatheGlow{0%,100%{opacity:.72;filter:blur(38px)}50%{opacity:1;filter:blur(50px)}}
+@keyframes breatheEmit{0%,100%{opacity:.14}50%{opacity:.58}}
+/* Sidebar */
+.sb-disabled{opacity:.35;pointer-events:none;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;font-family:"Geist",sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;position:relative;color:rgba(255,255,255,.72);transition:background .15s,color .15s;white-space:nowrap;}
+.sb-item:hover{background:rgba(255,255,255,.06);color:white;}
+.sb-item.active{background:rgba(225,29,42,.16);box-shadow:inset 2.5px 0 0 #e11d2a;border-radius:0 7px 7px 0;color:#ff5a63;font-weight:600;padding-left:14px;}
+.sb-item.active .sb-ico{color:#ff5a63;}
+.sb-ico{display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;}
+.sb-lbl{flex:1;overflow:hidden;transition:opacity .2s;}
+.sb-bdg{font-family:"Geist Mono",monospace;font-size:10px;font-weight:600;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e11d2a;color:white;display:grid;place-items:center;flex-shrink:0;transition:opacity .2s;box-shadow:0 0 8px rgba(225,29,42,.4);}
+.sb-tgl-btn:hover{background:rgba(255,255,255,.12)!important;color:rgba(255,255,255,.82)!important;}
+/* Collapsed — based on v4 M3 True Black */
+#sb.sb-c{width:64px!important;}
+#sb.sb-c #sb-wm{display:none;}
+#sb.sb-c #sb-ws-info,#sb.sb-c #sb-ws-chev{display:none;}
+#sb.sb-c .sb-lbl{display:none;}
+#sb.sb-c .sb-bdg{display:none;}
+#sb.sb-c #sb-logo{width:48px!important;height:48px!important;}
+#sb.sb-c .sb-header-inner{justify-content:center;padding:12px 7px;}
+#sb.sb-c #sb-tgl{display:none!important;}
+#sb.sb-c nav{padding:6px 0 20px;}
+#sb.sb-c .sb-item{justify-content:center;padding:9px 0;gap:0;width:100%;}
+#sb.sb-c .sb-item.active{background:rgba(216,31,42,.14);box-shadow:inset 3px 0 0 #d81f2a;border-radius:0 5px 5px 0;}
+/* expand button — only visible when collapsed */
+#sb-expand-btn{display:none;}
+#sb.sb-c #sb-expand-btn{display:flex;}
+/* workspace footer collapsed */
+#sb.sb-c #sb-ws-footer{padding:6px 0;}
+#sb.sb-c #sb-ws-info,#sb.sb-c #sb-ws-chev{display:none;}
+#sb.sb-c #sb-ws-footer button{justify-content:center;padding:6px;}
+
+/* Table */
+.tbl-row{display:grid;align-items:center;padding:10px 16px;border-bottom:1px solid #202124;cursor:pointer;transition:background .12s;min-height:44px;}
+.tbl-row:hover{background:#1f2023;}
+.tbl-row:last-child{border-bottom:none;}
+/* Severity badges */
+:root{--sev-critical:#ff2d3d;--sev-high:#ff6a3d;--sev-medium:#f5a524;--sev-low:#f5d524;--sev-info:#4aa3ff;--sev-safe:#2ecc8b;--surface-deep:#08090c;}
+.sev{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;}
+.sev-fx{min-width:78px;height:auto;padding:2px 10px;justify-content:center;font-family:"Open Sans","Helvetica Neue",Arial,sans-serif;font-size:10px;font-weight:600;letter-spacing:.05em;border-radius:100px;border:none!important;color:var(--surface-deep)!important;flex-shrink:0;}
+.sev-fx.sev-critical{background:var(--sev-critical);}
+.sev-fx.sev-high{background:var(--sev-high);}
+.sev-fx.sev-medium{background:var(--sev-medium);}
+.sev-fx.sev-low{background:var(--sev-low);}
+.sev-fx.sev-info{background:var(--sev-info);}
+.sev-fx.sev-safe{background:var(--sev-safe);}
+.sev-critical{background:rgba(239,68,68,.14);color:#ef4444;border:1px solid rgba(239,68,68,.25);}
+.sev-high{background:rgba(249,115,22,.12);color:#f97316;border:1px solid rgba(249,115,22,.22);}
+.sev-medium{background:rgba(234,179,8,.12);color:#eab308;border:1px solid rgba(234,179,8,.22);}
+.sev-low{background:rgba(34,197,94,.10);color:#22c55e;border:1px solid rgba(34,197,94,.18);}
+.sev-info{background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.22);}
+/* Status badges */
+.st-done{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.22);}
+.st-running{background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.22);}
+.st-failed{background:rgba(239,68,68,.14);color:#ef4444;border:1px solid rgba(239,68,68,.25);}
+.st-skipped{background:rgba(112,112,112,.12);color:#707070;border:1px solid rgba(112,112,112,.22);}
+.st-queued{background:rgba(234,179,8,.12);color:#eab308;border:1px solid rgba(234,179,8,.22);}
+.st-blocked{background:rgba(239,68,68,.14);color:#ef4444;border:1px solid rgba(239,68,68,.25);}
+/* Slide-over */
+.slide-over{position:fixed;top:0;right:0;bottom:0;width:520px;background:#17181a;border-left:1px solid #202124;z-index:50;transform:translateX(100%);transition:transform .25s cubic-bezier(.22,.61,.36,1);overflow-y:auto;}
+.slide-over.open{transform:translateX(0);}
+.slide-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:49;opacity:0;display:none;pointer-events:none;transition:opacity .25s;}
+.slide-overlay.open{opacity:1;display:block;pointer-events:auto;}
+.card-link{transition:background .12s,border-color .12s;}
+.card-link:hover{background:#1f2023;}
+.metric-link:hover .metric-lbl{text-decoration:underline;}
+/* ── Overview KPI tiles (tech-brutalist) ── */
+.ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 20px;}
+@media(max-width:1199px){.ov-grid{grid-template-columns:repeat(2,1fr);}}
+.ov-tile{position:relative;padding:18px 20px 16px;background:#111214;cursor:pointer;overflow:hidden;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));background-image:radial-gradient(rgba(255,255,255,.04) 1px,transparent 1px);background-size:13px 13px;background-position:-1px -1px;transition:transform .14s ease,background-color .14s;}
+.ov-tile:hover{transform:translateY(-2px);background-color:#161719;}
+.ov-tile::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--ov-accent,#d81f2a);transform:scaleX(0);transform-origin:left;transition:transform .18s ease;}
+.ov-tile:hover::after{transform:scaleX(1);}
+.ov-idx{position:absolute;top:14px;right:16px;font-family:"JetBrains Mono",monospace;font-size:10px;color:#3a3b3d;letter-spacing:.06em;}
+.ov-mark{width:6px;height:6px;background:var(--ov-accent,#5c5c5c);margin-bottom:13px;}
+.ov-lbl{font-family:"JetBrains Mono",monospace;text-transform:uppercase;font-size:11px;letter-spacing:.12em;color:#8a8a8a;margin-bottom:9px;}
+.ov-num{font-family:"Chakra Petch","JetBrains Mono",monospace;font-weight:700;font-size:52px;line-height:.9;font-variant-numeric:tabular-nums;color:#f2f2f2;}
+.ov-num.is-crit{color:var(--sev-critical);text-shadow:0 0 12px rgba(255,45,61,.35);}
+.ov-num.is-high{color:var(--sev-high);}
+.ov-sub{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:#5c5c5c;margin-top:11px;letter-spacing:.02em;}
+@media(max-width:1199px){.ov-tile:hover{transform:none;}}
+.sev-row:hover{background:#1f2023;}
+.sev-row:hover .sev-row-lbl{text-decoration:underline;}
+.drawer-nav{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;background:transparent;border:1px solid transparent;color:#a1a1a1;cursor:pointer;transition:background .12s,color .12s;}
+.drawer-nav:hover{background:#1f2023;color:#f2f2f2;}
+.drawer-nav:disabled{opacity:.3;cursor:not-allowed;}
+.lnk-ext{color:#539fe5;text-decoration:none;}
+.lnk-ext:hover{text-decoration:underline;}
+.exec-select{display:inline-flex;align-items:center;gap:8px;background:#17181a;border:1px solid #2e2f31;border-radius:6px;padding:6px 10px;cursor:pointer;transition:background .12s,border-color .12s;}
+.exec-select:hover{background:#1f2023;border-color:#3a3b3e;}
+.exec-dd{position:absolute;top:calc(100% + 6px);left:0;width:440px;max-width:90vw;background:#17181a;border:1px solid #2e2f31;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:40;opacity:0;pointer-events:none;transform:translateY(-4px);transition:opacity .14s,transform .14s;overflow:hidden;}
+.exec-dd.open{opacity:1;pointer-events:auto;transform:translateY(0);}
+.exec-dd-search{padding:8px;border-bottom:1px solid #202124;}
+.exec-dd-search input{width:100%;background:#0c0d0f;border:1px solid #2e2f31;border-radius:6px;padding:0 10px;height:34px;color:#f2f2f2;font-size:13px;outline:none;font-family:inherit;}
+.exec-dd-search input:focus{border-color:#c22f3d;}
+.exec-dd-list{max-height:340px;overflow-y:auto;padding:4px;}
+.exec-opt{width:100%;display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;background:transparent;border:none;cursor:pointer;transition:background .1s;text-align:left;}
+.exec-opt:hover{background:#1f2023;}
+/* Diff */
+.diff-add{color:#22c55e;background:rgba(34,197,94,.07);}
+.diff-rem{color:#ef4444;background:rgba(239,68,68,.08);}
+/* Btn */
+.btn{display:inline-flex;align-items:center;gap:7px;font-weight:600;cursor:pointer;border-radius:4px;transition:all .14s;white-space:nowrap;border:1px solid transparent;}
+.btn-sm{height:30px;padding:0 12px;font-size:12.5px;}
+.btn-md{height:36px;padding:0 14px;font-size:13.5px;}
+.btn-primary{background:#c22f3d;color:white;border-color:#a02531;}
+.btn-primary:hover{background:#a02531;}
+.btn-ghost{background:transparent;color:#d0d0d0;border-color:#a1a1a1;font-weight:600;}
+.btn-ghost:hover{background:rgba(255,255,255,.06);color:#f2f2f2;border-color:#d0d0d0;}
+.btn-success{background:#238636;color:#fff;border-color:#2ea043;}
+.btn-success:hover{background:#2ea043;}
+.btn-danger{background:transparent;color:#ef4444;border-color:rgba(239,68,68,.4);}
+.btn-danger:hover{background:rgba(239,68,68,.1);}
+/* Filter chip */
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #202124;color:#a1a1a1;background:transparent;transition:background .12s,border-color .12s,color .12s;text-transform:capitalize;}
+.chip:hover{background:#1f2023;border-color:#4a4b4d;color:#f2f2f2;}
+.chip.on{background:#1f2023;border-color:#a1a1a1;color:#f2f2f2;}
+.chip-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.chip-x{font-size:13px;line-height:1;opacity:.6;margin-left:1px;}
+.chip-clear{color:#707070;border-color:transparent;text-transform:none;}
+.chip-clear:hover{color:#f2f2f2;background:transparent;border-color:#4a4b4d;}
+.sort-h{cursor:pointer;user-select:none;}
+.sort-h:hover{color:#f2f2f2;}
+/* Tier bubble */
+.tier-bubble{display:inline-flex;align-items:center;gap:5px;font-family:"Geist Mono",monospace;font-size:10px;font-weight:600;}
+/* Input */
+.inp{background:#0c0d0f;border:1px solid #202124;border-radius:4px;padding:0 12px;color:#f2f2f2;font-size:13.5px;outline:none;height:36px;transition:border-color .14s;}
+.inp:focus{border-color:#c22f3d;box-shadow:0 0 0 2px rgba(194,47,61,.22);}
+.inp::placeholder{color:#707070;}
+/* Attack path step — sequential reveal */
+.ap-step{display:flex;gap:16px;align-items:flex-start;position:relative;}
+.ap-conn{position:absolute;left:15px;top:36px;bottom:-20px;width:2px;background:#26272a;overflow:hidden;z-index:0;}
+.ap-conn .fill{position:absolute;inset:0;background:color-mix(in srgb,var(--sc) 50%,transparent);transform:scaleY(0);transform-origin:top;transition:transform .35s linear;}
+.ap-conn.filled .fill{transform:scaleY(1);}
+.ap-conn .shim{position:absolute;left:0;right:0;height:40%;top:0;background:linear-gradient(180deg,transparent,rgba(239,68,68,.55),transparent);transform:translateY(-100%);opacity:0;}
+.ap-conn.filled.crit .shim{animation:ap-shim 6s linear infinite;}
+@keyframes ap-shim{0%{transform:translateY(-100%);opacity:1}14%{transform:translateY(350%);opacity:1}14.1%{opacity:0}100%{transform:translateY(350%);opacity:0}}
+.ap-node{position:relative;flex-shrink:0;z-index:1;}
+.ap-ring{position:absolute;inset:0;border-radius:50%;border:1.5px solid var(--sc);opacity:0;pointer-events:none;}
+.ap-step.lit .ap-ring{animation:ap-pulse .4s ease-out;}
+.ap-step.climax .ap-ring{animation:ap-pulse .5s ease-out 2;}
+@keyframes ap-pulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.7);opacity:0}}
+.ap-dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font-family:"Geist Mono",monospace;font-size:12px;font-weight:900;color:#ffffff;background:var(--sc);transition:color .3s ease-out,background .3s ease-out,box-shadow .3s ease-out;position:relative;z-index:1;}
+.ap-step[data-sev="critical"] .ap-dot{box-shadow:0 0 10px rgba(239,68,68,.14);}
+.ap-body{flex:1;padding-top:4px;opacity:1;transform:none;transition:opacity .25s ease-out,transform .25s ease-out;min-width:0;}
+.ap-tactic{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--sc);}
+.ap-fcard{background:#17181a;border:1px solid #202124;border-left:2px solid var(--sc);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .12s;}
+.ap-fcard:hover{background:#1f2023;}
+/* Dim the pre-lit state ONLY while the narrative is actively animating */
+@media (prefers-reduced-motion: no-preference){
+  #ap-chain.animate .ap-step:not(.lit) .ap-body{opacity:.35;transform:translateY(4px);}
+  #ap-chain.animate .ap-step:not(.lit) .ap-dot{color:rgba(255,255,255,.5);background:#1f2023;box-shadow:none;}
+  #ap-chain.animate .ap-step:not(.lit) .ap-fcard{border-left-color:#202124;}
+}
+@media (prefers-reduced-motion: reduce){
+  .ap-ring,.ap-conn .shim{animation:none!important;}
+  .ap-body,.ap-dot,.ap-conn .fill{transition:none!important;}
+}
+.lnk:hover{color:#539fe5;text-decoration:underline;cursor:pointer;}
+/* Stepper + gauge instrumentation */
+@keyframes ring-in{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.node-ring{animation:ring-in .3s ease-out;}
+@keyframes node-pulse{0%,100%{opacity:.12}50%{opacity:.32}}
+.node-pulse{animation:node-pulse 2s ease-in-out infinite;}
+.spin-15{animation:spin 1.5s linear infinite;transform-origin:center;}
+@keyframes conn-flow{from{background-position:-60% 0}to{background-position:160% 0}}
+.conn-flow{background-image:linear-gradient(90deg,transparent,rgba(34,197,94,.55),transparent);background-size:45% 100%;background-repeat:no-repeat;background-color:rgba(34,197,94,.16);animation:conn-flow 4s linear infinite;}
+@keyframes gauge-fill{from{stroke-dashoffset:207.3}}
+.gauge-arc{animation:gauge-fill .8s ease-out;}
+@media (prefers-reduced-motion: reduce){
+  .node-ring,.node-pulse,.spin,.spin-15,.conn-flow,.gauge-arc{animation:none!important;}
+  .conn-flow{background-image:none;background-color:rgba(34,197,94,.5);}
+}
+/* Data table (real table, shared column axes, vertical dividers) */
+.dtbl{width:100%;border-collapse:collapse;table-layout:fixed;}
+.dtbl th{padding:10px 16px;font-size:13px;font-weight:700;color:#a1a1a1;background:#0c0d0f;border-bottom:1px solid #202124;text-align:center;white-space:nowrap;}
+.dtbl td{padding:12px 16px;border-bottom:1px solid #202124;text-align:center;vertical-align:middle;font-size:13px;}
+.dtbl th+th,.dtbl td+td{border-left:1px solid #202124;}
+.dtbl tr:last-child td{border-bottom:none;}
+.dtbl tbody tr{transition:background .12s;}
+.dtbl tbody tr.rowlink{cursor:pointer;}
+.dtbl tbody tr:hover{background:#1f2023;}
+.dtbl .cl{text-align:left;}
+.dtbl-h{display:flex;justify-content:center;align-items:center;gap:6px;}
+/* Page grid */
+.page-wrap{max-width:1440px;margin:0 auto;padding:24px 32px;}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);}
+@media(max-width:1199px){
+  .metric-grid{grid-template-columns:repeat(2,1fr);}
+  .metric-grid>div:nth-child(3){border-left:none!important;}
+  .metric-grid>div:nth-child(n+3){border-top:1px solid #202124;}
+}
+.row-12{display:grid;grid-template-columns:repeat(12,1fr);gap:24px;}
+.col-8{grid-column:span 8;}
+.col-4{grid-column:span 4;}
+@media(max-width:1199px){.row-12{grid-template-columns:1fr;}.col-8,.col-4{grid-column:auto;}}
+/* Stat card */
+.stat-card{background:#17181a;border:1px solid #202124;border-radius:4px;padding:20px;}
+/* ── Tech-brutalist card system (shared) ── */
+:root{--chamfer:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));--ch7:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,7px 100%,0 calc(100% - 7px));}
+.stat-card.tb-card{position:relative;background:#222!important;border:none!important;border-radius:0!important;clip-path:var(--chamfer);}
+.tb-card::before{content:"";position:absolute;inset:1px;background:#0d0d0d;background-image:radial-gradient(rgba(255,255,255,.035) 1px,transparent 1px);background-size:13px 13px;background-position:-1px -1px;clip-path:var(--chamfer);z-index:0;}
+.tb-card>*{position:relative;z-index:1;}
+.tb-title{font-family:"JetBrains Mono",monospace;text-transform:uppercase;font-size:11px;letter-spacing:.12em;color:#8a8a8a;font-weight:600;white-space:nowrap;}
+.tb-idx{font-family:"JetBrains Mono",monospace;font-size:10px;color:#3a3b3d;letter-spacing:.06em;}
+.tb-num{font-family:"Chakra Petch","JetBrains Mono",monospace;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;}
+.tb-mark{width:6px;height:6px;flex-shrink:0;display:inline-block;}
+.tbmk{width:15px;height:15px;flex-shrink:0;display:grid;place-items:center;clip-path:polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px));}
+.sr-row{border-left:2px solid transparent;transition:background .12s,border-color .12s;}
+.sr-row:hover{background:#161719;border-left-color:#d81f2a;}
+.tb-btn{position:relative;background:#333;padding:7px 14px;clip-path:var(--ch7);cursor:pointer;color:#a1a1a1;transition:color .12s;white-space:nowrap;}
+.tb-btn::before{content:"";position:absolute;inset:1px;background:#0d0d0d;clip-path:var(--ch7);z-index:0;}
+.tb-btn>span{position:relative;z-index:1;font-family:"JetBrains Mono",monospace;text-transform:uppercase;font-size:10.5px;letter-spacing:.1em;}
+.tb-btn:hover{color:#f2f2f2;}
+.tb-btn:hover::before{background:#161719;}
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:#26272a;border-radius:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+</style>
+</head>
+<body class="min-h-screen bg-surface-deep text-fg antialiased">
+
+<div id="app-shell" style="display:grid;grid-template-columns:256px 1fr;min-height:100vh;transition:grid-template-columns .25s cubic-bezier(.22,.61,.36,1);">
+  <aside id="sb" style="width:256px;background:#0c0d0f;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:hidden;flex-shrink:0;transition:width .25s cubic-bezier(.22,.61,.36,1);">
+    <div class="sb-header-inner" style="flex-shrink:0;padding:14px;display:flex;align-items:center;gap:12px;background:#0f1012;border-bottom:1px solid rgba(255,255,255,.06);">
+      <img id="sb-logo" src="uploads/1.png" alt="aperIA" style="width:88px;height:88px;object-fit:contain;flex-shrink:0;display:block;transition:width .25s,height .25s;"/>
+      <div id="sb-wm" style="min-width:0;overflow:hidden;white-space:nowrap;transition:opacity .2s;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:21px;font-weight:700;letter-spacing:-.015em;color:white;line-height:1;">aper<span style="color:#e11d2a;">IA</span></div>
+      </div>
+      <button id="sb-tgl" class="sb-tgl-btn" onclick="toggleSb()" title="Recolher sidebar" style="margin-left:auto;flex-shrink:0;width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.42);transition:background .15s,color .15s;">
+        <svg id="sb-tgl-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <nav id="sb-nav" style="flex:1;overflow-y:auto;padding:8px 10px 20px;scrollbar-width:none;">
+      <!-- small expand button, only shown in collapsed mode -->
+      <div id="sb-expand-btn" style="justify-content:center;margin-bottom:6px;">
+        <button onclick="toggleSb()" title="Expandir" style="width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.42);cursor:pointer;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='rgba(255,255,255,.14)';this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.42)'">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+
+      <a class="sb-item" data-screen="home" onclick="navigate('home')" title="Início">
+        <span class="sb-ico" style="margin-left:2px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="10.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="2.5" y="10.5" width="6" height="6" rx="1.2"/><rect x="10.5" y="10.5" width="6" height="6" rx="1.2"/></svg></span>
+        <span class="sb-lbl">Início</span>
+      </a>
+      <a class="sb-item" data-screen="findings" onclick="navigate('findings')" title="Findings">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.2l6.5 2.3v4.5c0 4-2.7 6.8-6.5 7.8-3.8-1-6.5-3.8-6.5-7.8V4.5L12 2.2z"/></svg></span>
+        <span class="sb-lbl">Findings</span>
+        <span class="sb-bdg" id="findings-badge">10</span>
+      </a>
+      <a class="sb-item" data-screen="inventory" onclick="navigate('inventory')" title="Inventário">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3.5 6.5v9L12 20l8.5-4.5v-9L12 2z"/><path d="M3.5 6.5L12 11l8.5-4.5M12 11v9"/></svg></span>
+        <span class="sb-lbl">Inventário</span>
+      </a>
+      <a class="sb-item" data-screen="pipelines" onclick="navigate('pipelines')" title="Scans">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><circle cx="12" cy="12" r="3.2"/><path d="M15.4 15.4L18 18"/></svg></span>
+        <span class="sb-lbl">Scans</span>
+      </a>
+      <a class="sb-item" data-screen="attack" onclick="openInsights(null)" title="AI insights">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l1.4 4L18 8l-4.6 1.5L12 14l-1.4-4.5L6 8l4.6-1.5L12 2.5z"/><path d="M16.5 13.5l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6.6-1.7z"/></svg></span>
+        <span class="sb-lbl">AI insights</span>
+      </a>
+      <div style="height:1px;background:rgba(255,255,255,.08);margin:6px 4px;"></div>
+      <a class="sb-item" data-screen="remediations" onclick="navigate('remediations')" title="Políticas">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></span>
+        <span class="sb-lbl">Remediações</span>
+      </a>
+      <a class="sb-item" data-screen="integrations" onclick="navigate('integrations')" title="Integrações">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="-2 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h13l-5.5 7v4.5l-3 1.5V12L3 5z"/></svg></span>
+        <span class="sb-lbl">Integrações</span>
+      </a>
+      <a class="sb-item" data-screen="team" onclick="navigate('team')" title="Time">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><path d="M16 5.5a3 3 0 010 6M17.5 14.2c2.2.4 3.5 2.1 3.5 4.3"/></svg></span>
+        <span class="sb-lbl">Time</span>
+      </a>
+    </nav>
+    <!-- Workspace footer -->
+    <div id="sb-ws-footer" style="flex-shrink:0;padding:6px 10px;border-top:1px solid rgba(255,255,255,.08);background:#0c0d0f;">
+      <button style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;cursor:pointer;width:100%;background:transparent;border:none;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='transparent'">
+        <div style="width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.10);color:rgba(255,255,255,.78);font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;display:grid;place-items:center;flex-shrink:0;">A</div>
+        <div id="sb-ws-info" style="flex:1;text-align:left;overflow:hidden;white-space:nowrap;font-family:'Geist',sans-serif;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.88);">Acme · Pessoal</div>
+        <svg id="sb-ws-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:rgba(255,255,255,.28);"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="flex flex-col" style="height:100vh;overflow-y:scroll;scrollbar-gutter:stable;background:#0c0d0f;">
+    <header class="h-14 border-b border-line sticky top-0 z-10" style="background:#0c0d0f;flex:0 0 56px;min-height:56px;"><div class="h-full max-w-[1440px] mx-auto flex items-center gap-4 relative" style="padding:0 32px;">
+      <div class="flex items-center gap-2 text-[13px] text-fg-dim">
+        <span class="text-fg-mute">Acme</span>
+        <span class="text-ink-400">/</span>
+        <span id="breadcrumb" class="text-fg">Início</span>
+      </div>
+      <div class="absolute left-1/2 -translate-x-1/2 w-full max-w-[400px]" style="padding:0 16px;">
+        <div class="relative">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" class="absolute left-3 top-1/2 -translate-y-1/2 text-fg-dim"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/></svg>
+          <input id="global-search" type="text" placeholder="Buscar… (⌘K)" class="inp w-full" style="padding-left:32px;padding-right:44px;background:#0c0d0f;" oninput="onGlobalSearch(this.value)"/>
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 mono text-[10px] text-fg-dim border border-line px-1.5 py-0.5 rounded-xs" style="background:#1f2023;">⌘K</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 ml-auto">
+      <button class="relative w-9 h-9 rounded-md grid place-items-center text-fg-mute hover:bg-surface-1 hover:text-fg transition-colors">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 18V11a6 6 0 1112 0v7M4 18h16M10 21a2 2 0 004 0"/></svg>
+        <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full" style="background:#c22f3d;"></span>
+      </button>
+      <div class="h-7 w-px bg-line"></div>
+      <button class="flex items-center gap-2.5 pr-1.5 pl-1 py-1 rounded-md hover:bg-surface-1 transition-colors">
+        <div class="w-7 h-7 rounded-full bg-ink-500 grid place-items-center text-[11px] font-semibold mono">MA</div>
+        <span class="text-sm text-fg">Marina</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-fg-dim"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      </div>
+    </div></header>
+    <main id="app-main" class="flex-1" style="background:#0c0d0f;"></main>
+  </div>
+</div>
+
+<!-- slide-over overlay -->
+<div id="overlay" class="slide-overlay" onclick="closePanel()"></div>
+<div id="panel" class="slide-over"></div>
+<script>
+/* ═══════════════════════ MOCK DATA ═══════════════════════ */
+const FINDINGS = [
+  {id:'f1',source:'trufflehog',severity:'critical',title:'AWS Access Key exposta no código-fonte',description:'Credencial AWS verificada encontrada em texto plano no arquivo de configuração. A chave tem permissões amplas (AdministratorAccess) e foi confirmada como ativa via AWS STS GetCallerIdentity.',commit_sha:'a3f8c1d2e4b56789abcdef01',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:null,cwe_id:'CWE-312',file_path:'src/config.py',line_number:42,asset:'payments-api',asset_criticality:'high',secret_verified:true,secret_type:'aws_access_key',tier:1,created_at:'2024-06-29T14:23:11Z'},
+  {id:'f2',source:'semgrep',severity:'high',title:'SQL Injection via raw query em ORM',description:'Interpolação direta de parâmetro não sanitizado em query SQL. Permite UNION-based data extraction, podendo expor toda a tabela de usuários e hashes de senha.',commit_sha:'a3f8c1d2e4b56789abcdef01',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:'CVE-2024-38856',cwe_id:'CWE-89',file_path:'app/repositories/user_repo.py',line_number:87,asset:'payments-api',asset_criticality:'high',secret_verified:false,secret_type:null,tier:2,created_at:'2024-06-29T14:25:33Z'},
+  {id:'f3',source:'trivy',severity:'critical',title:'Log4Shell RCE em dependência transitiva',description:'log4j-core 2.14.1 vulnerável a execução remota de código via JNDI lookup. CVSS 10.0. Caminho de ataque confirmado pelo Claude Sonnet como exploitável no ambiente atual.',commit_sha:'a3f8c1d2e4b56789abcdef01',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:'CVE-2021-44228',cwe_id:'CWE-400',file_path:'pom.xml',line_number:234,asset:'payments-api',asset_criticality:'high',secret_verified:false,secret_type:null,tier:2,created_at:'2024-06-29T14:26:01Z'},
+  {id:'f4',source:'semgrep',severity:'high',title:'Path traversal em upload de arquivos',description:'Parâmetro filename não validado permite navegação no sistema de arquivos do servidor. Atacante pode ler /etc/passwd ou sobrescrever arquivos de configuração.',commit_sha:'b7e9f2a1c3d45678abcdef02',repo_url:'https://github.com/OCR-aperIA/auth-service',cve_id:null,cwe_id:'CWE-22',file_path:'api/upload_handler.py',line_number:156,asset:'auth-service',asset_criticality:'critical',secret_verified:false,secret_type:null,tier:1,created_at:'2024-06-28T09:44:52Z'},
+  {id:'f5',source:'zap',severity:'high',title:'CORS misconfiguration permite origem arbitrária',description:'Header Access-Control-Allow-Origin: * com credenciais habilitadas. Permite ataques cross-origin autenticados a partir de qualquer domínio.',commit_sha:'b7e9f2a1c3d45678abcdef02',repo_url:'https://github.com/OCR-aperIA/auth-service',cve_id:null,cwe_id:'CWE-346',file_path:'api/middleware/cors.py',line_number:23,asset:'auth-service',asset_criticality:'critical',secret_verified:false,secret_type:null,tier:3,created_at:'2024-06-28T10:12:09Z'},
+  {id:'f6',source:'prowler',severity:'medium',title:'Bucket S3 com ACL pública habilitada',description:'Bucket de artefatos de build exposto publicamente. Contém binários internos e arquivos de configuração de CI/CD que podem revelar a arquitetura interna.',commit_sha:'a3f8c1d2e4b56789abcdef01',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:null,cwe_id:'CWE-284',file_path:'infra/terraform/s3.tf',line_number:18,asset:'infra-aws',asset_criticality:'medium',secret_verified:false,secret_type:null,tier:2,created_at:'2024-06-29T14:27:44Z'},
+  {id:'f7',source:'semgrep',severity:'medium',title:'Logging de dados de cartão em produção',description:'Campos de número de cartão e CVV sendo logados em texto plano no módulo de pagamento. Viola PCI-DSS. Logs acessíveis por todos os engenheiros com acesso ao Datadog.',commit_sha:'c9a1b3e5d7f89012abcdef03',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:null,cwe_id:'CWE-532',file_path:'app/services/payment_service.py',line_number:201,asset:'payments-api',asset_criticality:'high',secret_verified:false,secret_type:null,tier:1,created_at:'2024-06-27T16:58:22Z'},
+  {id:'f8',source:'trivy',severity:'medium',title:'OpenSSL 3.0.7 — DoS via certificado X.509',description:'Versão vulnerável a denial-of-service durante verificação de cadeia de certificados X.509 excessivamente longa. Pode derrubar o serviço de autenticação.',commit_sha:'c9a1b3e5d7f89012abcdef03',repo_url:'https://github.com/OCR-aperIA/auth-service',cve_id:'CVE-2022-3786',cwe_id:'CWE-119',file_path:'requirements.txt',line_number:12,asset:'auth-service',asset_criticality:'critical',secret_verified:false,secret_type:null,tier:2,created_at:'2024-06-27T17:02:11Z'},
+  {id:'f9',source:'semgrep',severity:'low',title:'Hash MD5 sem salt para senha de usuário',description:'Hash MD5 sem salt para armazenamento de credenciais. Vulnerável a rainbow tables. Recomendado migrar para bcrypt com work factor ≥ 12 ou Argon2id.',commit_sha:'d2c4e6a8b0f12345abcdef04',repo_url:'https://github.com/OCR-aperIA/user-service',cve_id:null,cwe_id:'CWE-327',file_path:'services/auth/password.py',line_number:67,asset:'user-service',asset_criticality:'medium',secret_verified:false,secret_type:null,tier:1,created_at:'2024-06-26T11:33:45Z'},
+  {id:'f10',source:'trufflehog',severity:'info',title:'Token de API de teste detectado',description:'Token de ambiente de desenvolvimento encontrado. Não verificado como ativo. Remover por higiene de código e para não confundir auditorias futuras.',commit_sha:'d2c4e6a8b0f12345abcdef04',repo_url:'https://github.com/OCR-aperIA/user-service',cve_id:null,cwe_id:null,file_path:'tests/fixtures/test_config.py',line_number:8,asset:'user-service',asset_criticality:'low',secret_verified:false,secret_type:'api_key',tier:1,created_at:'2024-06-26T11:35:12Z'},
+];
+
+const SCAN_JOBS = [
+  {id:'s1',commit_sha:'a3f8c1d2e4',repo_full_name:'OCR-aperIA/payments-api',pr_number:47,tier1_status:'done',tier2_status:'done',tier3_status:'done',blocked_at_tier:null,final_risk_score:847,final_risk_level:'critical',created_at:'2024-06-29T14:20:00Z',t1_dur:'4m',t2_dur:'4m',t3_dur:'7m'},
+  {id:'s2',commit_sha:'b7e9f2a1c3',repo_full_name:'OCR-aperIA/auth-service',pr_number:31,tier1_status:'done',tier2_status:'done',tier3_status:'running',blocked_at_tier:null,final_risk_score:null,final_risk_level:null,created_at:'2024-06-29T10:15:00Z',t1_dur:'4m',t2_dur:'7m',t3_dur:null},
+  {id:'s3',commit_sha:'c9a1b3e5d7',repo_full_name:'OCR-aperIA/payments-api',pr_number:46,tier1_status:'done',tier2_status:'done',tier3_status:'skipped',blocked_at_tier:null,final_risk_score:312,final_risk_level:'medium',created_at:'2024-06-27T16:50:00Z',t1_dur:'5m',t2_dur:'8m',t3_dur:null},
+  {id:'s4',commit_sha:'e5a9b7c1d3',repo_full_name:'OCR-aperIA/payments-api',pr_number:45,tier1_status:'done',tier2_status:'failed',tier3_status:null,blocked_at_tier:2,final_risk_score:null,final_risk_level:null,created_at:'2024-06-26T08:30:00Z',t1_dur:'5m',t2_dur:null,t3_dur:null},
+  {id:'s5',commit_sha:'d2c4e6a8b0',repo_full_name:'OCR-aperIA/user-service',pr_number:22,tier1_status:'done',tier2_status:'done',tier3_status:'skipped',blocked_at_tier:null,final_risk_score:156,final_risk_level:'low',created_at:'2024-06-26T11:30:00Z',t1_dur:'6m',t2_dur:'8m',t3_dur:null},
+  {id:'s6',commit_sha:'f1e3d5c7b9',repo_full_name:'OCR-aperIA/payments-api',pr_number:44,tier1_status:'done',tier2_status:'skipped',tier3_status:'skipped',blocked_at_tier:1,final_risk_score:null,final_risk_level:'blocked',created_at:'2024-06-25T15:00:00Z',t1_dur:'4m',t2_dur:null,t3_dur:null},
+];
+
+const REMEDIATIONS = [
+  {id:'r1',finding_id:'f2',scan_job_id:'s1',status:'suggested',explanation:'Usar SQLAlchemy parametrizado ao invés de interpolação de string. O ORM já oferece proteção via bind parameters — substituição de 2 linhas.',patch_diff:'-    query = f"SELECT * FROM users WHERE email = \'{email}\'"\n-    result = db.execute(query)\n+    result = db.execute(\n+        select(User).where(User.email == email)\n+    ).scalars().first()',requires_secret_rotation:false,rotation_instructions:null,approved_by:null,created_at:'2024-06-29T14:36:00Z'},
+  {id:'r2',finding_id:'f1',scan_job_id:'s1',status:'suggested',explanation:'A credencial AWS AKIAIOSFODNN7EXAMPLE deve ser rotacionada imediatamente. Remova do código e use variáveis de ambiente ou AWS Secrets Manager.',patch_diff:'-AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"\n-AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCY"\n+AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]\n+AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]',requires_secret_rotation:true,rotation_instructions:'1. AWS IAM Console → desative AKIAIOSFODNN7EXAMPLE imediatamente\n2. Crie nova access key com política de menor privilégio\n3. Atualize secrets no GitHub Actions (Settings → Secrets)\n4. Atualize ECS Task Definitions com nova chave',approved_by:null,created_at:'2024-06-29T14:36:30Z'},
+  {id:'r3',finding_id:'f7',scan_job_id:'s3',status:'approved',explanation:'Mascarar campos sensíveis antes de logar usando serializer que redacta PAN e CVV.',patch_diff:'-    logger.info("payment_processed", card_number=card_number, cvv=cvv)\n+    logger.info("payment_processed", card_last4=card_number[-4:], masked=True)',requires_secret_rotation:false,rotation_instructions:null,approved_by:'marina.alves@acme.io',created_at:'2024-06-27T17:10:00Z'},
+  {id:'r4',finding_id:'f4',scan_job_id:'s2',status:'suggested',explanation:'Sanitizar filename com os.path.basename() e validar contra allowlist de extensões antes de usar no sistema de arquivos.',patch_diff:'-    filepath = os.path.join(UPLOAD_DIR, filename)\n+    safe_name = os.path.basename(filename)\n+    if not safe_name.endswith(ALLOWED_EXTENSIONS):\n+        raise ValueError("Extensão não permitida")\n+    filepath = os.path.join(UPLOAD_DIR, safe_name)',requires_secret_rotation:false,rotation_instructions:null,approved_by:null,created_at:'2024-06-28T10:30:00Z'},
+  {id:'r5',finding_id:'f9',scan_job_id:'s5',status:'rejected',explanation:'Migrar para bcrypt com work factor ≥ 12. Usar passlib para abstração. Inclui migration script para re-hash de senhas existentes no próximo login.',patch_diff:'-import hashlib\n-hashed = hashlib.md5(password.encode()).hexdigest()\n+from passlib.hash import bcrypt\n+hashed = bcrypt.hash(password, rounds=12)',requires_secret_rotation:false,rotation_instructions:null,approved_by:'carlos.melo@acme.io',created_at:'2024-06-26T12:00:00Z'},
+];
+
+/* Schema real: attack_path.py (Tier 3) — attack_path[], kill_chain_complete, prioritized_actions[],
+   cti_status, caldera_status. Não persistido em tabela: existe por execução. Chaveado por scan_job_id;
+   findings/score/tiers vêm do dataset compartilhado SCAN_JOBS (fonte única com Scans e Início). */
+const INSIGHTS = {
+  s1: {
+    attack_path:[
+      {step:1,phase:'initial_access',technique:'T1190',description:'SQL injection em GET /api/users?email= permite UNION-based extraction da tabela users (emails + password_hashes)',finding_ids:['f2'],caldera_validated:false},
+      {step:2,phase:'credential_access',technique:'T1552.001',description:'AWS Access Key com AdministratorAccess exposta no config.py permite assumir identidade de produção via STS AssumeRole',finding_ids:['f1'],caldera_validated:true},
+      {step:3,phase:'lateral_movement',technique:'T1210',description:'Log4Shell (CVE-2021-44228) no container payments-service permite RCE via JNDI LDAP lookup',finding_ids:['f3'],caldera_validated:true},
+      {step:4,phase:'collection',technique:'T1530',description:'Bucket S3 público contém dumps de dados de clientes acessíveis a partir do ambiente comprometido',finding_ids:['f6'],caldera_validated:false},
+      {step:5,phase:'exfiltration',technique:'T1567',description:'Dados de cartão e dados pessoais de ~40k usuários exfiltráveis para infraestrutura externa sem detecção',finding_ids:['f6'],caldera_validated:false},
+    ],
+    kill_chain_complete:true,
+    prioritized_actions:[
+      {priority:1,action:'Rotacionar imediatamente a AWS Access Key exposta em config.py',rationale:'Credencial verificada com AdministratorAccess — acesso direto ao ambiente de produção'},
+      {priority:2,action:'Parametrizar a query de /api/users (SQLAlchemy bound parameters)',rationale:'Ponto de entrada da cadeia — elimina o acesso inicial'},
+      {priority:3,action:'Atualizar log4j-core para 2.17+ no container payments-service',rationale:'RCE validado por emulação — pivô do movimento lateral'},
+      {priority:4,action:'Bloquear acesso público ao bucket S3 de dumps',rationale:'Alvo final da exfiltração — dados de ~40k clientes'},
+    ],
+    kill_chain_complete_note:'',
+    cti_status:'available',caldera_status:'available',
+  },
+  s3: {tier2_summary:'Análise Tier 2 concluída: 2 findings de severidade média (logging de dados de cartão, OpenSSL DoS). Nenhum atinge o limiar high/critical do Gate 2.'},
+  s5: {tier2_summary:'Análise Tier 2 concluída: 1 finding de severidade baixa (hash MD5 sem salt). Abaixo do limiar do Gate 2.'},
+};
+
+const ASSETS = [
+  {id:'a1',name:'payments-api',type:'repository',repo_url:'https://github.com/OCR-aperIA/payments-api',criticality:'high',last_scan:'2024-06-29',risk_score:847,scanners:['trufflehog','semgrep','trivy','prowler','zap']},
+  {id:'a2',name:'auth-service',type:'repository',repo_url:'https://github.com/OCR-aperIA/auth-service',criticality:'critical',last_scan:'2024-06-28',risk_score:412,scanners:['semgrep','trivy','zap']},
+  {id:'a3',name:'user-service',type:'repository',repo_url:'https://github.com/OCR-aperIA/user-service',criticality:'medium',last_scan:'2024-06-26',risk_score:156,scanners:['semgrep','trufflehog']},
+  {id:'a4',name:'infra-aws',type:'cloud',repo_url:null,criticality:'medium',last_scan:'2024-06-29',risk_score:205,scanners:['prowler']},
+];
+
+/* ═══ GitHub connection (mirrors backend: GitHub App + installation_id → installation grants repo access) ═══ */
+const GH_ORG='OCR-aperIA';
+const INSTALLATION_REPOS=[
+  {name:'payments-api',private:true,lang:'Python',last_push:'2024-06-29T14:30:00Z'},
+  {name:'auth-service',private:true,lang:'Python',last_push:'2024-06-28T09:50:00Z'},
+  {name:'user-service',private:true,lang:'Python',last_push:'2024-06-26T16:20:00Z'},
+  {name:'notifications-worker',private:true,lang:'Go',last_push:'2024-06-25T11:00:00Z'},
+  {name:'web-dashboard',private:true,lang:'TypeScript',last_push:'2024-06-29T08:15:00Z'},
+  {name:'mobile-app',private:true,lang:'Kotlin',last_push:'2024-06-20T13:40:00Z'},
+  {name:'docs-site',private:false,lang:'MDX',last_push:'2024-06-18T10:00:00Z'},
+  {name:'legacy-billing',private:true,lang:'Ruby',last_push:'2024-05-30T17:00:00Z'},
+];
+function getMonitored(){try{const v=JSON.parse(localStorage.getItem('aperia-monitored'));if(Array.isArray(v))return v;}catch(e){}return ['payments-api','auth-service','user-service'];}
+function setMonitored(a){localStorage.setItem('aperia-monitored',JSON.stringify(a));}
+function ghInstalledAt(){return localStorage.getItem('aperia-gh-installed')||'2024-06-25T09:00:00Z';}
+
+/* Repo-selector working state (shared by onboarding step 2 and manage mode) */
+let repoDraft=[];
+let repoSearchQ='';
+let repoSelMode='onboarding';
+function repoRowHtml(rp){
+  const on=repoDraft.includes(rp.name);
+  return `<button class="repo-row" data-repo="${rp.name}" onclick="repoToggle('${rp.name}')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-radius:8px;background:transparent;border:1px solid transparent;cursor:pointer;text-align:left;transition:background .1s;">
+    <span style="display:flex;align-items:center;gap:11px;min-width:0;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="8" r="2.3"/><path d="M6 8.3v7.4M18 10.3c0 4-6 3-12 5"/></svg>
+      <span style="min-width:0;">
+        <span style="font-size:13.5px;font-weight:500;color:#f2f2f2;display:block;">${GH_ORG}/${rp.name}</span>
+        <span style="display:flex;align-items:center;gap:8px;margin-top:2px;font-size:11px;color:#707070;">
+          <span style="display:inline-flex;align-items:center;gap:3px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>${rp.private?'Privado':'Público'}</span>
+          <span>·</span><span>${rp.lang}</span><span>·</span><span>push ${timeAgo(rp.last_push)}</span>
+        </span>
+      </span>
+    </span>
+    <span class="repo-sw" style="width:36px;height:20px;border-radius:100px;background:${on?'#c22f3d':'#2e2f31'};position:relative;flex-shrink:0;transition:background .15s;"><span style="position:absolute;top:2px;left:${on?'18px':'2px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;"></span></span>
+  </button>`;
+}
+function repoListHtml(){
+  const q=repoSearchQ.toLowerCase().trim();
+  const list=INSTALLATION_REPOS.filter(r=>!q||r.name.toLowerCase().includes(q));
+  if(!list.length)return '<div style="padding:32px;text-align:center;color:#707070;font-size:13px;">Nenhum repositório corresponde à busca.</div>';
+  return list.map(repoRowHtml).join('');
+}
+function repoFooterHtml(){
+  const n=repoDraft.length,tot=INSTALLATION_REPOS.length;
+  const label=repoSelMode==='onboarding'?'Começar a monitorar':'Salvar alterações';
+  const fn=repoSelMode==='onboarding'?'finishOnboarding()':'saveRepos()';
+  const disabled=n===0;
+  return `<span style="font-size:13px;color:#a1a1a1;">${n} de ${tot} repositórios selecionados</span>
+    <button class="btn btn-md btn-primary" ${disabled?'disabled style="opacity:.45;cursor:not-allowed;" title="Selecione ao menos um repositório"':''} onclick="${disabled?'':fn}">${label}</button>`;
+}
+function repoToggle(name){const i=repoDraft.indexOf(name);if(i>=0)repoDraft.splice(i,1);else if(name!=='__noop__')repoDraft.push(name);const l=document.getElementById('repo-list');if(l)l.innerHTML=repoListHtml();const f=document.getElementById('repo-footer');if(f)f.innerHTML=repoFooterHtml();}
+function repoSelectAll(){repoDraft=INSTALLATION_REPOS.map(r=>r.name);repoToggle('__noop__');}
+function repoClearAll(){repoDraft=[];repoToggle('__noop__');}
+function repoSearch(v){repoSearchQ=v;document.getElementById('repo-list').innerHTML=repoListHtml();}
+function repoSelectorHtml(){
+  return `<div id="repo-selector" style="background:#17181a;border:1px solid #202124;border-radius:10px;overflow:hidden;">
+    <div style="padding:14px 16px;border-bottom:1px solid #202124;display:flex;align-items:center;gap:10px;">
+      <div style="position:relative;flex:1;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#707070;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/></svg>
+        <input type="text" placeholder="Buscar repositório…" oninput="repoSearch(this.value)" class="inp" style="width:100%;padding-left:32px;height:34px;"/>
+      </div>
+      <button class="chip chip-clear" onclick="repoSelectAll()">Selecionar todos</button>
+      <button class="chip chip-clear" onclick="repoClearAll()">Limpar</button>
+    </div>
+    <div id="repo-list" style="max-height:420px;overflow-y:auto;padding:6px;">${repoListHtml()}</div>
+    <div id="repo-footer" style="padding:14px 16px;border-top:1px solid #202124;display:flex;align-items:center;justify-content:space-between;gap:12px;">${repoFooterHtml()}</div>
+  </div>`;
+}
+
+/* Disconnect confirmation modal */
+function openDisconnectModal(){
+  const n=getMonitored().length;
+  const ov=document.createElement('div');
+  ov.id='gh-modal';
+  ov.style.cssText='position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px;';
+  ov.onclick=e=>{if(e.target===ov)closeModal();};
+  ov.innerHTML=`<div style="background:#17181a;border:1px solid #2e2f31;border-radius:10px;max-width:440px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;">
+    <div style="padding:20px 22px;">
+      <h3 style="font-size:16px;font-weight:600;color:#f2f2f2;margin-bottom:8px;">Desconectar GitHub</h3>
+      <p style="font-size:13px;color:#a1a1a1;line-height:1.6;">Desconectar remove o monitoramento de ${n} repositório${n===1?'':'s'}. O histórico de findings e execuções é preservado, mas novos scans param até reconectar.</p>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid #202124;display:flex;justify-content:flex-end;gap:10px;">
+      <button class="btn btn-md btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-md btn-danger" onclick="confirmDisconnect()">Desconectar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+function closeModal(){const m=document.getElementById('gh-modal');if(m)m.remove();}
+function confirmDisconnect(){localStorage.removeItem('aperia-connected');appConnected=false;onboardingStep=1;closeModal();navigate('home');}
+function saveRepos(){setMonitored(repoDraft.slice());navigate('integrations');}
+
+const INTEGRATIONS = [
+  {id:'trufflehog',name:'TruffleHog',desc:'Secret scanning em commits e diff',tier:'T1',status:'operational',last_run:'2024-06-29T14:24:00Z',findings_total:2,version:'3.67.2'},
+  {id:'semgrep',name:'Semgrep',desc:'SAST — análise estática de código',tier:'T1+T2',status:'operational',last_run:'2024-06-29T14:28:00Z',findings_total:5,version:'1.74.0'},
+  {id:'trivy',name:'Trivy',desc:'SCA — CVEs em dependências e containers',tier:'T2',status:'operational',last_run:'2024-06-29T14:26:00Z',findings_total:2,version:'0.52.0'},
+  {id:'prowler',name:'Prowler',desc:'Cloud security posture (AWS/GCP/Azure)',tier:'T2',status:'operational',last_run:'2024-06-29T14:27:00Z',findings_total:1,version:'4.2.1'},
+  {id:'zap',name:'OWASP ZAP',desc:'DAST — testes de segurança dinâmicos',tier:'T3',status:'operational',last_run:'2024-06-28T10:12:00Z',findings_total:1,version:'2.14.0'},
+  {id:'opencti',name:'OpenCTI',desc:'Threat intelligence contextual',tier:'T3',status:'degraded',last_run:'2024-06-27T08:00:00Z',findings_total:0,version:'5.12.4',impact:'Enriquecimento de threat intel indisponível — attack paths sem contexto CTI'},
+  {id:'caldera',name:'Caldera',desc:'Adversary simulation (MITRE ATT&CK)',tier:'T3',status:'operational',last_run:'2024-06-28T10:15:00Z',findings_total:0,version:'5.0.0'},
+  {id:'claude',name:'Claude Sonnet',desc:'Raciocínio de IA — cadeia de eventos e attack path',tier:'T2+T3',status:'operational',last_run:'2024-06-29T14:35:00Z',findings_total:null,version:'claude-sonnet-4-5'},
+];
+
+/* ═══════════════════════ HELPERS ═══════════════════════ */
+const SEV_ORDER = {critical:5,high:4,medium:3,low:2,info:1};
+const STATUS_PT = {operational:'Operational',degraded:'Degraded',offline:'Offline'};
+const REM_STATUS_PT = {suggested:'Suggested',approved:'Approved',rejected:'Rejected',merged:'Merged'};
+const SEV_COLORS = {critical:'#ff2d3d',high:'#ff6a3d',medium:'#f5a524',low:'#f5d524',info:'#4aa3ff',safe:'#2ecc8b'};
+function sevColor(s){return SEV_COLORS[s]||'#a1a1a1';}
+function hexA(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;}
+/* risk-score band on new palette: >700 critical, 400-700 medium/amber, <400 safe/green */
+function riskColor(score){return score>700?SEV_COLORS.critical:score>=400?SEV_COLORS.medium:SEV_COLORS.safe;}
+function sevBadge(s){return `<span class="sev sev-${s} sev-fx">${s}</span>`;}
+function sortArrow(col){
+  if(findingsSort.col!==col)return '';
+  const up=findingsSort.dir==='asc';
+  return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;color:#c22f3d;">${up?'<path d="M6 15l6-6 6 6"/>':'<path d="M6 9l6 6 6-6"/>'}</svg>`;
+}
+function timeAgo(iso){
+  const d=new Date(iso),n=new Date('2024-06-29T16:00:00Z'),diff=n-d,m=Math.floor(diff/60000),h=Math.floor(m/60),dy=Math.floor(h/24);
+  if(dy>0)return 'há '+dy+'d';if(h>0)return 'há '+h+'h';return 'há '+Math.max(m,0)+'m';
+}
+function fmtAbs(iso){const d=new Date(iso),p=x=>String(x).padStart(2,'0');return `${p(d.getUTCDate())}/${p(d.getUTCMonth()+1)}/${d.getUTCFullYear()} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} (UTC)`;}
+function timeTag(iso,cls){return `<span class="${cls||''}" title="${fmtAbs(iso)}" style="cursor:help;">${timeAgo(iso)}</span>`;}
+function tierStatusBadge(st,running){
+  if(!st)return `<span class="sev st-skipped" style="opacity:.4">—</span>`;
+  const lbl={done:'done',running:'running',failed:'failed',skipped:'skip',queued:'queued'}[st]||st;
+  const cls='sev st-'+st;
+  const spin=st==='running'?`<svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-9-9"/></svg>`:'';
+  return `<span class="${cls}" style="gap:4px">${spin}${lbl}</span>`;
+}
+function shortSha(sha){return sha.slice(0,8);}
+function critColor(c){return sevColor(c);}
+function sourceIcon(src){
+  const icons={trufflehog:'🔍',semgrep:'⚡',trivy:'📦',prowler:'☁️',zap:'🌐'};
+  return icons[src]||'🔧';
+}
+
+/* ═══ Tier stepper — scan instrument ═══ */
+const TIER_META=[
+  {name:'Tier 1',desc:'Fast Feedback',sla:'≤3min',scanners:'TruffleHog · Semgrep changed-files'},
+  {name:'Tier 2',desc:'Standard Analysis',sla:'≤10min',scanners:'Semgrep full · Trivy SCA · Prowler'},
+  {name:'Tier 3',desc:'Deep Heuristic',sla:'30-60min',scanners:'ZAP DAST · Claude attack-path'},
+];
+function tierIconSvg(st){
+  if(st==='done')return `<span style="position:relative;width:20px;height:20px;flex-shrink:0;display:grid;place-items:center;"><span class="node-ring" style="position:absolute;inset:-4px;border-radius:50%;border:1.5px solid rgba(34,197,94,.4);"></span><span style="width:20px;height:20px;border-radius:50%;background:rgba(34,197,94,.12);border:1.5px solid #22c55e;display:grid;place-items:center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 7"/></svg></span></span>`;
+  if(st==='running')return `<span style="position:relative;width:20px;height:20px;flex-shrink:0;"><span class="node-pulse" style="position:absolute;inset:3px;border-radius:50%;background:#3b82f6;"></span><svg class="spin-15" width="20" height="20" viewBox="0 0 20 20" fill="none" style="position:absolute;inset:0;"><circle cx="10" cy="10" r="9" stroke="rgba(59,130,246,.25)" stroke-width="1.5"/><path d="M10 1a9 9 0 016.36 2.64" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round"/></svg></span>`;
+  if(st==='failed')return `<span style="position:relative;width:20px;height:20px;flex-shrink:0;display:grid;place-items:center;"><span style="position:absolute;inset:-4px;border-radius:50%;border:1.5px solid rgba(239,68,68,.3);"></span><span style="width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.5);display:grid;place-items:center;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></span>`;
+  if(st==='skipped')return `<span style="width:20px;height:20px;border-radius:50%;border:1px solid #4a4b4d;display:grid;place-items:center;flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#707070" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></span>`;
+  return `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;"><circle cx="10" cy="10" r="9" stroke="#4a4b4d" stroke-width="1.2" stroke-dasharray="3 3"/></svg>`;
+}
+function tierStage(i,st,dur){
+  const t=TIER_META[i];
+  const on=st&&st!=='skipped';
+  return `<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:help;" title="${t.name} — ${t.scanners}">${tierIconSvg(st)}<div><div style="font-size:12px;font-weight:600;color:${on?'#f2f2f2':'#707070'};line-height:1.2;white-space:nowrap;">${t.name} · ${t.desc}</div><div class="mono" style="font-size:10px;color:#707070;line-height:1.5;white-space:nowrap;">${dur?dur+' · ':''}${t.sla}</div></div></div>`;
+}
+function tierGate(n,j){
+  const prev=n===1?j.tier1_status:j.tier2_status;
+  const next=n===1?j.tier2_status:j.tier3_status;
+  const blocked=j.blocked_at_tier===n;
+  const passed=!blocked&&prev==='done'&&!!next;
+  const seg=prev==='done'&&next==='running'?'flow':prev==='done'&&next?'solid':'idle';
+  const lineStyle=seg==='solid'?'background:rgba(34,197,94,.5);':seg==='flow'?'':'background:#26272a;';
+  const lineCls=seg==='flow'?' class="conn-flow"':'';
+  const dBg=blocked?'#ef4444':passed?'rgba(34,197,94,.6)':'#17181a';
+  const dBd=blocked?'#ef4444':passed?'rgba(34,197,94,.6)':'#4a4b4d';
+  const gateRules={1:'secret verificado bloqueia o scan',2:'só low/info finaliza sem Tier 3'};
+  const tip=blocked?`Gate ${n} · Bloqueado — ${gateRules[n]}`:passed?`Gate ${n} · Aprovado — ${n===1?'sem secrets verificados':'análise profunda liberada'}`:`Gate ${n} · ${gateRules[n]}`;
+  return `<div style="flex:1;display:flex;align-items:center;min-width:20px;" title="${tip}"><div${lineCls} style="flex:1;height:1.5px;${lineStyle}"></div><div style="width:9px;height:9px;transform:rotate(45deg);background:${dBg};border:1.5px solid ${dBd};margin:0 3px;flex-shrink:0;cursor:help;"></div><div${lineCls} style="flex:1;height:1.5px;${lineStyle}"></div></div>`;
+}
+function tierStepper(j){
+  return `<div style="display:flex;align-items:center;gap:10px;">${tierStage(0,j.tier1_status,j.t1_dur)}${tierGate(1,j)}${tierStage(1,j.tier2_status,j.t2_dur)}${tierGate(2,j)}${tierStage(2,j.tier3_status,j.t3_dur)}</div>`;
+}
+function tierDot(st){
+  const c={done:'#22c55e',running:'#3b82f6',failed:'#ef4444'}[st];
+  if(!st)return '<span style="width:6px;height:6px;box-shadow:inset 0 0 0 1px #4a4b4d;flex-shrink:0;"></span>';
+  if(st==='skipped')return '<span style="width:6px;height:6px;background:#3a3b3d;flex-shrink:0;"></span>';
+  return `<span style="width:6px;height:6px;background:${c};flex-shrink:0;"></span>`;
+}
+function tierStepperCompact(j){
+  const sts=[j.tier1_status,j.tier2_status,j.tier3_status];
+  const durs=[j.t1_dur,j.t2_dur,j.t3_dur];
+  const stPt={done:'concluído',running:'em execução',failed:'falhou',skipped:'pulado',queued:'na fila'};
+  const dot=(i)=>{const st=sts[i],t=TIER_META[i];const durTxt=st==='done'&&durs[i]?` em ${durs[i]}`:'';const tip=`${t.name} · ${t.desc} · ${stPt[st]||'pendente'}${durTxt}`;return `<span title="${tip}" style="cursor:help;display:inline-flex;">${tierDot(st)}</span>`;};
+  return `<div style="display:flex;align-items:center;">${dot(0)}<span style="width:14px;border-top:1px dashed #3a3b3d;flex-shrink:0;"></span>${dot(1)}<span style="width:14px;border-top:1px dashed #3a3b3d;flex-shrink:0;"></span>${dot(2)}</div>`;
+}
+
+/* ═══ Risk score — 270° gauge ═══ */
+const GAUGE_C=207.3;
+function gaugeBand(score){
+  return score>700?{c:'#ff2d3d',t:'Crítico',g0:'#f5a524'}:score>=400?{c:'#f5a524',t:'Moderado',g0:'#f5d524'}:{c:'#2ecc8b',t:'Baixo',g0:'#2ecc8b'};
+}
+function riskScore(score){
+  if(score==null)return '';
+  const b=gaugeBand(score);
+  const off=GAUGE_C*(1-Math.min(score,1000)/1000);
+  const gid='rg'+score+'-'+Math.floor(Math.random()*1e4);
+  const ticks=[0.25,0.5,0.75].map(f=>{
+    const a=(135+270*f)*Math.PI/180;
+    const x1=60+36*Math.cos(a),y1=60+36*Math.sin(a),x2=60+39*Math.cos(a),y2=60+39*Math.sin(a);
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#707070" stroke-width="1"/>`;
+  }).join('');
+  return `<div style="text-align:center;flex-shrink:0;width:126px;">
+    <div style="position:relative;width:120px;height:112px;margin:0 auto;">
+      <svg width="120" height="120" viewBox="0 0 120 120" style="${score>700?'filter:drop-shadow(0 0 6px rgba(239,68,68,.18));':''}">
+        <defs><linearGradient id="${gid}" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="${b.g0}"/><stop offset="100%" stop-color="${b.c}"/></linearGradient></defs>
+        <path d="M28.89 91.11 A44 44 0 1 1 91.11 91.11" stroke="#202124" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path class="gauge-arc" d="M28.89 91.11 A44 44 0 1 1 91.11 91.11" stroke="url(#${gid})" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="${GAUGE_C} 999" stroke-dashoffset="${off.toFixed(1)}"/>
+        ${ticks}
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+        <div class="mono" style="font-size:21px;font-weight:600;color:#f2f2f2;font-variant-numeric:tabular-nums;line-height:1;" data-count-to="${score}">${score}</div>
+      </div>
+      <div style="position:absolute;left:0;right:0;top:50%;margin-top:12px;text-align:center;">
+        <div class="mono" style="font-size:9.5px;color:#707070;line-height:1.2;">de 1000</div>
+        <div style="font-size:11px;font-weight:600;color:${b.c};line-height:1.2;">${b.t}</div>
+      </div>
+    </div>
+    <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#707070;margin-top:-6px;">Risk Score</div>
+  </div>`;
+}
+function miniGauge(score){
+  if(score==null)return '';
+  const b=gaugeBand(score);
+  const C=28.3,off=C*(1-Math.min(score,1000)/1000);
+  return `<svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink:0;"><path d="M3.76 12.24 A6 6 0 1 1 12.24 12.24" stroke="#26272a" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M3.76 12.24 A6 6 0 1 1 12.24 12.24" stroke="${b.c}" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="${C} 99" stroke-dashoffset="${off.toFixed(1)}"/></svg>`;
+}
+/* ── Início-scoped tech-brutalist variants (Último Scan card) ── */
+function tbTierMarker(st){
+  const c={done:'#22c55e',running:'#3b82f6',failed:'#ef4444',skipped:'#5c5c5c'}[st];
+  if(!st)return `<span class="tbmk" style="background:#141517;"><span style="width:5px;height:5px;background:#2e2f31;"></span></span>`;
+  const glyph=st==='done'?'<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#0d0d0d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 7"/></svg>':st==='failed'?'<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0d0d0d" stroke-width="4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>':st==='skipped'?'<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0d0d0d" stroke-width="4" stroke-linecap="round"><path d="M5 12h14"/></svg>':st==='running'?'<svg class="spin-15" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#0d0d0d" stroke-width="3.5" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.5"/></svg>':'';
+  return `<span class="tbmk" style="background:${c};">${glyph}</span>`;
+}
+function tierStageTB(i,st,dur){
+  const t=TIER_META[i];const on=st&&st!=='skipped';
+  return `<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:help;" title="${t.name} · ${t.desc} — ${t.scanners}">${tbTierMarker(st)}<div style="min-width:0;"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:${on?'#e6e6e6':'#5c5c5c'};line-height:1.25;white-space:nowrap;">${t.name}</div><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#5c5c5c;line-height:1.5;white-space:nowrap;">${dur?dur+' · ':''}${t.sla}</div></div></div>`;
+}
+function tbTierGate(n,j){
+  const prev=n===1?j.tier1_status:j.tier2_status;
+  const next=n===1?j.tier2_status:j.tier3_status;
+  const blocked=j.blocked_at_tier===n;
+  const active=prev==='done'&&!!next;
+  const line=blocked?'#ef4444':active?'rgba(34,197,94,.45)':'#2e2f31';
+  const dcol=blocked?'#ef4444':active?'rgba(34,197,94,.6)':'#3a3b3d';
+  return `<div style="flex:1;display:flex;align-items:center;min-width:24px;gap:4px;"><div style="flex:1;border-top:1px dashed ${line};"></div><span style="width:7px;height:7px;transform:rotate(45deg);background:${dcol};flex-shrink:0;"></span><div style="flex:1;border-top:1px dashed ${line};"></div></div>`;
+}
+function tierStepperTB(j){
+  return `<div style="display:flex;align-items:center;gap:6px;">${tierStageTB(0,j.tier1_status,j.t1_dur)}${tbTierGate(1,j)}${tierStageTB(1,j.tier2_status,j.t2_dur)}${tbTierGate(2,j)}${tierStageTB(2,j.tier3_status,j.t3_dur)}</div>`;
+}
+function riskScoreTB(score){
+  if(score==null)return '';
+  const b=gaugeBand(score);
+  const off=GAUGE_C*(1-Math.min(score,1000)/1000);
+  const gid='rgtb'+score+'-'+Math.floor(Math.random()*1e4);
+  const ticks=[0.25,0.5,0.75].map(f=>{const a=(135+270*f)*Math.PI/180;const x1=60+36*Math.cos(a),y1=60+36*Math.sin(a),x2=60+39*Math.cos(a),y2=60+39*Math.sin(a);return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#707070" stroke-width="1"/>`;}).join('');
+  const glow=score>700?'text-shadow:0 0 14px rgba(255,45,61,.4);':'';
+  return `<div style="text-align:center;flex-shrink:0;width:126px;">
+    <div style="position:relative;width:120px;height:112px;margin:0 auto;">
+      <svg width="120" height="120" viewBox="0 0 120 120" style="${score>700?'filter:drop-shadow(0 0 6px rgba(255,45,61,.2));':''}">
+        <defs><linearGradient id="${gid}" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="${b.g0}"/><stop offset="100%" stop-color="${b.c}"/></linearGradient></defs>
+        <path d="M28.89 91.11 A44 44 0 1 1 91.11 91.11" stroke="#202124" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path class="gauge-arc" d="M28.89 91.11 A44 44 0 1 1 91.11 91.11" stroke="url(#${gid})" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="${GAUGE_C} 999" stroke-dashoffset="${off.toFixed(1)}"/>
+        ${ticks}
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+        <div class="mono" style="font-size:24px;font-weight:700;color:${b.c};font-variant-numeric:tabular-nums;line-height:1;${glow}" data-count-to="${score}">${score}</div>
+      </div>
+      <div style="position:absolute;left:0;right:0;top:50%;margin-top:11px;text-align:center;">
+        <div class="mono" style="font-size:9.5px;color:#707070;line-height:1.3;">de 1000</div>
+        <div style="font-size:11px;font-weight:600;color:${b.c};line-height:1.3;">${b.t}</div>
+      </div>
+    </div>
+    <div style="font-size:11px;letter-spacing:.08em;color:#8a8a8a;margin-top:-4px;">Risk Score</div>
+  </div>`;
+}
+function initCountUps(){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  document.querySelectorAll('[data-count-to]').forEach(el=>{
+    if(el.dataset.counted)return;
+    el.dataset.counted='1';
+    const target=+el.dataset.countTo,t0=performance.now();
+    function tick(t){
+      const p=Math.min((t-t0)/800,1),e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(target*e);
+      if(p<1)requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+/* ═══════════════════════ ROUTER ═══════════════════════ */
+let currentScreen='home';
+let appConnected=localStorage.getItem('aperia-connected')==='true';
+const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',remediations:'Remediações',attack:'AI Insights',inventory:'Inventário',integrations:'Integrações',team:'Time'};
+
+function navigate(screen){
+  const dataScreens=['findings','inventory','pipelines','attack','remediations'];
+  if(!appConnected&&dataScreens.includes(screen))return; /* locked during onboarding */
+  currentScreen=screen;
+  document.querySelectorAll('.sb-item').forEach(a=>{
+    a.classList.toggle('active',a.dataset.screen===screen);
+  });
+  syncSidebarState();
+  document.getElementById('breadcrumb').textContent=SCREEN_LABELS[screen]||screen;
+  const main=document.getElementById('app-main');
+  main.innerHTML='';
+  const screens={home:renderHome,findings:renderFindings,pipelines:renderPipelines,remediations:renderRemediations,attack:renderAttack,inventory:renderInventory,integrations:renderIntegrations,team:renderTeam,repos:renderReposManage};
+  if(screens[screen]) main.innerHTML=screens[screen]();
+  bindScreenEvents(screen);
+  initCountUps();
+  if(screen==='attack')apObserve();
+  localStorage.setItem('aperia-screen',screen);
+}
+/* During onboarding (no GitHub connection) data tabs have nothing to show — disable them */
+function syncSidebarState(){
+  const dataScreens=['findings','inventory','pipelines','attack','remediations'];
+  const locked=!appConnected;
+  document.querySelectorAll('.sb-item').forEach(a=>{
+    if(dataScreens.includes(a.dataset.screen)) a.classList.toggle('sb-disabled',locked);
+  });
+  const bdg=document.querySelector('.sb-bdg');
+  if(bdg) bdg.style.display=locked?'none':'';
+}
+
+function bindScreenEvents(screen){
+  if(screen==='findings') bindFindingsEvents();
+  if(screen==='remediations') bindRemediationsEvents();
+  if(screen==='pipelines') startPipelinePolling();
+}
+
+/* ═══════════════════════ SCREEN: HOME ═══════════════════════ */
+let onboardingStep=1;
+function connectGitHub(){
+  onboardingStep='installing';
+  document.getElementById('app-main').innerHTML=renderHomeOnboarding();
+  setTimeout(()=>{
+    localStorage.setItem('aperia-gh-installed',new Date('2024-06-25T09:00:00Z').toISOString());
+    onboardingStep=2;
+    repoSelMode='onboarding';
+    repoDraft=['payments-api','auth-service','user-service'];
+    repoSearchQ='';
+    document.getElementById('app-main').innerHTML=renderHomeOnboarding();
+  },900);
+}
+function finishOnboarding(){
+  setMonitored(repoDraft.slice());
+  appConnected=true;
+  localStorage.setItem('aperia-connected','true');
+  onboardingStep=1;
+  navigate('home');
+}
+
+function renderHomeOnboarding(){
+  /* Etapa 2 · Selecionar repositórios */
+  if(onboardingStep===2){
+    return `<div class="page-wrap" style="max-width:760px;">
+  <div class="mb-6">
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#8b8f98;margin-bottom:10px;"><span style="color:#22c55e;">✓ Conectado</span><span style="color:#2e2f31;">—</span><span style="color:#c22f3d;">Etapa 2 de 2</span></div>
+    <h1 style="font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px;">Selecione os repositórios</h1>
+    <p style="color:#a1a1a1;font-size:14px;line-height:1.6;max-width:56ch;">A instalação concedeu acesso a ${INSTALLATION_REPOS.length} repositórios de ${GH_ORG}. Escolha quais o aperIA deve monitorar — cada PR nesses repos dispara o scan de 3 tiers.</p>
+  </div>
+  ${repoSelectorHtml()}
+</div>`;
+  }
+
+  /* Etapa 1 · Conectar */
+  const installing=onboardingStep==='installing';
+  const hasErr=onboardingStep==='error';
+  const vp=[
+    {t:'Scans em 3 Tiers: Feedback em até 3 minutos.',i:'<path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>'},
+    {t:'Attack Paths com raciocínio de IA e MITRE ATT&CK.',i:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/>'},
+    {t:'Patches sugeridos como code suggestions, você aprova no PR.',i:'<path d="M9 18l-6-6 6-6"/><path d="M15 6l6 6-6 6"/>'},
+  ].map(v=>`<div style="display:flex;align-items:flex-start;gap:12px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c22f3d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;">${v.i}</svg>
+      <span style="font-size:14px;color:#d0d0d0;line-height:1.45;">${v.t}</span>
+    </div>`).join('');
+
+  const btnInner=installing
+    ? '<svg class="spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 11-9-9"/></svg>Redirecionando ao GitHub…'
+    : '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="width:25px;height:25px;"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2c-3.2.69-3.88-1.36-3.88-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.79 2.74 1.27 3.41.97.1-.75.41-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.1 11.1 0 015.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.4-5.25 5.68.42.36.79 1.07.79 2.16v3.2c0 .31.21.66.8.55C20.21 21.38 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>Conectar GitHub';
+
+  const perms=[
+    {p:'Leitura de código e metadados',r:'para executar os scans',i:'<path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>'},
+    {p:'Leitura e escrita em pull requests',r:'para comentar análises e sugerir patches',i:'<circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 9v6a3 3 0 003 3h6"/>'},
+    {p:'Checks',r:'para bloquear merge quando um secret verificado é encontrado',i:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>'},
+  ].map(x=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #202124;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;">${x.i}</svg>
+      <span style="font-size:12.5px;color:#d0d0d0;line-height:1.5;"><span style="font-weight:600;color:#f2f2f2;">${x.p}</span> — ${x.r}</span>
+    </div>`).join('');
+
+  const trust=`<div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#a1a1a1;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>GitHub App</span>
+      <span style="font-size:12px;color:#a1a1a1;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l5 5L20 7"/></svg>Só leitura de código</span>
+      <span style="font-size:12px;color:#a1a1a1;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 0115-6.7L21 8M21 3v5h-5"/></svg>Revogável</span>
+    </div>`;
+
+  const stepper=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:26px;">      <span style="display:flex;align-items:center;gap:7px;"><span style="width:9px;height:9px;border-radius:50%;background:#c22f3d;"></span><span style="font-size:12px;font-weight:600;color:#f2f2f2;">Conectar GitHub</span></span>
+      <span style="width:28px;height:1px;background:#2e2f31;"></span>
+      <span style="display:flex;align-items:center;gap:7px;"><span style="width:9px;height:9px;border-radius:50%;border:1.5px solid #4a4b4d;"></span><span style="font-size:12px;color:#707070;">Selecionar Repositórios</span></span>
+    </div>`;
+
+  return `<div class="page-wrap" style="max-width:1080px;min-height:calc(100vh - 56px);display:flex;flex-direction:column;justify-content:center;">
+  <div style="display:grid;grid-template-columns:minmax(0,55fr) minmax(0,45fr);gap:56px;align-items:center;">
+    <!-- Left: proposta + ação -->
+    <div>
+      <h1 style="font-size:38px;font-weight:600;letter-spacing:-.028em;line-height:1.05;margin-bottom:10px;">Bem-vindo ao <span style="color:#f2f2f2;">aper</span><span style="color:#c22f3d;">IA</span></h1>
+      <p style="color:#a1a1a1;font-size:16px;line-height:1.5;margin-bottom:28px;">Segurança ofensiva com IA no seu código.</p>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:32px;">${vp}</div>
+
+      ${hasErr?`<div style="display:flex;align-items:center;gap:10px;background:#17181a;border:1px solid rgba(239,68,68,.35);border-left:3px solid #ef4444;border-radius:6px;padding:11px 14px;margin-bottom:16px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><span style="font-size:13px;color:#f2f2f2;flex:1;">A instalação não foi concluída.</span><button class="btn btn-sm btn-ghost" onclick="connectGitHub()">Tentar novamente</button></div>`:''}
+
+      <div>
+        <button class="btn btn-primary" onclick="connectGitHub()" ${installing?'disabled':''} style="height:46px;padding:0 22px;font-size:15px;gap:9px;${installing?'opacity:.7;cursor:wait;':''}">${btnInner}</button>
+        <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap;"></div>
+        <div style="margin-top:18px;">
+          <button id="perm-toggle" onclick="togglePerms()" style="background:none;border:none;padding:0;cursor:pointer;font:inherit;color:#539fe5;font-size:13px;display:flex;align-items:center;gap:5px;">
+            <svg id="perm-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;"><path d="M9 6l6 6-6 6"/></svg>
+            Quais permissões o aperIA solicita?
+          </button>
+          <div id="perm-body" style="display:none;margin-top:12px;padding:4px 14px 10px;background:#141517;border:1px solid #202124;border-radius:8px;">${perms}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: mascote aperÍA recortado (desenho isolado, sem fundo) -->
+    <div style="position:relative;min-height:460px;display:flex;align-items:center;justify-content:flex-start;margin-left:-48px;" aria-hidden="true">
+      <div style="position:relative;width:92%;max-width:490px;">
+        <img src="assets/mascote-gato.png" alt="" style="position:relative;width:100%;height:auto;display:block;animation:catBob 5.5s ease-in-out infinite;filter:drop-shadow(0 30px 46px rgba(0,0,0,.55));"/>
+      </div>
+      <img src="assets/mascote-gato-glow.png" alt="" style="position:absolute;inset:0;width:376px;height:368px;display:block;pointer-events:none;mix-blend-mode:screen;opacity:.2;animation:catBob 5.5s ease-in-out infinite,breatheEmit 3.8s ease-in-out infinite;filter:drop-shadow(0 0 6px rgba(255,77,84,.55));left:17px;top:40px;"/>
+    </div>
+  </div>
+</div>`;
+}
+function togglePerms(){
+  const b=document.getElementById('perm-body'),c=document.getElementById('perm-chev');
+  if(!b)return;
+  const open=b.style.display!=='none';
+  b.style.display=open?'none':'block';
+  if(c)c.style.transform=open?'rotate(0deg)':'rotate(90deg)';
+}
+
+function renderHome(){
+  if(!appConnected) return renderHomeOnboarding();
+  if(getMonitored().length===0) return `<div class="page-wrap"><div class="mb-6"><h1 class="text-[24px] font-bold">Postura de Segurança</h1></div><div class="stat-card">${emptyState({title:'Nenhum repositório monitorado',body:'Você desmarcou todos os repositórios. Selecione ao menos um para o aperIA voltar a escanear e popular o dashboard.',action:`<button class="btn btn-md btn-primary" onclick="openRepoManager()">Selecionar repositórios</button>`})}</div></div>`;
+  const critCount=FINDINGS.filter(f=>f.severity==='critical').length;
+  const highCount=FINDINGS.filter(f=>f.severity==='high').length;
+  const openRem=REMEDIATIONS.filter(r=>r.status==='suggested').length;
+  const lastJob=SCAN_JOBS[0];
+  const sevCounts={critical:critCount,high:highCount,medium:FINDINGS.filter(f=>f.severity==='medium').length,low:FINDINGS.filter(f=>f.severity==='low').length,info:FINDINGS.filter(f=>f.severity==='info').length};
+  const total=FINDINGS.length;
+
+  const lastJobHtml=`
+  <div class="stat-card col-8 card-link" style="padding:0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;" onclick="openInsights('${lastJob.id}')">
+    <div style="padding:14px 20px;border-bottom:1px solid #202124;display:flex;align-items:center;justify-content:space-between;"><h2 class="text-[16px] font-bold">Último Scan</h2><span class="tb-idx">05</span></div>
+    <div style="padding:20px;flex:1;display:flex;gap:24px;align-items:stretch;">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:18px;">
+        <div>
+          <div class="text-sm font-medium text-fg lnk">${lastJob.repo_full_name} · PR #${lastJob.pr_number}</div>
+          <div class="mt-1" style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#5c5c5c;">COMMIT <span style="color:#b8555f;">${shortSha(lastJob.commit_sha)}</span> · ${timeTag(lastJob.created_at)}</div>
+        </div>
+        <div style="max-width:700px;">${tierStepperTB(lastJob)}</div>
+      </div>
+      <div style="display:flex;align-items:center;flex-shrink:0;border-left:1px solid #202124;padding-left:20px;">${riskScoreTB(lastJob.final_risk_score)}</div>
+    </div>
+  </div>`;
+
+  const barHtml=Object.entries(sevCounts).map(([s,n])=>{
+    const pct=Math.round(n/total*100);
+    return n>0?`<div style="flex:${n};background:${sevColor(s)};height:100%;min-width:2px;" title="${s}: ${n}"></div>`:'';
+  }).join('');
+
+  const recentRows=SCAN_JOBS.slice(0,5).map(j=>`
+  <div class="tbl-row sr-row" style="grid-template-columns:1fr 84px 96px 24px;gap:16px;align-items:center;" onclick="openInsights('${j.id}')">
+    <div style="min-width:0;">
+      <div class="text-sm font-medium text-fg lnk">${j.repo_full_name} <span class="mono text-fg-dim" style="font-size:12px;">#${j.pr_number}</span></div>
+      <div class="mt-0.5" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5c5c5c;">${shortSha(j.commit_sha)} · ${timeTag(j.created_at)}</div>
+    </div>
+    <div style="display:flex;justify-content:center;">${tierStepperCompact(j)}</div>
+    <div class="flex items-center gap-1.5 justify-end">${j.final_risk_score?`${miniGauge(j.final_risk_score)}<span class="tb-num" style="font-size:16px;color:${riskColor(j.final_risk_score)}">${j.final_risk_score}</span>`:`<span class="tb-num" style="font-size:15px;color:#3a3b3d;">–</span>`}</div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-fg-dim" style="justify-self:end;"><path d="M9 6l6 6-6 6"/></svg>
+  </div>`).join('');
+
+  return `<div class="page-wrap">
+  <div class="mb-6">
+    <h1 class="text-[24px] font-bold">Postura de Segurança</h1>
+    <p class="text-fg-mute text-[13.5px] mt-1">${GH_ORG} · ${getMonitored().length} ${getMonitored().length===1?'repositório':'repositórios'} · última análise há 2h</p>
+  </div>
+
+  <div class="stat-card mb-6" style="padding:0;overflow:hidden;">
+    <div style="padding:14px 20px;border-bottom:1px solid #202124;"><h2 class="text-[16px] font-bold">Visão Geral</h2></div>
+    <div class="ov-grid">
+      <div class="ov-tile" style="--ov-accent:#d81f2a;" onclick="goFindings()">
+        <span class="ov-idx">01</span>
+        <div class="ov-mark" style="background:#f2f2f2;"></div>
+        <div class="ov-lbl">Total de Findings</div>
+        <div class="ov-num" data-count-to="${total}">${total}</div>
+        <div class="ov-sub">em ${getMonitored().length} ${getMonitored().length===1?'repositório':'repositórios'}</div>
+      </div>
+      <div class="ov-tile" style="--ov-accent:var(--sev-critical);" onclick="goFindings({sev:'critical'})">
+        <span class="ov-idx">02</span>
+        <div class="ov-mark"></div>
+        <div class="ov-lbl">Critical</div>
+        <div class="ov-num is-crit" data-count-to="${critCount}">${critCount}</div>
+        <div class="ov-sub">requerem ação imediata</div>
+      </div>
+      <div class="ov-tile" style="--ov-accent:var(--sev-high);" onclick="goFindings({sev:'high'})">
+        <span class="ov-idx">03</span>
+        <div class="ov-mark"></div>
+        <div class="ov-lbl">High</div>
+        <div class="ov-num is-high" data-count-to="${highCount}">${highCount}</div>
+        <div class="ov-sub">alta prioridade</div>
+      </div>
+      <div class="ov-tile" style="--ov-accent:#d81f2a;" onclick="navigate('remediations')">
+        <span class="ov-idx">04</span>
+        <div class="ov-mark" style="background:#d81f2a;"></div>
+        <div class="ov-lbl">Remediações</div>
+        <div class="ov-num" data-count-to="${openRem}">${openRem}</div>
+        <div class="ov-sub">aguardam aprovação</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row-12 mb-6">
+    ${lastJobHtml}
+    <div class="stat-card col-4" style="padding:0;overflow:hidden;display:flex;flex-direction:column;">
+      <div style="padding:14px 20px;border-bottom:1px solid #202124;display:flex;align-items:center;justify-content:space-between;"><h2 class="text-[16px] font-bold">Distribuição por Severidade</h2><span class="tb-idx">06</span></div>
+      <div style="padding:16px 20px;flex:1;display:flex;flex-direction:column;">
+      <div class="flex mb-3" style="height:6px;gap:2px;">${barHtml}</div>
+      <div class="flex flex-col" style="flex:1;justify-content:space-evenly;">
+        ${Object.entries(sevCounts).map(([s,n])=>`<div class="sev-row flex items-center justify-between" style="padding:5px 0;border-bottom:1px solid #202124;cursor:pointer;" onclick="goFindings({sev:'${s}'})">${sevBadge(s)}<span class="mono" style="font-size:13px;font-weight:600;color:#e6e6e6;font-variant-numeric:tabular-nums;">${n}</span></div>`).join('')}
+      </div>
+      <div class="flex items-center justify-between" style="padding-top:11px;margin-top:2px;border-top:1px solid #202124;">
+        <span class="text-[13px] font-semibold text-fg">Total</span>
+        <span class="mono" style="font-size:15px;font-weight:700;color:#f2f2f2;font-variant-numeric:tabular-nums;">${total}</span>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-card" style="padding:0;overflow:hidden;">
+    <div class="flex items-center justify-between" style="padding:12px 20px;border-bottom:1px solid #202124;">
+      <div class="flex items-center gap-2.5"><h2 class="text-[16px] font-bold">Scans Recentes</h2><span class="tb-idx">07</span></div>
+      <button class="btn btn-sm btn-ghost" onclick="navigate('pipelines')">Ver todos →</button>
+    </div>
+    ${recentRows}
+  </div>
+</div>`;
+}
+
+/* ═══════════════════════ SCREEN: FINDINGS ═══════════════════════ */
+let findingsFilter={sev:null,src:null,tier:null,q:''};
+let findingsSort={col:'sev',dir:'desc'};
+function setFindingSort(col){
+  if(findingsSort.col===col)findingsSort.dir=findingsSort.dir==='asc'?'desc':'asc';
+  else findingsSort={col,dir:col==='sev'?'desc':'asc'};
+  document.getElementById('app-main').innerHTML=renderFindings(findingsFilter);
+  bindFindingsEvents();
+}
+function goFindings(f){findingsFilter={sev:null,src:null,tier:null,q:'',...(f||{})};navigate('findings');}
+function openChainFinding(id){const job=currentExecId?SCAN_JOBS.find(j=>j.id===currentExecId):SCAN_JOBS[0];const ins=job&&INSIGHTS[job.id];window.currentFindingIds=ins&&ins.attack_path?ins.attack_path.map(s=>s.finding_ids[0]).filter(Boolean):[id];openFinding(id);}
+
+function renderFindings(filter){
+  const f=filter||findingsFilter;
+  let list=FINDINGS.slice();
+  if(f.sev)list=list.filter(x=>x.severity===f.sev);
+  if(f.src)list=list.filter(x=>x.source===f.src);
+  if(f.tier)list=list.filter(x=>x.tier===+f.tier);
+  if(f.q)list=list.filter(x=>x.title.toLowerCase().includes(f.q)||x.file_path?.toLowerCase().includes(f.q)||x.cve_id?.toLowerCase().includes(f.q));
+  const dir=findingsSort.dir==='asc'?1:-1;
+  list.sort((a,b)=>{
+    let av,bv;
+    if(findingsSort.col==='tier'){av=a.tier;bv=b.tier;}
+    else if(findingsSort.col==='when'){av=new Date(a.created_at).getTime();bv=new Date(b.created_at).getTime();}
+    else {av=SEV_ORDER[a.severity]||0;bv=SEV_ORDER[b.severity]||0;}
+    return (av-bv)*dir;
+  });
+
+  const srcs=['trufflehog','semgrep','trivy','prowler','zap'];
+  window.currentFindingIds=list.map(x=>x.id);
+  const sevChips=['critical','high','medium','low','info'].map(s=>{const on=f.sev===s;const c=sevColor(s);const style=on?`--c:${c};background:${hexA(c,.12)};border-color:${hexA(c,.4)};color:${c};`:`--c:${c};`;return `<button class="chip${on?' on':''}" style="${style}" onclick="setFindingFilter('sev','${s}')"><span class="chip-dot" style="background:${c};"></span>${s}${on?'<span class="chip-x">\u00d7</span>':''}</button>`;}).join('');
+  const srcChips=srcs.map(s=>`<button class="chip${f.src===s?' on':''}" onclick="setFindingFilter('src','${s}')">${s}${f.src===s?'<span class="chip-x">\u00d7</span>':''}</button>`).join('');
+  const tierChips=[1,2,3].map(t=>`<button class="chip${f.tier===String(t)?' on':''}" onclick="setFindingFilter('tier','${t}')">Tier ${t}${f.tier===String(t)?'<span class="chip-x">\u00d7</span>':''}</button>`).join('');
+
+  const rows=list.map(fn=>`
+  <tr class="rowlink" onclick="openFinding('${fn.id}')">
+    <td>${sevBadge(fn.severity)}</td>
+    <td class="cl" style="overflow:hidden;">
+      <div class="font-medium text-fg truncate">${fn.title}${fn.secret_verified?`<span class="mono text-[9px] px-1.5 py-0.5 ml-1.5" style="color:#ff2d3d;background:rgba(255,45,61,.1);border:1px solid rgba(255,45,61,.4);border-radius:999px;">Verified</span>`:''}</div>
+      <div class="mono text-[10px] text-fg-dim mt-0.5 truncate">${fn.file_path||'—'}:${fn.line_number||'?'}</div>
+    </td>
+    <td><span class="mono text-[10px] text-fg-mute">${fn.source}</span></td>
+    <td style="overflow:hidden;"><span class="mono text-[10px] text-fg-dim">${fn.cve_id||fn.cwe_id||'—'}</span></td>
+    <td><span class="mono text-[10px] px-1.5 py-0.5 rounded" style="background:#1f2023;color:#a1a1a1;">T${fn.tier}</span></td>
+    <td>${timeTag(fn.created_at,"text-[12px] text-fg-dim")}</td>
+  </tr>`).join('');
+
+  return `<div class="page-wrap">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-[24px] font-bold tracking-tight">Findings <span class="text-[14px] text-fg-mute font-normal">${list.length} de ${FINDINGS.length} exibidos</span></h1>
+      <p class="text-fg-dim text-[13px] mt-1">Vulnerabilidades detectadas pelos scanners — ordenadas por severidade</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 flex-wrap mb-4">
+    <input class="inp" style="width:240px;" placeholder="Buscar título, arquivo, CVE…" value="${f.q}" oninput="setFindingFilter('q',this.value)"/>
+    <div class="w-px h-6 bg-line mx-1"></div>
+    ${sevChips}
+    <div class="w-px h-6 bg-line mx-1"></div>
+    ${srcChips}
+    <div class="w-px h-6 bg-line mx-1"></div>
+    ${tierChips}
+    ${(f.sev||f.src||f.tier||f.q)?`<button class="chip chip-clear" onclick="clearFindingFilters()">Limpar filtros</button>`:''}
+  </div>
+  <div class="stat-card" style="padding:0;overflow:hidden;">
+    <table class="dtbl">
+      <colgroup><col style="width:120px"><col><col style="width:110px"><col style="width:140px"><col style="width:70px"><col style="width:100px"></colgroup>
+      <thead><tr>
+        <th class="sort-h" onclick="setFindingSort('sev')"><span class="dtbl-h">Severidade${sortArrow('sev')}</span></th>
+        <th class="cl">Título / Arquivo</th>
+        <th>Scanner</th>
+        <th>CVE / CWE</th>
+        <th class="sort-h" onclick="setFindingSort('tier')"><span class="dtbl-h">Tier${sortArrow('tier')}</span></th>
+        <th class="sort-h" onclick="setFindingSort('when')"><span class="dtbl-h">Quando${sortArrow('when')}</span></th>
+      </tr></thead>
+      <tbody>${rows||`<tr><td colspan="6" style="padding:0;">${FINDINGS.length===0?emptyState({title:'Nenhum finding — seu código está limpo neste commit.',body:'O último scan não encontrou vulnerabilidades. Novos findings aparecem aqui a cada scan.'}):emptyState({title:'Nenhum finding com esses filtros',body:'Ajuste ou limpe os filtros para ver os findings desta execução.',action:'<button class="chip chip-clear" onclick="clearFindingFilters()">Limpar filtros</button>'})}</td></tr>`}</tbody>
+    </table>
+  </div>
+</div>`;
+}
+
+function bindFindingsEvents(){}
+
+function setFindingFilter(key,val){
+  if(findingsFilter[key]===val) findingsFilter[key]=key==='q'?'':null;
+  else findingsFilter[key]=val;
+  document.getElementById('app-main').innerHTML=renderFindings(findingsFilter);
+  bindFindingsEvents();
+}
+function clearFindingFilters(){findingsFilter={sev:null,src:null,tier:null,q:''};document.getElementById('app-main').innerHTML=renderFindings(findingsFilter);bindFindingsEvents();}
+
+/* ═══ Mascot line-art + empty-state pattern ═══ */
+function mascotSvg(size){
+  const s=size||120;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <!-- head + ears -->
+    <path d="M40 30 L33 52 C34 71 45 84 58 84 C71 84 82 71 83 52 L76 30 L69 46 C64 43 52 43 47 46 Z"/>
+    <!-- detective cap dome + brim -->
+    <path d="M40 34 Q58 20 76 34"/>
+    <path d="M37 38 Q58 46 79 38"/>
+    <!-- left eye -->
+    <circle cx="50" cy="58" r="2.4" fill="currentColor" stroke="none"/>
+    <!-- nose + mouth -->
+    <path d="M58 66 l-2.5 3 h5 Z" fill="currentColor" stroke="none"/>
+    <path d="M58 69 v3 M58 72 q-4 3 -8 1 M58 72 q4 3 8 1"/>
+    <!-- whiskers left -->
+    <path d="M46 66 L30 63 M46 70 L31 71"/>
+    <!-- magnifying glass over right eye -->
+    <circle cx="70" cy="58" r="9"/>
+    <path d="M76.5 64.5 L88 76"/>
+    <!-- code glyph inside lens -->
+    <path d="M67 55 v6 M72 55 v6 M65.5 57.5 h7 M65.5 60 h7" stroke-width="1.1"/>
+  </svg>`;
+}
+function emptyState(opts){
+  const{title,body,action}=opts;
+  return `<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 24px;">
+    <div style="color:#707070;margin-bottom:20px;">${mascotSvg(120)}</div>
+    <div style="font-size:16px;font-weight:600;color:#f2f2f2;margin-bottom:8px;line-height:1.35;">${title}</div>
+    <p style="font-size:13px;color:#a1a1a1;max-width:42ch;line-height:1.55;">${body}</p>
+    ${action?`<div style="margin-top:18px;">${action}</div>`:''}
+  </div>`;
+}
+
+function openFinding(id){
+  const fn=FINDINGS.find(f=>f.id===id);
+  if(!fn)return;
+  window.currentFindingId=id;
+  const ids=window.currentFindingIds&&window.currentFindingIds.length?window.currentFindingIds:FINDINGS.map(f=>f.id);
+  const idx=ids.indexOf(id);
+  const rem=REMEDIATIONS.find(r=>r.finding_id===id);
+
+  /* CVE/CWE external link */
+  let idLink='—';
+  if(fn.cve_id){idLink=`<a href="https://nvd.nist.gov/vuln/detail/${fn.cve_id}" target="_blank" rel="noopener" class="lnk-ext">${fn.cve_id} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;"><path d="M14 4h6v6M20 4l-9 9M17 13v6a1 1 0 01-1 1H5a1 1 0 01-1-1V8a1 1 0 011-1h6"/></svg></a>`;}
+  else if(fn.cwe_id){const num=(fn.cwe_id.match(/\d+/)||[''])[0];idLink=`<a href="https://cwe.mitre.org/data/definitions/${num}.html" target="_blank" rel="noopener" class="lnk-ext">${fn.cwe_id} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;"><path d="M14 4h6v6M20 4l-9 9M17 13v6a1 1 0 01-1 1H5a1 1 0 01-1-1V8a1 1 0 011-1h6"/></svg></a>`;}
+
+  /* Remediation section */
+  let remHtml;
+  if(rem){
+    const rotation=rem.requires_secret_rotation?rotationBlock(rem.rotation_instructions):'';
+    remHtml=`
+  <div style="background:#17181a;border:1px solid #202124;border-radius:8px;padding:16px;margin-top:16px;">
+    <div class="flex items-center justify-between mb-2">
+      <div class="text-[14px] text-fg-mute">Remediação sugerida pelo Claude</div>
+      <span class="sev ${rem.status==='approved'?'st-done':rem.status==='rejected'?'st-failed':'st-queued'}">${REM_STATUS_PT[rem.status]||rem.status}</span>
+    </div>
+    <p class="text-[13px] text-fg-mute mb-3">${rem.explanation}</p>
+    ${rotation}
+    ${diffBlock(rem.patch_diff,fn.file_path)}
+    <button class="btn btn-sm btn-ghost mt-3" style="gap:6px;" onclick="openRemFromFinding('${rem.id}')">Abrir em Remediações <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </div>`;
+  } else {
+    remHtml='<div style="color:#707070;font-size:13px;margin-top:12px;">Nenhuma remediação gerada ainda.</div>';
+  }
+
+  const ghBtn=(fn.repo_url&&fn.file_path)?`<a href="${fn.repo_url}/blob/main/${fn.file_path}#L${fn.line_number||1}" target="_blank" rel="noopener" class="btn btn-sm btn-ghost" style="gap:7px;text-decoration:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2c-3.2.69-3.88-1.36-3.88-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.79 2.74 1.27 3.41.97.1-.75.41-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.1 11.1 0 015.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.4-5.25 5.68.42.36.79 1.07.79 2.16v3.2c0 .31.21.66.8.55C20.21 21.38 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>Ver no GitHub</a>`:'';
+
+  document.getElementById('panel').innerHTML=`
+  <div style="display:flex;flex-direction:column;height:100%;">
+    <div style="flex-shrink:0;padding:16px 24px;border-bottom:1px solid #202124;display:flex;align-items:center;justify-content:space-between;">
+      <div class="flex items-center gap-1">
+        <button onclick="navFinding(-1)" ${idx<=0?'disabled':''} class="drawer-nav" title="Anterior (↑)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+        <button onclick="navFinding(1)" ${idx>=ids.length-1?'disabled':''} class="drawer-nav" title="Próximo (↓)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+        <span class="text-[12px] text-fg-dim ml-2">${idx+1} de ${ids.length}</span>
+      </div>
+      <button onclick="closePanel()" class="drawer-nav" title="Fechar (Esc)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:24px;">
+      <div class="flex items-center gap-2 mb-4">${sevBadge(fn.severity)}${fn.secret_verified?`<span class="mono text-[9px] px-1.5 py-0.5" style="color:#ef4444;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);border-radius:999px;">Verified Secret</span>`:''}</div>
+      <h2 style="font-size:17px;font-weight:600;letter-spacing:-.015em;margin-bottom:4px;">${fn.title}</h2>
+      <p style="font-size:13px;color:#a1a1a1;line-height:1.65;margin-bottom:16px;">${fn.description}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        ${metaItem('Scanner',fn.source)}
+        ${metaItem('Tier','T'+fn.tier)}
+        ${metaItemBadge('Criticidade do Asset',fn.asset_criticality)}
+        ${metaItem('Asset',fn.asset||'—')}
+        ${metaItem('Arquivo',fn.file_path?`<span class="mono">${fn.file_path}:${fn.line_number||'?'}</span>`:'—')}
+        ${metaItem('CVE / CWE',idLink)}
+        ${metaItem('Commit',`<span class="mono">${shortSha(fn.commit_sha)}</span>`)}
+        ${metaItem('Detectado',timeTag(fn.created_at))}
+      </div>
+      ${remHtml}
+    </div>
+    ${ghBtn?`<div style="flex-shrink:0;padding:14px 24px;border-top:1px solid #202124;display:flex;gap:8px;">${ghBtn}</div>`:''}
+  </div>`;
+  document.getElementById('panel').classList.add('open');
+  const _ov=document.getElementById('overlay');if(_ov)_ov.classList.add('open');
+}
+
+function navFinding(dir){
+  const ids=window.currentFindingIds||[];
+  const i=ids.indexOf(window.currentFindingId);
+  const ni=i+dir;
+  if(ni<0||ni>=ids.length)return;
+  openFinding(ids[ni]);
+}
+function openRemFromFinding(remId){
+  closePanel();
+  window.highlightRem=remId;
+  navigate('remediations');
+  setTimeout(()=>{
+    const el=document.getElementById('rem-'+remId);
+    if(el){el.scrollIntoView({block:'center'});el.style.transition='box-shadow .3s';el.style.boxShadow='0 0 0 2px #c22f3d';setTimeout(()=>{el.style.boxShadow='';},1600);}
+  },80);
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* Shared diff block: GitHub-style header (file path + change count) + body */
+function diffBlock(patch,filePath){
+  let add=0,rem=0;
+  const body=patch.split('\n').map(l=>{
+    if(l.startsWith('+')){add++;return `<span class="diff-add">${escHtml(l)}</span>`;}
+    if(l.startsWith('-')){rem++;return `<span class="diff-rem">${escHtml(l)}</span>`;}
+    return `<span style="color:#707070;">${escHtml(l)}</span>`;
+  }).join('\n');
+  const hdr=`<div style="display:flex;align-items:center;justify-content:space-between;background:#0c0d0f;border:1px solid #202124;border-bottom:none;border-radius:6px 6px 0 0;padding:6px 10px;">
+    <span class="mono" style="font-size:11px;color:#a1a1a1;display:inline-flex;align-items:center;gap:6px;overflow:hidden;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M13 2v7h7"/></svg><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${filePath||'patch'}</span></span>
+    <span class="mono" style="font-size:11px;flex-shrink:0;margin-left:10px;"><span style="color:var(--sev-safe);">+${add}</span> <span style="color:var(--sev-critical);">−${rem}</span></span>
+  </div>`;
+  return `${hdr}<pre style="background:#0c0d0f;border:1px solid #202124;border-radius:0 0 6px 6px;padding:12px;overflow-x:auto;font-size:11.5px;line-height:1.7;margin:0;">${body}</pre>`;
+}
+/* Shared rotation-procedure block (neutral surface, amber left-border) */
+function rotationBlock(instructions){
+  const monoIds=s=>escHtml(s).replace(/\b([A-Z][A-Z0-9_\/]{6,})\b/g,'<span class="mono">$1</span>');
+  let steps='';
+  if(instructions){
+    steps='<ol style="margin:8px 0 0;padding-left:20px;list-style:decimal;">'+
+      instructions.replace(/\\n/g,'\n').split('\n').map(l=>l.replace(/^\d+\.\s*/,'').trim()).filter(Boolean)
+      .map(l=>`<li style="font-size:12.5px;color:#f2f2f2;line-height:1.5;margin-bottom:4px;padding-left:2px;">${monoIds(l)}</li>`).join('')+'</ol>';
+  }
+  return `<div style="background:#17181a;border:1px solid #202124;border-left:3px solid #eab308;border-radius:6px;padding:10px 12px;margin:10px 0;display:flex;gap:9px;align-items:flex-start;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><div style="min-width:0;"><div style="font-size:13px;font-weight:600;color:#f2f2f2;">Rotação de credencial necessária</div>${steps||'<div style="font-size:12px;color:#a1a1a1;margin-top:1px;">Este secret foi verificado — rotacione a credencial antes de aplicar o patch.</div>'}</div></div>`;
+}
+function metaItem(k,v){return `<div style="background:#17181a;border:1px solid #202124;border-radius:6px;padding:8px 10px;"><div style="font-size:13px;font-weight:400;color:#a1a1a1;margin-bottom:3px;">${k}</div><div style="font-size:12.5px;font-weight:500;color:#f2f2f2;">${v}</div></div>`;}
+function metaItemBadge(k,crit){return `<div style="background:#17181a;border:1px solid #202124;border-radius:6px;padding:8px 10px;"><div style="font-size:13px;font-weight:400;color:#a1a1a1;margin-bottom:5px;">${k}</div>${crit?sevBadge(crit):'<span style="font-size:12.5px;color:#f2f2f2;">—</span>'}</div>`;}
+function closePanel(){const _p=document.getElementById('panel');if(_p)_p.classList.remove('open');const _o=document.getElementById('overlay');if(_o)_o.classList.remove('open');}
+
+/* ═══════════════════════ SCREEN: PIPELINES ═══════════════════════ */
+let pipelineInterval=null;
+
+function riskCompact(score,level){
+  if(score==null)return `<span class="mono text-[11px] text-fg-dim">${level||'—'}</span>`;
+  const b=gaugeBand(score);
+  return `<span class="flex items-center gap-1.5">${miniGauge(score)}<span class="mono text-[13px] font-semibold" style="color:${b.c};">${score}</span></span>`;
+}
+let pipelinesFilter={repo:null,status:null,tier:null};
+function pipeStatus(j){
+  if(j.blocked_at_tier===1||j.final_risk_level==='blocked')return 'blocked';
+  if(j.tier2_status==='failed'||j.tier3_status==='failed')return 'failed';
+  if(j.tier1_status==='running'||j.tier2_status==='running'||j.tier3_status==='running')return 'running';
+  return 'done';
+}
+function pipeTierReached(j){
+  if(j.tier3_status&&j.tier3_status!=='skipped')return 3;
+  if(j.tier2_status&&j.tier2_status!=='skipped')return 2;
+  return 1;
+}
+function setPipelineFilter(key,val){
+  pipelinesFilter[key]=pipelinesFilter[key]===val?null:val;
+  document.getElementById('app-main').innerHTML=renderPipelines();
+  bindScreenEvents('pipelines');
+}
+function clearPipelineFilters(){pipelinesFilter={repo:null,status:null,tier:null};document.getElementById('app-main').innerHTML=renderPipelines();bindScreenEvents('pipelines');}
+
+function renderPipelines(){
+  const pf=pipelinesFilter;
+  let list=SCAN_JOBS.filter(j=>
+    (!pf.repo||j.repo_full_name===pf.repo)&&
+    (!pf.status||pipeStatus(j)===pf.status)&&
+    (!pf.tier||pipeTierReached(j)===pf.tier)
+  );
+  const rows=list.map(j=>{
+    const hasRunning=j.tier1_status==='running'||j.tier2_status==='running'||j.tier3_status==='running';
+    const isBlocked=j.blocked_at_tier!=null&&j.final_risk_level!=='blocked'||j.final_risk_level==='blocked';
+    return `<div class="stat-card card-link mb-3" style="cursor:pointer;" onclick="openInsights('${j.id}')">
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-semibold text-[15px]">${j.repo_full_name}</span>
+          <span class="mono text-[10px] text-fg-dim">PR #${j.pr_number}</span>
+          ${hasRunning?`<span class="sev st-running" style="gap:4px;"><svg class="spin" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-9-9"/></svg>em execução</span>`:''}
+          ${isBlocked&&j.final_risk_level==='blocked'?`<span class="sev st-blocked">gate1 bloqueado</span>`:''}
+        </div>
+        <div class="text-[12px] text-fg-dim mt-0.5"><span class="mono">commit ${shortSha(j.commit_sha)}</span> · ${timeTag(j.created_at)}</div>
+      </div>
+      ${riskCompact(j.final_risk_score,j.final_risk_level)}
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #202124;"><div style="max-width:700px;">${tierStepper(j)}</div></div>
+  </div>`;
+  }).join('');
+
+  const repos=[...new Set(SCAN_JOBS.map(j=>j.repo_full_name))];
+  const repoChips=repos.map(rp=>`<button class="chip${pf.repo===rp?' on':''}" style="text-transform:none;" onclick="setPipelineFilter('repo','${rp}')">${rp.split('/')[1]||rp}${pf.repo===rp?'<span class="chip-x">\u00d7</span>':''}</button>`).join('');
+  const statusOpts=[['done','Concluído'],['running','Em execução'],['failed','Falhou'],['blocked','Bloqueado']];
+  const statusChips=statusOpts.map(([v,l])=>`<button class="chip${pf.status===v?' on':''}" onclick="setPipelineFilter('status','${v}')">${l}${pf.status===v?'<span class="chip-x">\u00d7</span>':''}</button>`).join('');
+  const tierChips=[1,2,3].map(t=>`<button class="chip${pf.tier===t?' on':''}" onclick="setPipelineFilter('tier',${t})">Tier ${t}${pf.tier===t?'<span class="chip-x">\u00d7</span>':''}</button>`).join('');
+  const anyFilter=pf.repo||pf.status||pf.tier;
+
+  const runningCount=SCAN_JOBS.filter(j=>pipeStatus(j)==='running').length;
+  return `<div class="page-wrap">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-[24px] font-bold tracking-tight">Scans <span class="text-[14px] text-fg-mute font-normal">${SCAN_JOBS.length} no total</span></h1>
+      <p class="text-fg-dim text-[13px] mt-1">Execuções dos repositórios monitorados${runningCount>0?` · ${runningCount} em execução`:''}</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#a1a1a1;"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse-safe 2s infinite;"></span>Atualização automática</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 flex-wrap mb-4">
+    ${repoChips}
+    <div class="w-px h-6 bg-line mx-1"></div>
+    ${statusChips}
+    <div class="w-px h-6 bg-line mx-1"></div>
+    ${tierChips}
+    ${anyFilter?`<button class="chip chip-clear" onclick="clearPipelineFilters()">Limpar filtros</button>`:''}
+  </div>
+  ${rows||(SCAN_JOBS.length===0?`<div class="stat-card">${emptyState({title:'Nenhum scan ainda',body:'Conecte um repositório e abra um pull request para disparar o primeiro scan. Cada PR roda os três tiers automaticamente.',action:`<button class="btn btn-md btn-primary" onclick="navigate('integrations')">Configurar scanners</button>`})}</div>`:`<div class="stat-card">${emptyState({title:'Nenhuma execução com esses filtros',body:'Ajuste ou limpe os filtros para ver as execuções do histórico.',action:`<button class="chip chip-clear" onclick="clearPipelineFilters()">Limpar filtros</button>`})}</div>`)}
+</div>`;
+}
+
+function tierStep(label,status,dur,scanners,failed){
+  if(!status)return`<div style="opacity:.25;padding:8px 12px;border:1px solid #202124;border-radius:7px;min-width:100px;"><div class="mono text-[9px] text-fg-dim">${label}</div><div class="mono text-[9px] text-fg-dim mt-1">—</div></div>`;
+  const col={done:'#22c55e',running:'#3b82f6',failed:'#ef4444',skipped:'#707070'}[status]||'#707070';
+  return`<div style="padding:8px 12px;border:1px solid ${col}33;border-radius:7px;min-width:100px;background:${col}0a;">
+    <div class="flex items-center gap-1.5 mb-1"><span class="mono text-[9px]" style="color:${col}">${label}</span>${status==='running'?`<svg class="spin" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:${col}"><path d="M21 12a9 9 0 11-9-9"/></svg>`:''}</div>
+    <div class="mono text-[9px] text-fg-dim">${scanners.slice(0,2).join(' · ')}${scanners.length>2?' +1':''}</div>
+    ${dur?`<div class="mono text-[9px] mt-1" style="color:${col}">${dur}</div>`:''}
+  </div>`;
+}
+function tierArrow(status){
+  if(!status||status==='skipped')return`<div style="width:20px;height:1px;background:#26272a;margin:0 4px;flex-shrink:0;"></div>`;
+  return`<div style="width:20px;height:1px;background:#707070;margin:0 4px;flex-shrink:0;"></div>`;
+}
+
+function startPipelinePolling(){
+  if(pipelineInterval)clearInterval(pipelineInterval);
+  let tick=0;
+  pipelineInterval=setInterval(()=>{
+    tick++;
+    if(currentScreen!=='pipelines'){clearInterval(pipelineInterval);return;}
+    // simulate T3 completing for s2
+    if(tick===4){SCAN_JOBS[1].tier3_status='done';SCAN_JOBS[1].final_risk_score=412;SCAN_JOBS[1].final_risk_level='high';SCAN_JOBS[1].t3_dur='9m';}
+    document.getElementById('app-main').innerHTML=renderPipelines();
+  },3000);
+}
+
+/* ═══════════════════════ SCREEN: REMEDIATIONS ═══════════════════════ */
+function renderRemediations(){
+  const cards=REMEDIATIONS.map(r=>{
+    const fn=FINDINGS.find(f=>f.id===r.finding_id)||{};
+    const job=SCAN_JOBS.find(j=>j.id===r.scan_job_id);
+    const stCls={suggested:'st-queued',approved:'st-done',rejected:'st-failed',merged:'st-done'}[r.status]||'st-queued';
+    const btns=r.status==='suggested'?`
+    <div class="flex items-center gap-2 mt-3">
+      <button class="btn btn-sm btn-success" onclick="approveRem('${r.id}')">Aprovar patch</button>
+      <button class="btn btn-sm btn-danger" onclick="rejectRem('${r.id}')">Rejeitar</button>
+    </div>`:(r.status==='approved'?`<div class="mt-3 text-[12px]" style="color:#22c55e;">Aprovado por ${r.approved_by||'—'}</div>`:r.status==='rejected'?`<div class="mt-3 text-[12px]" style="color:#ef4444;">Rejeitado por ${r.approved_by||'—'}</div>`:'');
+    return`<div class="stat-card mb-6" id="rem-${r.id}">
+      <div class="flex items-start justify-between mb-3">
+        <div style="flex:1;min-width:0;">
+          <div class="flex items-center gap-2 flex-wrap">
+            ${fn.severity?sevBadge(fn.severity):''}
+            <span class="sev ${stCls}">${REM_STATUS_PT[r.status]||r.status}</span>
+          </div>
+          <h3 class="font-semibold text-[15px] mt-2 leading-snug">${fn.title||'Finding #'+r.finding_id}</h3>
+          <p class="text-fg-mute text-[12.5px] mt-1.5 leading-relaxed">${r.explanation}</p>
+          ${r.requires_secret_rotation?rotationBlock(r.rotation_instructions):''}
+        </div>
+      </div>
+      <div class="text-[14px] text-fg-mute mb-2">Patch diff · gerado pelo Claude Sonnet</div>
+      ${diffBlock(r.patch_diff,fn.file_path)}
+      <div class="flex items-center gap-4 mt-3 text-[12px]">
+        ${fn.id?`<button class="lnk-ext" style="background:none;border:none;cursor:pointer;padding:0;font:inherit;" onclick="openFinding('${fn.id}')">Origem: ${fn.title}</button>`:''}
+        ${(fn.repo_url&&job&&job.pr_number)?`<a class="lnk-ext" href="${fn.repo_url}/pull/${job.pr_number}" target="_blank" rel="noopener">PR #${job.pr_number} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;"><path d="M14 4h6v6M20 4l-9 9M17 13v6a1 1 0 01-1 1H5a1 1 0 01-1-1V8a1 1 0 011-1h6"/></svg></a>`:''}
+      </div>
+      ${btns}
+    </div>`;
+  }).join('');
+
+  return`<div class="page-wrap">
+  <div class="mb-6">
+    <h1 class="text-[24px] font-bold tracking-tight">Remediações</h1>
+    <p class="text-fg-dim text-[13px] mt-1">Patches sugeridos pelo Claude — aguardando aprovação humana antes de aplicar</p>
+  </div>
+  ${cards}
+</div>`;
+}
+
+function bindRemediationsEvents(){}
+function approveRem(id){
+  const r=REMEDIATIONS.find(x=>x.id===id);
+  if(r){r.status='approved';r.approved_by='marina.alves@acme.io';}
+  document.getElementById('app-main').innerHTML=renderRemediations();
+}
+function rejectRem(id){
+  const r=REMEDIATIONS.find(x=>x.id===id);
+  if(r){r.status='rejected';r.approved_by='marina.alves@acme.io';}
+  document.getElementById('app-main').innerHTML=renderRemediations();
+}
+
+/* ═══════════════════════ SCREEN: ATTACK PATH ═══════════════════════ */
+const AP_PHASES={initial_access:'Initial Access',execution:'Execution',persistence:'Persistence',privilege_escalation:'Privilege Escalation',defense_evasion:'Defense Evasion',credential_access:'Credential Access',discovery:'Discovery',lateral_movement:'Lateral Movement',collection:'Collection',exfiltration:'Exfiltration',impact:'Impact',reconnaissance:'Reconnaissance'};
+let currentExecId=null;
+function openInsights(id){currentExecId=id;navigate('attack');}
+function execOutcome(j){
+  if(j.blocked_at_tier===1||j.final_risk_level==='blocked')return '<span class="text-[11px]" style="color:#ef4444;">Bloqueado · Gate 1</span>';
+  if(j.tier2_status==='failed')return '<span class="text-[11px]" style="color:#ef4444;">Falhou · Tier 2</span>';
+  if(j.tier3_status==='running')return '<span class="text-[11px] flex items-center gap-1" style="color:#3b82f6;"><svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 11-9-9"/></svg>Em execução</span>';
+  if(j.final_risk_score!=null){const b=gaugeBand(j.final_risk_score);return `<span class="flex items-center gap-1.5">${miniGauge(j.final_risk_score)}<span class="mono text-[11px] font-semibold" style="color:${b.c};">${j.final_risk_score}</span></span>`;}
+  return '<span class="text-[11px] text-fg-dim">—</span>';
+}
+function execDropdownList(currentId){
+  const rows=SCAN_JOBS.map(j=>`
+    <button class="exec-opt" data-repo="${j.repo_full_name.toLowerCase()}" data-pr="${j.pr_number}" onclick="selectExec('${j.id}')">
+      <span style="display:flex;align-items:center;gap:8px;min-width:0;">
+        ${j.id===currentId?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c22f3d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M5 12l5 5L20 7"/></svg>':'<span style="width:13px;flex-shrink:0;"></span>'}
+        <span style="min-width:0;text-align:left;">
+          <span class="text-[12.5px] text-fg" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${j.repo_full_name} · PR #${j.pr_number}</span>
+          <span class="text-[11px] text-fg-dim"><span class="mono">${shortSha(j.commit_sha)}</span> · ${timeAgo(j.created_at)}</span>
+        </span>
+      </span>
+      <span style="flex-shrink:0;margin-left:12px;">${execOutcome(j)}</span>
+    </button>`).join('');
+  return `<div class="exec-dd-search"><input type="text" id="exec-search" placeholder="Buscar por repositório ou PR..." oninput="filterExecList(this.value)" onclick="event.stopPropagation()"></div><div class="exec-dd-list" id="exec-dd-list">${rows}</div>`;
+}
+function toggleExecDropdown(e){
+  e.stopPropagation();
+  const dd=document.getElementById('exec-dd');
+  dd.classList.toggle('open');
+  if(dd.classList.contains('open')){
+    const inp=document.getElementById('exec-search'); if(inp)setTimeout(()=>inp.focus(),0);
+    document.addEventListener('click',closeExecDropdownOnce);
+  }
+}
+function closeExecDropdownOnce(){const dd=document.getElementById('exec-dd');if(dd)dd.classList.remove('open');document.removeEventListener('click',closeExecDropdownOnce);}
+function filterExecList(q){
+  q=(q||'').toLowerCase().trim();
+  document.querySelectorAll('#exec-dd-list .exec-opt').forEach(el=>{
+    const match=!q||el.dataset.repo.includes(q)||('pr #'+el.dataset.pr).includes(q)||el.dataset.pr.includes(q.replace('#',''));
+    el.style.display=match?'flex':'none';
+  });
+}
+function selectExec(id){currentExecId=id;const dd=document.getElementById('exec-dd');if(dd)dd.classList.remove('open');navigate('attack');}
+function renderAttack(){
+  if(!SCAN_JOBS.length){
+    return `<div class="page-wrap">
+    <div class="mb-6"><h1 class="text-[24px] font-bold tracking-tight">AI Insights</h1></div>
+    <div class="stat-card">${emptyState({title:'Nenhuma execução para analisar',body:'Assim que um scan rodar o Tier 3, a análise de attack path do Claude aparece aqui — com kill chain, risk score e ações priorizadas.',action:`<button class="btn btn-md btn-primary" onclick="navigate('integrations')">Configurar scanners</button>`})}</div>
+  </div>`;
+  }
+  const job = currentExecId ? SCAN_JOBS.find(j=>j.id===currentExecId) : SCAN_JOBS[0];
+  if(!job) return '<div class="page-wrap"><p class="text-fg-dim">Nenhuma execução disponível.</p></div>';
+  const isLatest = job.id===SCAN_JOBS[0].id;
+  const ins = INSIGHTS[job.id];
+  const head=`<div class="mb-6">
+    <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-fg-mute mb-2">Análise Profunda · Tier 3 · powered by Claude</div>
+    <h1 class="text-[24px] font-bold tracking-tight">AI Insights</h1>
+    <div class="flex items-center gap-2 mt-2" style="position:relative;">
+      <button class="exec-select" onclick="toggleExecDropdown(event)">
+        <span class="text-fg-dim text-[13px]">${job.repo_full_name} · PR #${job.pr_number} · <span class="mono text-[12px]">${shortSha(job.commit_sha)}</span> · ${timeAgo(job.created_at)}</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#707070;flex-shrink:0;"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      ${isLatest?'<span class="text-[10px] font-semibold" style="padding:2px 7px;border-radius:4px;background:#1f2023;color:#a1a1a1;border:1px solid #2e2f31;">Mais recente</span>':''}
+      <div id="exec-dd" class="exec-dd">${execDropdownList(job.id)}</div>
+    </div>
+  </div>`;
+  const pipeLink=`<button class="btn btn-sm btn-ghost mt-3" style="gap:6px;" onclick="navigate('pipelines')">Ver na aba Scans <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`;
+
+  /* Estado: bloqueado no Gate 1 (secret verificado) */
+  if(job.final_risk_level==='blocked'||job.blocked_at_tier===1){
+    const sec=FINDINGS.find(f=>f.secret_verified);
+    return `<div class="page-wrap">${head}
+  <div class="stat-card">
+    <div class="flex items-center gap-3 mb-3"><span class="sev st-blocked">Gate 1 · bloqueado</span><h2 class="text-[16px] font-bold">Scan Bloqueado no Gate 1</h2></div>
+    <p class="text-[13px] text-fg-mute leading-relaxed mb-4">Um secret verificado interrompeu o scan no Tier 1 antes de qualquer análise posterior. Resolva o secret e re-execute para liberar os Tiers 2 e 3.</p>
+    ${sec?`<div class="ap-fcard" style="border-left:2px solid #ef4444;" onclick="openFinding('${sec.id}')">${sevBadge(sec.severity)}<span class="text-[12px] text-fg-mute">${sec.title}</span><span class="mono text-[10px] text-fg-dim">${sec.file_path||''}:${sec.line_number||''}</span></div>`:''}
+    ${pipeLink}
+  </div>
+</div>`;
+  }
+
+  /* Estado: Tier 2 falhou — interrupção */
+  if(job.tier2_status==='failed'){
+    return `<div class="page-wrap">${head}
+  <div class="stat-card">
+    <div class="flex items-center gap-3 mb-3"><span class="sev st-failed">Tier 2 · falhou</span><h2 class="text-[16px] font-bold">Análise Interrompida</h2></div>
+    <p class="text-[13px] text-fg-mute leading-relaxed">O scan parou no Tier 2 (falha de execução) após concluir o Tier 1 em ${job.t1_dur||'—'}. A análise profunda (Tier 3) não chegou a rodar e nenhuma attack path foi gerada para esta execução.</p>
+    ${pipeLink}
+  </div>
+</div>`;
+  }
+
+  /* Estado: Tier 3 em execução — parcial ao vivo */
+  if(job.tier3_status==='running'){
+    return `<div class="page-wrap">${head}
+  <div class="stat-card mb-6">
+    <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-fg-mute mb-3">Tiers concluídos</div>
+    <div class="flex items-center gap-4 text-[13px] text-fg-mute">
+      <span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></span>Tier 1 · ${job.t1_dur||'—'}</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></span>Tier 2 · ${job.t2_dur||'—'}</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="flex items-center gap-3 mb-2">
+      <svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 11-9-9"/></svg>
+      <h2 class="text-[16px] font-bold">Análise Profunda em Execução</h2>
+    </div>
+    <p class="text-[13px] text-fg-mute leading-relaxed">O Tier 3 (Claude + emulação Caldera) está processando esta execução. A attack path e o risk score ajustado aparecerão aqui assim que a análise concluir.</p>
+  </div>
+</div>`;
+  }
+
+  /* Estado: Tier 3 pulado pelo Gate 2 — finalizado no Tier 2 */
+  if(job.tier3_status==='skipped'){
+    return `<div class="page-wrap">${head}
+  <div class="stat-card mb-6">
+    <div class="flex items-center gap-4">
+      ${riskScore(job.final_risk_score)}
+      <div style="width:1px;height:50px;background:#26272a;"></div>
+      <div class="flex-1"><div class="text-[14px] font-semibold text-fg mb-1">Análise Tier 2 consolidada</div><p class="text-[13px] text-fg-mute leading-relaxed">${ins&&ins.tier2_summary?ins.tier2_summary:'Análise Tier 2 concluída.'}</p></div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <h2 class="text-[16px] font-bold mb-2">Attack Path Não Gerada</h2>
+    <p class="text-[13px] text-fg-mute leading-relaxed">Scan finalizado no Tier 2 — apenas findings de baixa severidade, então o Gate 2 não escalou para a análise profunda. Os findings desta execução estão disponíveis na aba Findings.</p>
+    ${pipeLink}
+  </div>
+</div>`;
+  }
+
+  /* Estado completo: Tier 3 concluído com attack path */
+  if(!ins||!ins.attack_path){
+    return `<div class="page-wrap">${head}
+  <div class="stat-card"><h2 class="text-[16px] font-bold mb-2">Sem Attack Path Nesta Execução</h2><p class="text-[13px] text-fg-mute leading-relaxed">Não há dados de análise profunda para esta execução.</p>${pipeLink}</div>
+</div>`;
+  }
+
+  const AP=ins;
+  const steps=AP.attack_path.map((s,i)=>{
+    const fn=FINDINGS.find(f=>s.finding_ids.includes(f.id))||{};
+    const sev=fn.severity||'info';
+    const dotColor=sevColor(sev);
+    const last=i===AP.attack_path.length-1;
+    return`<div class="ap-step" data-sev="${sev}" style="--sc:${dotColor};padding-bottom:24px;">
+    ${last?'':'<div class="ap-conn"><div class="fill"></div><div class="shim"></div></div>'}
+    <div class="ap-node"><span class="ap-ring"></span><div class="ap-dot">${s.step}</div></div>
+    <div class="ap-body">
+      <div class="flex items-center gap-2 mb-1 flex-wrap">
+        <span class="ap-tactic">${AP_PHASES[s.phase]||s.phase}</span>
+        <span class="mono text-[10px] px-1.5 py-0.5 rounded" style="background:#1f2023;color:#a1a1a1;">${s.technique}</span>
+        ${s.caldera_validated?'<span title="Confirmado por emulação Caldera em sandbox" style="font-size:10px;padding:2px 8px;border-radius:100px;background:rgba(46,204,139,.14);color:#2ecc8b;border:1px solid rgba(46,204,139,.3);cursor:help;">validado por emulação</span>':''}
+      </div>
+      <p class="text-[13.5px] text-fg leading-relaxed mb-2">${s.description}</p>
+      ${fn.title?`<div class="ap-fcard" onclick="openChainFinding('${fn.id}')">${sevBadge(fn.severity)}<span class="text-[12px] text-fg-mute">${fn.title}</span><span class="mono text-[10px] text-fg-dim">${fn.source} · ${fn.file_path||''}:${fn.line_number||''}${fn.cve_id?' · '+fn.cve_id:''}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-fg-dim" style="margin-left:auto;flex-shrink:0;"><path d="M9 6l6 6-6 6"/></svg></div>`:''}
+    </div>
+  </div>`;
+  }).join('');
+
+  const actions=AP.prioritized_actions.map(a=>`
+    <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #202124;">
+      <div style="width:22px;height:22px;border-radius:50%;background:#1f2023;color:#f2f2f2;font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;display:grid;place-items:center;flex-shrink:0;">${a.priority}</div>
+      <div style="min-width:0;"><div class="text-[13.5px] font-medium text-fg">${a.action}</div><div class="text-[12px] text-fg-dim mt-0.5">${a.rationale}</div></div>
+    </div>`).join('');
+
+  return`<div class="page-wrap">
+  ${head}
+  <div class="stat-card mb-6">
+    <div class="flex items-center gap-5">
+      ${riskScore(job.final_risk_score)}
+      <div style="width:1px;align-self:stretch;background:#26272a;"></div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-2 text-fg" style="font-size:14px;font-weight:600;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 017 7h2M15 7h2a5 5 0 010 10h-2M8 12h8"/></svg>
+          Kill chain ${AP.kill_chain_complete?'completa':'incompleta'} — ${AP.attack_path.length} passos mapeados em MITRE ATT&CK
+        </div>
+        <p class="text-[13px] text-fg-mute leading-relaxed">A partir de ${[...new Set(AP.attack_path.flatMap(s=>s.finding_ids))].length} findings desta execução.</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2" style="margin-top:16px;padding-top:14px;border-top:1px solid #202124;">
+      <span title="OpenCTI · inteligência de ameaças" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:4px;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3);cursor:help;">Threat Intel <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
+      <span title="Caldera · emulação de adversário" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:4px;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3);cursor:help;">Emulation <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
+    </div>
+  </div>
+  <div class="stat-card mb-6" style="padding:0;overflow:hidden;">
+    <div class="flex items-center justify-between" style="padding:14px 20px;border-bottom:1px solid #202124;">
+      <h2 class="text-[16px] font-bold">Cadeia de Ataque <span class="text-[13px] font-normal text-fg-dim">· ${AP.attack_path.length} passos</span></h2>
+      <div class="flex items-center gap-3">
+        <span id="ap-progress" style="font-size:11px;color:#707070;display:none;"></span>
+        <button class="btn btn-sm btn-ghost" onclick="playAttackChain(true)" style="gap:6px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg>Reproduzir Cadeia</button>
+      </div>
+    </div>
+    <div id="ap-chain" style="padding:20px;">${steps}</div>
+  </div>
+  <div class="stat-card" style="padding:0;overflow:hidden;">
+    <div style="padding:14px 20px;border-bottom:1px solid #202124;"><h2 class="text-[16px] font-bold">Ações Priorizadas</h2></div>
+    <div style="padding:8px 20px 12px;">${actions}</div>
+  </div>
+</div>`;
+}
+
+/* ═══ Attack chain narrative ═══ */
+let apTimers=[],apPlayed=false;
+function apSetStatic(steps,prog){
+  steps.forEach(st=>{
+    st.classList.add('lit');
+    const c=st.querySelector('.ap-conn');
+    if(c){c.classList.add('filled');if(st.dataset.sev==='critical')c.classList.add('crit');}
+  });
+  if(prog)prog.style.display='none';
+}
+function playAttackChain(force){
+  const chain=document.getElementById('ap-chain');
+  const steps=[...document.querySelectorAll('#ap-chain .ap-step')];
+  if(!steps.length)return;
+  const prog=document.getElementById('ap-progress');
+  apTimers.forEach(clearTimeout);apTimers=[];
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    if(chain)chain.classList.remove('animate');
+    apSetStatic(steps,prog);
+    steps[steps.length-1].classList.add('climax');
+    return;
+  }
+  if(chain)chain.classList.add('animate');
+  steps.forEach(st=>{
+    st.classList.remove('lit','climax');
+    const c=st.querySelector('.ap-conn');
+    if(c)c.classList.remove('filled','crit');
+  });
+  if(prog){prog.style.display='';prog.textContent='Passo 1 de '+steps.length;}
+  let critCount=0;
+  steps.forEach((st,i)=>{
+    apTimers.push(setTimeout(()=>{
+      st.classList.add('lit');
+      if(i===steps.length-1)st.classList.add('climax');
+      if(prog)prog.textContent='Passo '+(i+1)+' de '+steps.length;
+      const c=st.querySelector('.ap-conn');
+      if(c)apTimers.push(setTimeout(()=>{
+        c.classList.add('filled');
+        if(st.dataset.sev==='critical'){
+          const sh=c.querySelector('.shim');
+          if(sh)sh.style.animationDelay=(critCount++*3)+'s';
+          c.classList.add('crit');
+        }
+      },550));
+    },i*1200));
+  });
+  apTimers.push(setTimeout(()=>{if(prog)prog.style.display='none';},steps.length*1200+500));
+}
+function apObserve(){
+  const chain=document.getElementById('ap-chain');
+  if(!chain)return;
+  apPlayed=false;
+  const fire=()=>{if(!apPlayed){apPlayed=true;playAttackChain();}};
+  // If already in view, play on next frame; else observe.
+  const r=chain.getBoundingClientRect();
+  if(r.top<window.innerHeight&&r.bottom>0){requestAnimationFrame(fire);return;}
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting&&!apPlayed){obs.disconnect();fire();}
+    });
+  },{threshold:.15});
+  obs.observe(chain);
+}
+
+/* ═══════════════════════ SCREEN: INVENTORY ═══════════════════════ */
+function openRepoManager(){
+  repoSelMode='manage';
+  repoDraft=getMonitored().slice();
+  repoSearchQ='';
+  navigate('repos');
+}
+function renderReposManage(){
+  return `<div class="page-wrap" style="max-width:760px;">
+  <div class="mb-6">
+    <button class="btn btn-sm btn-ghost mb-4" onclick="navigate('integrations')" style="gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Integrações</button>
+    <h1 class="text-[24px] font-bold tracking-tight">Gerenciar Repositórios</h1>
+    <p class="text-fg-dim text-[13px] mt-1">Adicione ou remova repositórios do monitoramento. Remover um repo tira o asset do Inventário; o histórico de findings é preservado.</p>
+  </div>
+  ${repoSelectorHtml()}
+</div>`;
+}
+const INV_HICO={
+  asset:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
+  crit:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
+  findings:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  scan_at:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  risk:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+  scanners:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>',
+};
+function renderInventory(){
+  /* Findings count is DERIVED from the canonical Findings list, grouped by asset — never hardcoded. */
+  const findingsByAsset=FINDINGS.reduce((m,f)=>{m[f.asset]=(m[f.asset]||0)+1;return m;},{});
+  const monitored=getMonitored();
+  /* Inventory = monitored GitHub repos (asset list IS the monitored-repo list) + cloud assets (not GitHub-governed).
+     A monitored repo without scan data yet is shown as an asset awaiting its first scan. */
+  const repoAssets=monitored.map(name=>{
+    const existing=ASSETS.find(a=>a.type==='repository'&&a.name===name);
+    return existing||{id:'r-'+name,name,type:'repository',repo_url:'https://github.com/'+GH_ORG+'/'+name,criticality:null,last_scan:null,risk_score:null,scanners:[]};
+  });
+  const cloudAssets=ASSETS.filter(a=>a.type!=='repository');
+  const visibleAssets=[...repoAssets,...cloudAssets];
+  const rows=visibleAssets.map(a=>{
+    const fCount=findingsByAsset[a.name]||0;
+    const typeIco=a.type==='repository'?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="8" r="2.3"/><path d="M6 8.3v7.4M18 10.3c0 4-6 3-12 5"/></svg>':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18a4 4 0 01-.5-8A5.5 5.5 0 0116.5 8 4.5 4.5 0 0117 18H6z"/></svg>';
+    const scannerBadges=(a.scanners||[]).map(s=>`<span class="mono" style="font-size:10px;padding:2px 6px;border-radius:4px;background:#1f2023;color:#707070;white-space:nowrap;">${s}</span>`).join('');
+    return `
+  <tr class="rowlink" onclick="goFindings()">
+    <td class="cl">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+        <div style="width:20px;height:20px;border-radius:5px;background:#1f2023;display:grid;place-items:center;flex-shrink:0;">${typeIco}</div>
+        <div style="min-width:0;">
+          <div class="font-medium text-fg lnk">${a.name}</div>
+          ${a.repo_url?`<div class="mono text-[10px] text-fg-dim mt-0.5 truncate">${a.repo_url}</div>`:''}
+        </div>
+      </div>
+    </td>
+    <td>${a.criticality?sevBadge(a.criticality):'<span class="text-[12px] text-fg-dim">—</span>'}</td>
+    <td><span class="mono text-[12px] font-semibold" style="font-variant-numeric:tabular-nums;color:${fCount>4?'var(--sev-critical)':fCount>2?'var(--sev-high)':'var(--sev-safe)'}">${fCount}</span></td>
+    <td>${a.last_scan?timeTag(a.last_scan,"text-[12px] text-fg-dim"):'<span class="text-[12px] text-fg-dim">aguardando scan</span>'}</td>
+    <td>${a.risk_score?`<span class="mono text-[12px] font-semibold" style="font-variant-numeric:tabular-nums;color:${a.risk_score>700?'var(--sev-critical)':a.risk_score>=400?'var(--sev-medium)':'var(--sev-safe)'}">${a.risk_score}</span>`:'<span class="text-[12px] text-fg-dim">—</span>'}</td>
+    <td><div style="display:inline-flex;flex-wrap:wrap;justify-content:center;gap:4px;max-width:100%;">${scannerBadges}</div></td>
+    <td><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#707070" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></td>
+  </tr>`;
+  }).join('');
+
+  const totFindings=visibleAssets.reduce((s,a)=>s+(findingsByAsset[a.name]||0),0);
+  const withRisk=visibleAssets.filter(a=>a.risk_score!=null);
+  const avgRisk=withRisk.length?Math.round(withRisk.reduce((s,a)=>s+a.risk_score,0)/withRisk.length):null;
+  const summary=`${visibleAssets.length} assets · ${totFindings} findings${avgRisk!=null?` · risco médio ${avgRisk}`:''}`;
+
+  return`<div class="page-wrap">
+  <div class="mb-6">
+    <h1 class="text-[24px] font-bold tracking-tight">Inventário de Assets</h1>
+    <p class="text-fg-dim text-[13px] mt-1">Repositórios e recursos cloud monitorados pelo aperIA</p>
+  </div>
+  <div class="stat-card" style="padding:0;overflow:hidden;">
+    <table class="dtbl">
+      <colgroup><col><col style="width:130px"><col style="width:100px"><col style="width:130px"><col style="width:100px"><col style="width:220px"><col style="width:48px"></colgroup>
+      <thead><tr>
+        <th class="cl"><span style="display:flex;align-items:center;gap:12px;"><span style="width:20px;display:flex;justify-content:center;flex-shrink:0;">${INV_HICO.asset}</span>Asset</span></th>
+        <th><span class="dtbl-h">${INV_HICO.crit}Criticidade</span></th>
+        <th><span class="dtbl-h">${INV_HICO.findings}Findings</span></th>
+        <th><span class="dtbl-h">${INV_HICO.scan_at}Último Scan</span></th>
+        <th><span class="dtbl-h">${INV_HICO.risk}Risk</span></th>
+        <th><span class="dtbl-h">${INV_HICO.scanners}Scanners</span></th>
+        <th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="padding:12px 16px;border-top:1px solid #202124;font-size:12px;color:#a1a1a1;">${summary}</div>
+  </div>
+</div>`;
+}
+
+/* ═══════════════════════ SCREEN: INTEGRATIONS ═══════════════════════ */
+function renderIntegrations(){
+  const connected=appConnected;
+  const cards=INTEGRATIONS.map(i=>{
+    /* Without a GitHub connection nothing runs — neutralize execution data */
+    const stKey=connected?i.status:'idle';
+    const stCls={operational:'st-done',degraded:'st-queued',offline:'st-failed',idle:'st-skipped'}[stKey]||'st-skipped';
+    const stLabel=connected?(STATUS_PT[i.status]||i.status):'Inativo';
+    return`<div class="stat-card" style="position:relative;">
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-semibold text-[15px]">${i.name}</span>
+          <span class="mono text-[9px] px-1.5 py-0.5 rounded-xs border" style="color:#707070;border-color:#26272a;background:#1f2023;">${i.tier}</span>
+        </div>
+        <p class="text-fg-dim text-[12.5px] mt-1">${i.desc}</p>
+        ${(connected&&i.status!=='operational'&&i.impact)?`<div class="flex items-start gap-1.5 mt-2" style="color:#a1a1a1;font-size:12px;line-height:1.45;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>${i.impact} · ${timeAgo(i.last_run)}</span></div>`:''}
+      </div>
+      <span class="sev ${stCls}">${stLabel}</span>
+    </div>
+    <div class="flex items-center gap-4 text-[12px] text-fg-dim mt-3 pt-3 border-t border-line">
+      <span class="mono">v${i.version}</span>
+      ${connected?`<span title="${fmtAbs(i.last_run)}" style="cursor:help;">última execução: ${timeAgo(i.last_run)}</span>${i.findings_total!=null?(i.findings_total>0?`<span style="color:#f97316">${i.findings_total} findings</span>`:`<span>0 findings</span>`):'<span>Engine de IA</span>'}`:`<span>última execução: —</span><span>— findings</span>`}
+    </div>
+  </div>`;
+  }).join('');
+
+  const monCount=getMonitored().length;
+  const connCard=connected?`<div class="stat-card mb-2" style="display:flex;align-items:center;gap:16px;">
+    <div style="width:40px;height:40px;border-radius:8px;background:#1f2023;display:grid;place-items:center;flex-shrink:0;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="#f2f2f2"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2c-3.2.69-3.88-1.36-3.88-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.79 2.74 1.27 3.41.97.1-.75.41-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.1 11.1 0 015.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.4-5.25 5.68.42.36.79 1.07.79 2.16v3.2c0 .31.21.66.8.55C20.21 21.38 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="font-semibold text-[15px]">GitHub · ${GH_ORG}</span>
+        <span class="sev st-done">Connected</span>
+      </div>
+      <div class="text-fg-dim text-[12.5px] mt-1">Instalado ${timeAgo(ghInstalledAt())} · ${monCount} ${monCount===1?'repositório monitorado':'repositórios monitorados'}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <button class="btn btn-sm btn-ghost" onclick="openRepoManager()">Gerenciar repositórios</button>
+      <button onclick="openDisconnectModal()" style="background:none;border:none;color:#707070;font-size:12.5px;cursor:pointer;padding:6px;text-decoration:underline;">Desconectar</button>
+    </div>
+  </div>`:`<div class="stat-card mb-2" style="display:flex;align-items:center;gap:16px;">
+    <div style="width:40px;height:40px;border-radius:8px;background:#1f2023;display:grid;place-items:center;flex-shrink:0;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="#a1a1a1"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2c-3.2.69-3.88-1.36-3.88-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.79 2.74 1.27 3.41.97.1-.75.41-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.1 11.1 0 015.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.4-5.25 5.68.42.36.79 1.07.79 2.16v3.2c0 .31.21.66.8.55C20.21 21.38 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="font-semibold text-[15px]">GitHub</span>
+        <span class="sev st-skipped">Não conectado</span>
+      </div>
+      <div class="text-fg-dim text-[12.5px] mt-1">Conecte para monitorar repositórios e executar scans</div>
+    </div>
+    <div style="flex-shrink:0;">
+      <button class="btn btn-sm btn-primary" onclick="goConnect()" style="gap:7px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2c-3.2.69-3.88-1.36-3.88-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.79 2.74 1.27 3.41.97.1-.75.41-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.1 11.1 0 015.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.4-5.25 5.68.42.36.79 1.07.79 2.16v3.2c0 .31.21.66.8.55C20.21 21.38 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>Conectar GitHub</button>
+    </div>
+  </div>`;
+
+  return`<div class="page-wrap">
+  <div class="mb-6">
+    <h1 class="text-[24px] font-bold tracking-tight">Integrações</h1>
+    <p class="text-fg-dim text-[13px] mt-1">Conexões e scanners do aperIA</p>
+  </div>
+
+  <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-fg-mute mb-3">Conexões</div>
+  ${connCard}
+
+  <div style="height:1px;background:#202124;margin:24px 0;"></div>
+
+  <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-fg-mute mb-3">Scanners &amp; Engines</div>
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">${cards}</div>
+</div>`;
+}
+function goConnect(){onboardingStep=1;navigate('home');}
+
+/* ═══════════════════════ SCREEN: TEAM ═══════════════════════ */
+const TEAM = [
+  {id:'u1',name:'Marina Alves',email:'marina.alves@acme.io',role:'admin',avatar:'MA',last_seen:'2024-06-29T14:00:00Z'},
+  {id:'u2',name:'Carlos Melo',email:'carlos.melo@acme.io',role:'engineer',avatar:'CM',last_seen:'2024-06-28T10:00:00Z'},
+  {id:'u3',name:'Julia Pires',email:'julia.pires@acme.io',role:'viewer',avatar:'JP',last_seen:'2024-06-27T09:00:00Z'},
+];
+const ROLE_LABELS={admin:'Admin',engineer:'Engenheiro',viewer:'Visualizador'};
+
+function renderTeam(){
+  const rows=TEAM.map(u=>`
+  <tr>
+    <td class="cl">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:#26272a;color:#f2f2f2;font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;display:grid;place-items:center;flex-shrink:0;">${u.avatar}</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:500;">${u.name}</div>
+          <div style="font-size:12px;color:#707070;margin-top:1px;">${u.email}</div>
+        </div>
+      </div>
+    </td>
+    <td><span style="display:inline-block;font-size:11px;color:#a1a1a1;background:#1f2023;border:1px solid #2e2f31;border-radius:100px;padding:2px 10px;">${ROLE_LABELS[u.role]||u.role}</span></td>
+    <td>${appConnected?`<span style="font-size:12px;color:#707070;cursor:help;" title="${fmtAbs(u.last_seen)}">${timeAgo(u.last_seen)}</span>`:'<span style="font-size:12px;color:#707070;">—</span>'}</td>
+    <td><button class="btn btn-sm btn-ghost">...</button></td>
+  </tr>`).join('');
+  return `<div class="page-wrap">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 style="font-size:24px;font-weight:700;">Time</h1>
+      <p style="color:#707070;font-size:13px;margin-top:4px;">${TEAM.length} membros · workspace Acme · Pessoal</p>
+    </div>
+    <button class="btn btn-md btn-primary">+ Convidar membro</button>
+  </div>
+  <div class="stat-card" style="padding:0;overflow:hidden;">
+    <table class="dtbl">
+      <colgroup><col><col style="width:160px"><col style="width:120px"><col style="width:80px"></colgroup>
+      <thead><tr>
+        <th class="cl">Membro</th>
+        <th>Perfil</th>
+        <th>Última Atividade</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+</div>`;
+}
+
+/* ═══════════════════════ GLOBAL SEARCH ═══════════════════════ */
+function onGlobalSearch(q){
+  if(!q)return;
+  if(currentScreen!=='findings'){findingsFilter.q=q;navigate('findings');}
+  else{setFindingFilter('q',q);}
+}
+
+/* ═══════════════════════ SIDEBAR TOGGLE ═══════════════════════ */
+function toggleSb(){
+  const sb=document.getElementById('sb'),shell=document.getElementById('app-shell'),ico=document.getElementById('sb-tgl-ico'),btn=document.getElementById('sb-tgl');
+  const col=sb.classList.toggle('sb-c');
+  shell.style.gridTemplateColumns=col?'64px 1fr':'256px 1fr';
+  ico.querySelector('path').setAttribute('d',col?'M9 6l6 6-6 6':'M15 6l-6 6 6 6');
+  btn.title=col?'Expandir sidebar':'Recolher sidebar';
+  localStorage.setItem('aperia-sb-col',col);
+}
+
+/* ═══════════════════════ INIT ═══════════════════════ */
+(function(){
+  if(localStorage.getItem('aperia-sb-col')==='true'){
+    const sb=document.getElementById('sb'),shell=document.getElementById('app-shell'),ico=document.getElementById('sb-tgl-ico'),btn=document.getElementById('sb-tgl');
+    if(sb&&shell){sb.classList.add('sb-c');shell.style.gridTemplateColumns='64px 1fr';if(ico)ico.querySelector('path').setAttribute('d','M15 6l-6 6 6 6');if(btn)btn.title='Expandir sidebar';const w=document.getElementById('sb-expand-wrap');if(w)w.style.display='flex';}
+  }
+  const saved=localStorage.getItem('aperia-screen')||'home';
+  navigate(saved);
+  document.addEventListener('keydown',e=>{
+    const open=document.getElementById('panel').classList.contains('open');
+    if(!open)return;
+    if(e.key==='Escape'){closePanel();}
+    else if(e.key==='ArrowDown'){e.preventDefault();navFinding(1);}
+    else if(e.key==='ArrowUp'){e.preventDefault();navFinding(-1);}
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="icon" href="assets/mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  [data-page]{font-family:var(--fb,'Inter'),system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  [data-page] h1,[data-page] h2,[data-page] h3{font-family:var(--fd,'Space Grotesk'),sans-serif}
+  [data-page] a{color:inherit;text-decoration:none}
+  [data-page] ::selection{background:rgba(216,58,54,.32);color:#fff}
+  @keyframes nodeIn{from{opacity:0;transform:translate(-50%,calc(-50% + 8px))}to{opacity:1;transform:translate(-50%,-50%)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes drawLine{from{stroke-dashoffset:1600}to{stroke-dashoffset:0}}
+  @keyframes travel{0%{offset-distance:0%;opacity:0}6%{opacity:1}92%{opacity:1}100%{offset-distance:100%;opacity:0}}
+  @keyframes pulseRing{0%{transform:scale(1);opacity:.55}100%{transform:scale(2.4);opacity:0}}
+  @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:.18}}
+  @keyframes dashScan{to{stroke-dashoffset:-32}}
+  @keyframes glowPulse{0%,100%{box-shadow:0 0 12px var(--mk,#ff6b66)}50%{box-shadow:0 0 24px var(--mk,#ff6b66)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes hpulse{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(1)}50%{opacity:.95;transform:translate(-50%,-50%) scale(1.05)}}
+  @keyframes scanY{0%{transform:translateY(-100%)}100%{transform:translateY(2200%)}}
+  @keyframes tierOn{from{opacity:.28}to{opacity:1}}
+  @keyframes sweep{0%{transform:translateX(-130%)}100%{transform:translateX(360%)}}
+  @media (prefers-reduced-motion: reduce){
+    [data-page] *{animation:none !important}
+    [data-page] [data-anim]{opacity:1 !important}
+  }
+  @media (max-width:980px){
+    [data-hero-grid],[data-prob-grid],[data-api-grid],[data-cal-grid],[data-pr-grid],[data-layers-grid],[data-pillars-grid]{grid-template-columns:1fr !important}
+    [data-reason-grid]{grid-template-columns:1fr !important;gap:14px !important}
+    [data-stack-grid],[data-stats-grid],[data-safe-grid],[data-evrow]{grid-template-columns:1fr 1fr !important}
+    [data-footer-grid]{grid-template-columns:1fr 1fr !important;gap:32px !important}
+    [data-nav]{display:none !important}
+  }
+  @media (max-width:560px){
+    [data-stats-grid],[data-safe-grid],[data-footer-grid],[data-evrow]{grid-template-columns:1fr !important}
+  }
+</style>
+</helmet>
+
+<div data-page style="--bg:#0a0c11;--band:#0d1017;--panel:#12151c;--accent:#e0524d;--accent-bright:#ff6b66;--r:20px;--rs:11px;--fd:'Manrope';--fb:'Inter';--pad:132px;--text:#eceef2;position:relative;width:100%;min-height:100vh;background:var(--bg,#0a0c11);--bg:#0a0c11;--band:#0d1017;--panel:#12151c;--accent:#e0524d;--accent-bright:#ff6b66;--r:20px;--rs:11px;--fd:'Manrope';--fb:'Inter';--pad:132px;--text:#eceef2;color:var(--text,#eceef2);overflow-x:clip">
+
+  <!-- ambient grid + glow (scoped, not fixed) -->
+  <div style="position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:46px 46px;-webkit-mask-image:radial-gradient(ellipse 70% 38% at 50% 8%,#000,transparent 80%);mask-image:radial-gradient(ellipse 70% 38% at 50% 8%,#000,transparent 80%)"></div>
+  <div style="position:absolute;top:-180px;left:50%;transform:translateX(-50%);width:900px;height:520px;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(216,58,54,.10),transparent 65%);filter:blur(20px)"></div>
+
+  <!-- HEADER -->
+  <header style="position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg,#08090c) 78%,transparent);border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="max-width:1240px;margin:0 auto;padding:0 32px;height:72px;display:flex;align-items:center;justify-content:space-between">
+      <a href="#top" style="display:flex;align-items:center;gap:12px">
+        <img src="assets/mark.svg" alt="aperIA" width="52" height="56" style="display:block;border-radius:var(--rs,8px)">
+        <span style="font-family:var(--fd,'Manrope');font-weight:600;font-size:15px;letter-spacing:.02em;color:#9aa0aa;align-self:flex-end;padding-bottom:4px">aper<span style="color:var(--accent-bright,#ff6b66)">IA</span></span>
+      </a>
+      <nav data-nav style="display:flex;align-items:center;gap:30px;font-size:14px;color:#9a9ea7">
+        <a href="#problema" onmouseover="this.style.color='#e9eaee'" onmouseout="this.style.color=''">Problema</a>
+        <a href="#camadas" onmouseover="this.style.color='#e9eaee'" onmouseout="this.style.color=''">Como funciona</a>
+        <a href="#validacao" onmouseover="this.style.color='#e9eaee'" onmouseout="this.style.color=''">Validação</a>
+        <a href="#pilares" onmouseover="this.style.color='#e9eaee'" onmouseout="this.style.color=''">Pilares</a>
+      </nav>
+      <a href="#cadastro" style="font-size:14px;font-weight:600;padding:9px 18px;border-radius:var(--rs,7px);background:var(--accent,#d83a36);color:#fff;box-shadow:0 0 0 1px rgba(255,77,71,.4),0 8px 24px -8px rgba(216,58,54,.6);transition:transform .15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">Cadastrar</a>
+    </div>
+  </header>
+
+  <!-- HERO · trilho ascendente (scroll) -->
+  <section id="top" data-screen-label="Hero" ref="{{ heroRef }}" style="position:relative;z-index:1;background:#0b0a07;--accent:#f0a93a;--accent-bright:#f0a93a">
+    <div style="position:absolute;inset:0;z-index:0;background:radial-gradient(90% 60% at 50% 0%,rgba(240,169,58,.08),transparent 60%),linear-gradient(180deg,#0b0a07,#0c0b08)"></div><div style="position:absolute;inset:0;z-index:0;background-image:linear-gradient(rgba(240,169,58,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(240,169,58,.05) 1px,transparent 1px);background-size:38px 38px;-webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 30%,#000,transparent 80%);mask-image:radial-gradient(ellipse 80% 60% at 50% 30%,#000,transparent 80%)"></div><div style="position:absolute;left:24px;top:96px;z-index:1;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:rgba(240,169,58,.55)">// OPS-CONSOLE · LIVE TRACE</div><div style="position:absolute;left:18px;top:84px;width:14px;height:14px;border-left:2px solid rgba(240,169,58,.5);border-top:2px solid rgba(240,169,58,.5);z-index:1"></div><div style="position:absolute;right:18px;top:84px;width:14px;height:14px;border-right:2px solid rgba(240,169,58,.5);border-top:2px solid rgba(240,169,58,.5);z-index:1"></div>
+    <div style="position:relative;z-index:2;max-width:1240px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr 0.9fr;gap:64px;align-items:start" data-hero-grid>
+      <div>
+        <div style="padding:118px 0 30px">
+          <h1 style="font-size:clamp(38px,4.8vw,60px);line-height:1.02;font-weight:800;letter-spacing:-.025em;margin:0 0 20px;color:#f3ede0">From Findings to<br><span style="color:#f0a93a">Exploitable Attack Paths.</span></h1>
+          <p style="font-size:clamp(16px,1.3vw,18px);line-height:1.6;color:#b7ad96;max-width:460px;margin:0 0 28px">A camada de inteligência ofensiva acima dos seus scanners. Acompanhe o caminho subir, camada por camada, até a prova.</p>
+          <a href="#cadastro" style="display:inline-block;font-size:15px;font-weight:600;padding:14px 26px;border-radius:var(--r,12px);background:#d83a36;color:#fff;box-shadow:0 0 0 1px rgba(240,169,58,.35),0 14px 40px -12px rgba(216,58,54,.6)">Criar conta e acessar →</a>
+        </div>
+        <div style="min-height:58vh;display:flex;flex-direction:column;justify-content:center;opacity:{{ s1 }};transition:opacity .4s"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#f0a93a;margin-bottom:14px">01 — SINAL</div><h2 style="font-size:clamp(26px,3vw,38px);font-weight:700;letter-spacing:-.02em;margin:0 0 14px;line-height:1.1">Scanners coletam evidências</h2><p style="font-size:16px;line-height:1.6;color:#b7ad96;max-width:420px;margin:0">Semgrep, Trivy, ZAP, Prowler e TruffleHog varrem código e infra, normalizando cada finding com seu commit de origem.</p></div>
+        <div style="min-height:58vh;display:flex;flex-direction:column;justify-content:center;opacity:{{ s2 }};transition:opacity .4s"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#f0a93a;margin-bottom:14px">02 — CORRELAÇÃO</div><h2 style="font-size:clamp(26px,3vw,38px);font-weight:700;letter-spacing:-.02em;margin:0 0 14px;line-height:1.1">A I.A. encadeia o attack path</h2><p style="font-size:16px;line-height:1.6;color:#b7ad96;max-width:420px;margin:0">O motor de raciocínio conecta evidências dispersas em uma hipótese coerente — pensando como um adversário, hop a hop.</p></div>
+        <div style="min-height:58vh;display:flex;flex-direction:column;justify-content:center;opacity:{{ s3 }};transition:opacity .4s"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#f0a93a;margin-bottom:14px">03 — VALIDAÇÃO</div><h2 style="font-size:clamp(26px,3vw,38px);font-weight:700;letter-spacing:-.02em;margin:0 0 14px;line-height:1.1">Caldera prova a exploração</h2><p style="font-size:16px;line-height:1.6;color:#b7ad96;max-width:420px;margin:0">A emulação executa o adversário em sandbox isolada e confirma a rota inteira: do web-edge ao domain-admin.</p></div>
+      </div>
+      <div style="position:sticky;top:88px;height:calc(100vh - 130px);padding:22px 0;--mk:#f0a93a">
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;background:rgba(14,12,8,.5);border:1px solid rgba(240,169,58,.22);border-radius:var(--r,20px);padding:16px">
+          <div style="position:absolute;left:8px;top:8px;width:12px;height:12px;border-left:2px solid rgba(240,169,58,.6);border-top:2px solid rgba(240,169,58,.6)"></div><div style="position:absolute;right:8px;top:8px;width:12px;height:12px;border-right:2px solid rgba(240,169,58,.6);border-top:2px solid rgba(240,169,58,.6)"></div><div style="position:absolute;left:8px;bottom:8px;width:12px;height:12px;border-left:2px solid rgba(240,169,58,.6);border-bottom:2px solid rgba(240,169,58,.6)"></div><div style="position:absolute;right:8px;bottom:8px;width:12px;height:12px;border-right:2px solid rgba(240,169,58,.6);border-bottom:2px solid rgba(240,169,58,.6)"></div>
+          <div style="position:relative;display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:#8a7b58;letter-spacing:.04em;margin-bottom:6px"><span style="display:flex;align-items:center;gap:8px"><span style="width:7px;height:7px;border-radius:50%;background:#f0a93a;box-shadow:0 0 8px #f0a93a"></span>attack_path.live</span><span style="color:#ddd0b4">{{ heroConf }}% validado</span></div>
+          <div style="position:relative;flex:1;margin:18px 4px 8px">
+            <div style="position:absolute;left:13px;top:8px;bottom:8px;width:2px;background:rgba(240,169,58,.14);transform:translateX(-50%)"></div>
+            <div style="position:absolute;left:13px;bottom:5%;width:2px;height:{{ railFill }};background:linear-gradient(0deg,#f0a93a,#ffd27a);box-shadow:0 0 16px rgba(240,169,58,.85);transition:height .25s ease;transform:translateX(-50%)"></div>
+            <div style="position:absolute;left:13px;bottom:{{ markerBottom }};transform:translate(-50%,50%);transition:bottom .25s ease;z-index:3"><span style="position:relative;display:flex;align-items:center;justify-content:center;width:22px;height:22px"><span style="position:absolute;width:22px;height:22px;border:1px solid rgba(240,169,58,.7);border-radius:50%"></span><span style="position:absolute;width:1px;height:30px;background:rgba(240,169,58,.5)"></span><span style="position:absolute;width:30px;height:1px;background:rgba(240,169,58,.5)"></span><span style="display:block;width:10px;height:10px;border-radius:50%;background:#f0a93a;animation:glowPulse 1.6s ease-in-out infinite"></span></span></div>
+              <div style="position:absolute;left:0;bottom:5%;transform:translateY(50%);display:flex;align-items:center;gap:13px;white-space:nowrap"><span style="position:relative;display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0"><span style="width:8px;height:8px;border-radius:50%;background:#3a3220"></span><span style="position:absolute;width:12px;height:12px;border-radius:50%;background:#f0a93a;box-shadow:0 0 14px #f0a93a;opacity:{{ lit1 }};transition:opacity .45s"></span></span><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#ddd0b4;opacity:{{ litL1 }};transition:opacity .45s">web-edge</span></div>
+              <div style="position:absolute;left:0;bottom:22.6%;transform:translateY(50%);display:flex;align-items:center;gap:13px;white-space:nowrap"><span style="position:relative;display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0"><span style="width:8px;height:8px;border-radius:50%;background:#3a3220"></span><span style="position:absolute;width:12px;height:12px;border-radius:50%;background:#f0a93a;box-shadow:0 0 14px #f0a93a;opacity:{{ lit2 }};transition:opacity .45s"></span></span><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#ddd0b4;opacity:{{ litL2 }};transition:opacity .45s">app-server</span></div>
+              <div style="position:absolute;left:0;bottom:40.2%;transform:translateY(50%);display:flex;align-items:center;gap:13px;white-space:nowrap"><span style="position:relative;display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0"><span style="width:8px;height:8px;border-radius:50%;background:#3a3220"></span><span style="position:absolute;width:12px;height:12px;border-radius:50%;background:#f0a93a;box-shadow:0 0 14px #f0a93a;opacity:{{ lit3 }};transition:opacity .45s"></span></span><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#ddd0b4;opacity:{{ litL3 }};transition:opacity .45s">internal-api</span></div>
+              <div style="position:absolute;left:0;bottom:57.8%;transform:translateY(50%);display:flex;align-items:center;gap:13px;white-space:nowrap"><span style="position:relative;display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0"><span style="width:8px;height:8px;border-radius:50%;background:#3a3220"></span><span style="position:absolute;width:12px;height:12px;border-radius:50%;background:#f0a93a;box-shadow:0 0 14px #f0a93a;opacity:{{ lit4 }};transition:opacity .45s"></span></span><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#ddd0b4;opacity:{{ litL4 }};transition:opacity .45s">ci-runner</span></div>
+              <div style="position:absolute;left:0;bottom:75.4%;transform:translateY(50%);display:flex;align-items:center;gap:13px;white-space:nowrap"><span style="position:relative;display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0"><span style="width:8px;height:8px;border-radius:50%;background:#3a3220"></span><span style="position:absolute;width:12px;height:12px;border-radius:50%;background:#f0a93a;box-shadow:0 0 14px #f0a93a;opacity:{{ lit5 }};transition:opacity .45s"></span></span><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#ddd0b4;opacity:{{ litL5 }};transition:opacity .45s">secrets-vault</span></div>
+              <div style="position:absolute;left:0;bottom:93%;transform:translateY(50%);display:flex;align-items:center;gap:13px;white-space:nowrap"><span style="position:relative;display:flex;align-items:center;justify-content:center;width:34px;height:34px;flex-shrink:0"><span style="position:absolute;width:32px;height:32px;border-radius:50%;background:radial-gradient(circle,rgba(255,91,84,.6),transparent 70%);opacity:{{ lit6 }};transition:opacity .45s"></span><img src="assets/mark.svg" width="23" height="25" style="border-radius:5px;position:relative;opacity:{{ litL6 }};transition:opacity .45s;filter:drop-shadow(0 0 7px rgba(255,91,84,.6))"></span><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#ddd0b4;opacity:{{ litL6 }};transition:opacity .45s">domain-admin <span style="color:#ff5b54;font-size:9px;letter-spacing:.16em;margin-left:6px">ALVO</span></span></div>
+          </div>
+          <div style="position:relative;font-family:'JetBrains Mono',monospace;font-size:12px;color:#ddd0b4;padding-top:12px">{{ heroCaption }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · PROBLEMA -->
+  <section id="problema" data-screen-label="O problema" style="position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.06)">
+    <div style="max-width:1240px;margin:0 auto;padding:var(--pad,110px) 32px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--accent,#d83a36);margin-bottom:18px">O PROBLEMA</div>
+      <h2 style="font-size:clamp(30px,3.6vw,46px);line-height:1.08;font-weight:700;letter-spacing:-.02em;margin:0 0 18px;max-width:760px">Scanners entregam listas.<br>Não entregam respostas.</h2>
+      <p style="font-size:17px;line-height:1.6;color:#9a9ea7;max-width:600px;margin:0 0 56px">Semgrep, Trivy, ZAP, Prowler, TruffleHog produzem centenas de findings isolados e sem priorização ofensiva. O time recebe ruído — não sabe o que é explorável de verdade, como se encadeia, nem o que corrigir primeiro.</p>
+
+      <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;align-items:stretch" data-prob-grid>
+        <div style="position:relative;border:1px solid rgba(255,255,255,.08);border-radius:var(--r,14px);background:var(--band,#0a0b10);overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:12px;color:#7a7e88"><span>scanner_output.json</span><span style="color:#6a6e78">247 findings · 0 priorizados</span></div>
+          <div style="padding:8px 0;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#888c96">
+            <div style="display:flex;gap:12px;align-items:center;padding:9px 18px"><span style="flex-shrink:0;width:62px;color:#c9a23a">MEDIUM</span><span style="color:#9a9ea7">CVE-2024-21626</span><span style="color:#5d616b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">runc/libcontainer</span></div>
+            <div style="display:flex;gap:12px;align-items:center;padding:9px 18px"><span style="flex-shrink:0;width:62px;color:var(--accent,#d83a36)">HIGH</span><span style="color:#9a9ea7">hardcoded-secret</span><span style="color:#5d616b">src/config/db.py:14</span></div>
+            <div style="display:flex;gap:12px;align-items:center;padding:9px 18px"><span style="flex-shrink:0;width:62px;color:#c9a23a">MEDIUM</span><span style="color:#9a9ea7">sql-injection</span><span style="color:#5d616b">api/handlers/user.py:88</span></div>
+            <div style="display:flex;gap:12px;align-items:center;padding:9px 18px"><span style="flex-shrink:0;width:62px;color:#7a8a5a">LOW</span><span style="color:#9a9ea7">missing-header</span><span style="color:#5d616b">gateway/nginx.conf</span></div>
+            <div style="display:flex;gap:12px;align-items:center;padding:9px 18px"><span style="flex-shrink:0;width:62px;color:var(--accent,#d83a36)">HIGH</span><span style="color:#9a9ea7">ssrf-candidate</span><span style="color:#5d616b">api/fetch.py:53</span></div>
+            <div style="display:flex;gap:12px;align-items:center;padding:9px 18px"><span style="flex-shrink:0;width:62px;color:#c9a23a">MEDIUM</span><span style="color:#9a9ea7">outdated-dep</span><span style="color:#5d616b">requirements.txt:31</span></div>
+            <div style="display:flex;gap:12px;align-items:center;padding:9px 18px"><span style="flex-shrink:0;width:62px;color:#7a8a5a">LOW</span><span style="color:#9a9ea7">verbose-error</span><span style="color:#5d616b">core/errors.py:9</span></div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(transparent,var(--band,#0a0b10));pointer-events:none"></div>
+          <div style="position:absolute;left:18px;bottom:14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;color:#5d616b">+ 240 ⌄ RUÍDO SEM CONTEXTO</div>
+        </div>
+
+        <div style="position:relative;border:1px solid rgba(216,58,54,.4);border-radius:var(--r,14px);background:linear-gradient(160deg,rgba(216,58,54,.1),rgba(10,11,16,.6));overflow:hidden;box-shadow:0 0 40px -12px rgba(216,58,54,.4)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(216,58,54,.22);font-family:'JetBrains Mono',monospace;font-size:12px;color:#ff8e8a"><span>aperIA.verdict</span><span style="color:#fff">1 caminho explorável</span></div>
+          <div style="padding:22px 18px">
+            <div style="font-size:15px;line-height:1.55;color:#d6d8dd;margin-bottom:20px">Dos 247 findings, <span style="color:#fff;font-weight:600">três se encadeiam</span> em um caminho real de exploração — e a aperIA <span style="color:var(--accent-bright,#ff4d47);font-weight:600">provou</span> que ele funciona.</div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px">
+              <div style="display:flex;align-items:center;gap:10px;color:#cdd0d6"><span style="color:var(--accent-bright,#ff4d47)">①</span>ssrf-candidate <span style="color:#5d616b">→</span> internal-api</div>
+              <div style="display:flex;align-items:center;gap:10px;color:#cdd0d6"><span style="color:var(--accent-bright,#ff4d47)">②</span>hardcoded-secret <span style="color:#5d616b">→</span> secrets-vault</div>
+              <div style="display:flex;align-items:center;gap:10px;color:#cdd0d6"><span style="color:var(--accent-bright,#ff4d47)">③</span>token-reuse <span style="color:#5d616b">→</span> domain-admin</div>
+            </div>
+            <div style="margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9a9ea7"><span style="width:7px;height:7px;border-radius:50%;background:#3fae6a;box-shadow:0 0 8px #3fae6a"></span>validado em sandbox · risco 94/100</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · CAMADAS -->
+  <section id="camadas" data-screen-label="Como funciona" style="position:relative;z-index:1;background:var(--band,#0a0b10);border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="max-width:1240px;margin:0 auto;padding:var(--pad,110px) 32px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--accent,#d83a36);margin-bottom:18px">A DIFERENÇA APERIA</div>
+      <h2 style="font-size:clamp(30px,3.6vw,46px);line-height:1.08;font-weight:700;letter-spacing:-.02em;margin:0 0 18px;max-width:780px">Do sinal à prova, em três camadas.</h2>
+      <p style="font-size:17px;line-height:1.6;color:#9a9ea7;max-width:620px;margin:0 0 56px">A aperIA não compete com seus scanners. Ela vive acima deles e responde à pergunta que eles não respondem: qual é o caminho real até uma invasão?</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch" data-layers-grid>
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,14px);background:var(--panel,#0c0e13);padding:30px 26px;display:flex;flex-direction:column">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.1em;color:#5d616b;margin-bottom:20px">01 — SINAL</div>
+          <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 12px">Scanners coletam evidências</h3>
+          <p style="font-size:15px;line-height:1.6;color:#9a9ea7;margin:0 0 24px;flex:1">Uma esteira de scanners de segurança roda em tiers de profundidade crescente e normaliza cada finding — preservando o output bruto e o commit de origem.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9ea7">
+            <span style="padding:4px 9px;border:1px solid rgba(255,255,255,.12);border-radius:var(--rs,5px)">Semgrep</span>
+            <span style="padding:4px 9px;border:1px solid rgba(255,255,255,.12);border-radius:var(--rs,5px)">Trivy</span>
+            <span style="padding:4px 9px;border:1px solid rgba(255,255,255,.12);border-radius:var(--rs,5px)">ZAP</span>
+            <span style="padding:4px 9px;border:1px solid rgba(255,255,255,.12);border-radius:var(--rs,5px)">Prowler</span>
+            <span style="padding:4px 9px;border:1px solid rgba(255,255,255,.12);border-radius:var(--rs,5px)">TruffleHog</span>
+          </div>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,14px);background:var(--panel,#0c0e13);padding:30px 26px;display:flex;flex-direction:column">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.1em;color:#5d616b;margin-bottom:20px">02 — CORRELAÇÃO</div>
+          <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 12px">A I.A. correlaciona</h3>
+          <p style="font-size:15px;line-height:1.6;color:#9a9ea7;margin:0 0 24px;flex:1">O motor de raciocínio conecta evidências dispersas em hipóteses de ataque — pensando como um adversário, não como um classificador de CVSS.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9ea7">
+            <span style="padding:4px 9px;border:1px solid rgba(255,255,255,.12);border-radius:var(--rs,5px)">raciocínio I.A.</span>
+            <span style="padding:4px 9px;border:1px solid rgba(255,255,255,.12);border-radius:var(--rs,5px)">attack-path</span>
+            <span style="padding:4px 9px;border:1px solid rgba(255,255,255,.12);border-radius:var(--rs,5px)">LLM Guard</span>
+          </div>
+        </div>
+        <div style="border:1px solid rgba(216,58,54,.4);border-radius:var(--r,14px);background:linear-gradient(160deg,rgba(216,58,54,.08),var(--panel,#0c0e13));padding:30px 26px;display:flex;flex-direction:column;box-shadow:0 0 40px -16px rgba(216,58,54,.5)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.1em;color:#ff8e8a;margin-bottom:20px">03 — VALIDAÇÃO</div>
+          <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 12px">Caldera prova a exploração</h3>
+          <p style="font-size:15px;line-height:1.6;color:#c2c5cc;margin:0 0 24px;flex:1">MITRE Caldera emula o adversário real em sandbox isolada e demonstra empiricamente que o caminho funciona. "O ataque rodou" pesa mais que "o CVE existe".</p>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#d6d8dd">
+            <span style="padding:4px 9px;border:1px solid rgba(216,58,54,.4);border-radius:var(--rs,5px)">MITRE Caldera</span>
+            <span style="padding:4px 9px;border:1px solid rgba(216,58,54,.4);border-radius:var(--rs,5px)">sandbox isolada</span>
+            <span style="padding:4px 9px;border:1px solid rgba(216,58,54,.4);border-radius:var(--rs,5px)">OpenCTI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · ATTACK PATH INTELLIGENCE -->
+  <section data-screen-label="Attack Path Intelligence" style="position:relative;z-index:1">
+    <div style="max-width:1240px;margin:0 auto;padding:var(--pad,110px) 32px">
+      <div style="display:grid;grid-template-columns:minmax(0,0.9fr) minmax(0,1.3fr);gap:56px" data-api-grid>
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--accent,#d83a36);margin-bottom:18px">ATTACK PATH INTELLIGENCE</div>
+          <h2 style="font-size:clamp(28px,3.2vw,42px);line-height:1.1;font-weight:700;letter-spacing:-.02em;margin:0 0 18px">O caminho real, hop a hop.</h2>
+          <p style="font-size:16px;line-height:1.65;color:#9a9ea7;margin:0 0 26px">Cada salto é reconstruído com o ativo comprometido, a credencial obtida, a vulnerabilidade explorada e a técnica MITRE ATT&amp;CK correspondente. Não é um grafo teórico — é a rota que um adversário percorreria.</p>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-family:'JetBrains Mono',monospace;color:var(--accent,#d83a36);font-size:13px;margin-top:2px">▸</span><span style="font-size:15px;color:#c2c5cc">Ativos e credenciais encadeados, não findings soltos</span></div>
+            <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-family:'JetBrains Mono',monospace;color:var(--accent,#d83a36);font-size:13px;margin-top:2px">▸</span><span style="font-size:15px;color:#c2c5cc">Movimentação lateral mapeada para ATT&amp;CK</span></div>
+            <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-family:'JetBrains Mono',monospace;color:var(--accent,#d83a36);font-size:13px;margin-top:2px">▸</span><span style="font-size:15px;color:#c2c5cc">Cada hop marcado como validado pela emulação</span></div>
+          </div>
+        </div>
+
+        <div style="position:relative;padding-left:8px">
+          <div style="position:absolute;left:18px;top:18px;bottom:18px;width:2px;background:linear-gradient(#7a7e88,var(--accent,#d83a36))"></div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div style="position:relative;padding-left:54px">
+              <span style="position:absolute;left:11px;top:20px;width:16px;height:16px;border-radius:50%;background:var(--panel,#0c0e13);border:2px solid #7a7e88"></span>
+              <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,12px);background:var(--panel,#0c0e13);padding:18px 20px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#fff">web-edge</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#5d616b">HOP 01 · ENTRADA</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;font-family:'JetBrains Mono',monospace;font-size:12px">
+                  <div><span style="color:#5d616b">vuln </span><span style="color:#d6d8dd">SSRF · CVE-2024-3094</span></div>
+                  <div><span style="color:#5d616b">técnica </span><span style="color:#d6d8dd">T1190</span></div>
+                  <div style="grid-column:1/-1"><span style="color:#5d616b">obtém </span><span style="color:#ff8e8a">acesso à rede interna</span></div>
+                </div>
+              </div>
+            </div>
+            <div style="position:relative;padding-left:54px">
+              <span style="position:absolute;left:11px;top:20px;width:16px;height:16px;border-radius:50%;background:var(--panel,#0c0e13);border:2px solid #b03b38"></span>
+              <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,12px);background:var(--panel,#0c0e13);padding:18px 20px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#fff">internal-api</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#5d616b">HOP 02 · MOV. LATERAL</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;font-family:'JetBrains Mono',monospace;font-size:12px">
+                  <div><span style="color:#5d616b">vuln </span><span style="color:#d6d8dd">token de sessão exposto</span></div>
+                  <div><span style="color:#5d616b">técnica </span><span style="color:#d6d8dd">T1552</span></div>
+                  <div style="grid-column:1/-1"><span style="color:#5d616b">obtém </span><span style="color:#ff8e8a">service token</span></div>
+                </div>
+              </div>
+            </div>
+            <div style="position:relative;padding-left:54px">
+              <span style="position:absolute;left:11px;top:20px;width:16px;height:16px;border-radius:50%;background:var(--panel,#0c0e13);border:2px solid #c33d39"></span>
+              <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,12px);background:var(--panel,#0c0e13);padding:18px 20px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#fff">ci-runner</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#5d616b">HOP 03 · ESCALADA</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;font-family:'JetBrains Mono',monospace;font-size:12px">
+                  <div><span style="color:#5d616b">vuln </span><span style="color:#d6d8dd">secret hardcoded no pipeline</span></div>
+                  <div><span style="color:#5d616b">técnica </span><span style="color:#d6d8dd">T1078</span></div>
+                  <div style="grid-column:1/-1"><span style="color:#5d616b">obtém </span><span style="color:#ff8e8a">registry credentials</span></div>
+                </div>
+              </div>
+            </div>
+            <div style="position:relative;padding-left:54px">
+              <span style="position:absolute;left:11px;top:20px;width:16px;height:16px;border-radius:50%;background:var(--panel,#0c0e13);border:2px solid #db3f3b"></span>
+              <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,12px);background:var(--panel,#0c0e13);padding:18px 20px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#fff">secrets-vault</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#5d616b">HOP 04 · COLETA</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;font-family:'JetBrains Mono',monospace;font-size:12px">
+                  <div><span style="color:#5d616b">vuln </span><span style="color:#d6d8dd">política IAM permissiva</span></div>
+                  <div><span style="color:#5d616b">técnica </span><span style="color:#d6d8dd">T1555</span></div>
+                  <div style="grid-column:1/-1"><span style="color:#5d616b">obtém </span><span style="color:#ff8e8a">admin key</span></div>
+                </div>
+              </div>
+            </div>
+            <div style="position:relative;padding-left:54px">
+              <span style="position:absolute;left:9px;top:18px;width:20px;height:20px;border-radius:50%;background:rgba(216,58,54,.2);border:2px solid var(--accent-bright,#ff4d47);box-shadow:0 0 16px rgba(216,58,54,.7)"></span>
+              <div style="border:1px solid rgba(216,58,54,.5);border-radius:var(--r,12px);background:linear-gradient(160deg,rgba(216,58,54,.12),var(--panel,#0c0e13));padding:18px 20px;box-shadow:0 0 40px -16px rgba(216,58,54,.6)">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#fff"><img src="assets/mark.svg" width="16" height="17" style="border-radius:3px">domain-admin</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:var(--accent-bright,#ff4d47)">HOP 05 · ALVO</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;font-family:'JetBrains Mono',monospace;font-size:12px">
+                  <div><span style="color:#5d616b">vuln </span><span style="color:#d6d8dd">reuso de credencial</span></div>
+                  <div><span style="color:#5d616b">técnica </span><span style="color:#d6d8dd">T1098</span></div>
+                  <div style="grid-column:1/-1"><span style="color:#5d616b">impacto </span><span style="color:#fff;font-weight:600">controle total do domínio</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- divider -->
+  <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:16px;padding:6px 32px;opacity:.6">
+    <span style="height:1px;width:90px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18))"></span>
+    <img src="assets/mark.svg" width="20" height="22" style="border-radius:4px;opacity:.8">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;color:#6a6e78">ATAQUE PARA ENTENDER</span>
+    <span style="height:1px;width:90px;background:linear-gradient(90deg,rgba(255,255,255,.18),transparent)"></span>
+  </div>
+
+  <!-- 5 · ADVERSARY VALIDATION -->
+  <section id="validacao" data-screen-label="Adversary Validation" style="position:relative;z-index:1;background:var(--band,#0a0b10);border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="max-width:1240px;margin:0 auto;padding:var(--pad,110px) 32px">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:center" data-cal-grid>
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--accent,#d83a36);margin-bottom:18px">ADVERSARY VALIDATION</div>
+          <h2 style="font-size:clamp(28px,3.2vw,42px);line-height:1.1;font-weight:700;letter-spacing:-.02em;margin:0 0 18px">A prova: o ataque rodou.</h2>
+          <p style="font-size:16px;line-height:1.65;color:#9a9ea7;margin:0 0 30px">MITRE Caldera emula o adversário em uma sandbox completamente isolada — rede Docker <span style="font-family:'JetBrains Mono',monospace;color:#c2c5cc;font-size:14px">internal: true</span>, sem rota de saída. Evidência empírica de exploração, não suposição de CVSS.</p>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:8px">
+            <div style="display:flex;gap:12px;align-items:center"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent,#d83a36);flex-shrink:0"></span><span style="font-size:15px;color:#c2c5cc">Sandbox verificada no boot — sem isolamento, não roda</span></div>
+            <div style="display:flex;gap:12px;align-items:center"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent,#d83a36);flex-shrink:0"></span><span style="font-size:15px;color:#c2c5cc">Resultado da emulação pesa <span style="color:#fff;font-weight:600">30%</span> no risk score</span></div>
+            <div style="display:flex;gap:12px;align-items:center"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent,#d83a36);flex-shrink:0"></span><span style="font-size:15px;color:#c2c5cc">"O ataque funcionou" &gt; "o CVE existe"</span></div>
+          </div>
+        </div>
+
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,14px);background:var(--bg,#08090c);overflow:hidden;box-shadow:0 30px 70px -40px rgba(0,0,0,.9)">
+          <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+            <span style="width:11px;height:11px;border-radius:50%;background:#2a2c33"></span><span style="width:11px;height:11px;border-radius:50%;background:#2a2c33"></span><span style="width:11px;height:11px;border-radius:50%;background:#2a2c33"></span>
+            <span style="margin-left:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#7a7e88">caldera · operation/exploit-chain · sandbox=isolated</span>
+          </div>
+          <div style="padding:18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.9;color:#9a9ea7">
+            <div><span style="color:#5d616b">12:04:01</span> <span style="color:#7a8a5a">[boot]</span> sandbox network internal=true · egress=blocked</div>
+            <div><span style="color:#5d616b">12:04:08</span> <span style="color:#7a8a5a">[ability]</span> T1190 exploit web-edge … <span style="color:#3fae6a">ok</span></div>
+            <div><span style="color:#5d616b">12:04:22</span> <span style="color:#7a8a5a">[ability]</span> T1552 harvest session token … <span style="color:#3fae6a">ok</span></div>
+            <div><span style="color:#5d616b">12:04:39</span> <span style="color:#7a8a5a">[ability]</span> T1078 reuse ci credentials … <span style="color:#3fae6a">ok</span></div>
+            <div><span style="color:#5d616b">12:05:02</span> <span style="color:#7a8a5a">[ability]</span> T1555 dump vault secrets … <span style="color:#3fae6a">ok</span></div>
+            <div><span style="color:#5d616b">12:05:18</span> <span style="color:#7a8a5a">[ability]</span> T1098 escalate to domain-admin … <span style="color:#3fae6a">ok</span></div>
+            <div style="margin-top:6px;color:var(--accent-bright,#ff4d47)">▸ exploit chain CONFIRMED · 5/5 hops reachable</div>
+          </div>
+          <div style="padding:16px 18px;border-top:1px solid rgba(255,255,255,.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#7a7e88"><span>RISK SCORE · COMPOSIÇÃO</span><span style="color:#fff;font-size:14px;letter-spacing:0">94<span style="color:#5d616b">/100</span></span></div>
+            <div style="display:flex;height:10px;border-radius:4px;overflow:hidden;gap:2px">
+              <div style="width:25%;background:#3a3d45"></div>
+              <div style="width:25%;background:#5a5d66"></div>
+              <div style="width:30%;background:linear-gradient(90deg,#b03330,var(--accent-bright,#ff4d47))"></div>
+              <div style="width:20%;background:#3a3d45"></div>
+            </div>
+            <div style="display:flex;gap:16px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#7a7e88;flex-wrap:wrap">
+              <span>CVSS 25%</span><span>CTI 25%</span><span style="color:#ff8e8a">Emulação 30%</span><span>Business 20%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · REASONING ENGINE -->
+  <section data-screen-label="Reasoning" style="position:relative;z-index:1">
+    <div style="max-width:1240px;margin:0 auto;padding:var(--pad,110px) 32px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--accent,#d83a36);margin-bottom:18px">REASONING ENGINE</div>
+      <h2 style="font-size:clamp(30px,3.6vw,46px);line-height:1.08;font-weight:700;letter-spacing:-.02em;margin:0 0 18px;max-width:780px">Raciocínio ofensivo. Não classificação.</h2>
+      <p style="font-size:17px;line-height:1.6;color:#9a9ea7;max-width:640px;margin:0 0 48px">Uma I.A. de raciocínio conecta evidências dispersas em hipóteses de ataque coerentes — blindada por quatro salvaguardas arquiteturais.</p>
+
+      <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,14px);background:var(--panel,#0c0e13);padding:34px 30px;margin-bottom:24px">
+        <div style="display:grid;grid-template-columns:1.3fr auto 1fr;gap:24px;align-items:center" data-reason-grid>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#5d616b;margin-bottom:4px">EVIDÊNCIAS DISPERSAS</div>
+            <div style="padding:10px 14px;border:1px solid rgba(255,255,255,.1);border-radius:var(--rs,8px);background:var(--bg,#08090c);font-family:'JetBrains Mono',monospace;font-size:12px;color:#9a9ea7">ssrf-candidate · api/fetch.py:53</div>
+            <div style="padding:10px 14px;border:1px solid rgba(255,255,255,.1);border-radius:var(--rs,8px);background:var(--bg,#08090c);font-family:'JetBrains Mono',monospace;font-size:12px;color:#9a9ea7">hardcoded-secret · config/db.py:14</div>
+            <div style="padding:10px 14px;border:1px solid rgba(255,255,255,.1);border-radius:var(--rs,8px);background:var(--bg,#08090c);font-family:'JetBrains Mono',monospace;font-size:12px;color:#9a9ea7">iam-policy · prowler/finding-118</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;color:var(--accent,#d83a36);font-family:'JetBrains Mono',monospace;font-size:11px;gap:6px"><span style="font-size:22px;line-height:1">→</span><span style="letter-spacing:.1em">CORRELACIONA</span></div>
+          <div style="padding:18px 18px;border:1px solid rgba(216,58,54,.4);border-radius:var(--r,10px);background:linear-gradient(160deg,rgba(216,58,54,.1),var(--bg,#08090c))">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#ff8e8a;margin-bottom:10px">HIPÓTESE DE ATAQUE</div>
+            <div style="font-size:14px;line-height:1.5;color:#e9eaee">SSRF expõe a API interna → token reaproveitado no vault → escalada a domain-admin.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px" data-safe-grid>
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,12px);background:var(--panel,#0c0e13);padding:24px 22px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent,#d83a36);margin-bottom:14px">01</div>
+          <h3 style="font-size:16px;font-weight:600;margin:0 0 8px">LLM Guard</h3>
+          <p style="font-size:13.5px;line-height:1.55;color:#9a9ea7;margin:0">Validação antes e depois de toda chamada. Findings podem conter prompt injection craftado por atacante.</p>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,12px);background:var(--panel,#0c0e13);padding:24px 22px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent,#d83a36);margin-bottom:14px">02</div>
+          <h3 style="font-size:16px;font-weight:600;margin:0 0 8px">Prompt caching</h3>
+          <p style="font-size:13.5px;line-height:1.55;color:#9a9ea7;margin:0">System prompt em cache — forte redução de custo após a primeira chamada.</p>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,12px);background:var(--panel,#0c0e13);padding:24px 22px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent,#d83a36);margin-bottom:14px">03</div>
+          <h3 style="font-size:16px;font-weight:600;margin:0 0 8px">Circuit breaker</h3>
+          <p style="font-size:13.5px;line-height:1.55;color:#9a9ea7;margin:0">A falha da I.A. nunca derruba o pipeline. Modo degradado retorna os findings brutos.</p>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,12px);background:var(--panel,#0c0e13);padding:24px 22px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent,#d83a36);margin-bottom:14px">04</div>
+          <h3 style="font-size:16px;font-weight:600;margin:0 0 8px">Modelos especializados</h3>
+          <p style="font-size:13.5px;line-height:1.55;color:#9a9ea7;margin:0">Roteamento por tarefa: raciocínio pesado para o attack path, modelos rápidos para remediation e report.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · DOIS PILARES -->
+  <section id="pilares" data-screen-label="Os dois pilares" style="position:relative;z-index:1;background:var(--band,#0a0b10);border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="max-width:1240px;margin:0 auto;padding:var(--pad,110px) 32px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--accent,#d83a36);margin-bottom:18px">OS DOIS PILARES</div>
+      <h2 style="font-size:clamp(30px,3.6vw,46px);line-height:1.08;font-weight:700;letter-spacing:-.02em;margin:0 0 18px;max-width:720px">Correlação que pensa. Emulação que prova.</h2>
+      <p style="font-size:17px;line-height:1.6;color:#9a9ea7;max-width:620px;margin:0 0 52px">A aperIA se sustenta em duas capacidades que nenhum scanner entrega sozinho: uma inteligência que conecta o que está disperso, e uma emulação que comprova o que é real.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch" data-pillars-grid>
+        <div style="position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08);border-radius:var(--r,16px);background:var(--panel,#0c0e13);padding:38px 34px">
+          
+          <div style="position:relative">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.16em;color:#5d616b;margin-bottom:22px">PILAR 01</div>
+            <h3 style="font-size:26px;font-weight:700;letter-spacing:-.015em;margin:0 0 14px">Inteligência que correlaciona</h3>
+            <p style="font-size:15.5px;line-height:1.6;color:#9a9ea7;margin:0 0 26px">Uma I.A. de raciocínio ofensivo conecta evidências dispersas de múltiplas ferramentas em uma hipótese de ataque coerente — pensando como um adversário, não como um classificador de CVSS.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;font-size:14.5px;color:#c2c5cc">
+              <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--accent,#d83a36);margin-top:1px">▸</span>Correlaciona findings de fontes distintas</div>
+              <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--accent,#d83a36);margin-top:1px">▸</span>Monta o attack path hop a hop</div>
+              <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--accent,#d83a36);margin-top:1px">▸</span>Prioriza pelo caminho real, não pelo score isolado</div>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative;overflow:hidden;border:1px solid rgba(216,58,54,.4);border-radius:var(--r,16px);background:linear-gradient(160deg,rgba(216,58,54,.1),var(--panel,#0c0e13));padding:38px 34px;box-shadow:0 0 50px -20px rgba(216,58,54,.5)">
+          
+          <div style="position:relative">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.16em;color:#ff8e8a;margin-bottom:22px">PILAR 02</div>
+            <h3 style="font-size:26px;font-weight:700;letter-spacing:-.015em;margin:0 0 14px">Emulação que prova</h3>
+            <p style="font-size:15.5px;line-height:1.6;color:#c2c5cc;margin:0 0 26px">MITRE Caldera executa o adversário em sandbox isolada e demonstra empiricamente que o caminho funciona. A prova substitui a suposição — e é o que separa um risco real de um alerta teórico.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;font-size:14.5px;color:#d6d8dd">
+              <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--accent-bright,#ff4d47);margin-top:1px">▸</span>Emulação real de adversário (APT)</div>
+              <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--accent-bright,#ff4d47);margin-top:1px">▸</span>Sandbox isolada, sem rota de saída</div>
+              <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--accent-bright,#ff4d47);margin-top:1px">▸</span>Cada hop confirmado pesa no risk score</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · PULL REQUEST EXPERIENCE -->
+  <section data-screen-label="Pull Request Experience" style="position:relative;z-index:1">
+    <div style="max-width:1100px;margin:0 auto;padding:var(--pad,110px) 32px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--accent,#d83a36);margin-bottom:18px">PULL REQUEST EXPERIENCE</div>
+      <h2 style="font-size:clamp(28px,3.2vw,42px);line-height:1.1;font-weight:700;letter-spacing:-.02em;margin:0 0 16px;max-width:720px">O resultado chega no seu repositório. Com a prova junto.</h2>
+      <p style="font-size:16px;line-height:1.65;color:#9a9ea7;max-width:640px;margin:0 0 36px">A remediação vem como Pull Request — attack path explicado, passos de reprodução, diff sugerido e os checks da emulação. O merge fica bloqueado até a aprovação humana. <span style="color:#fff;font-weight:600">A aperIA nunca aplica código autonomamente.</span></p>
+
+      <!-- realistic github PR -->
+      <div style="border:1px solid #30363d;border-radius:8px;background:#0d1117;overflow:hidden;box-shadow:0 30px 80px -40px rgba(0,0,0,.95);font-family:'Inter',system-ui,sans-serif;color:#c9d1d9">
+        <!-- title -->
+        <div style="padding:18px 20px 14px;border-bottom:1px solid #21262d">
+          <div style="font-size:21px;font-weight:600;color:#e6edf3;line-height:1.3;margin-bottom:12px">Remediar attack path validado: web-edge → domain-admin <span style="color:#8b949e;font-weight:400">#142</span></div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;background:#347d39;color:#fff;font-size:13px;font-weight:500"><span style="width:7px;height:7px;border-radius:50%;background:#fff"></span>Open</span>
+            <span style="font-size:13.5px;color:#8b949e"><span style="color:#e6edf3;font-weight:600">aperIA-bot</span> quer fazer merge de <span style="color:#e6edf3">1 commit</span> em <span style="font-family:'JetBrains Mono',monospace;color:#58a6ff">main</span> a partir de <span style="font-family:'JetBrains Mono',monospace;color:#58a6ff">fix/attack-path-142</span></span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+            <span style="padding:3px 11px;border-radius:100px;font-size:12px;font-weight:500;background:rgba(248,81,73,.16);color:#ff7b72;border:1px solid rgba(248,81,73,.3)">security</span>
+            <span style="padding:3px 11px;border-radius:100px;font-size:12px;font-weight:500;background:rgba(216,58,54,.16);color:#ff8e8a;border:1px solid rgba(216,58,54,.35)">attack-path</span>
+            <span style="padding:3px 11px;border-radius:100px;font-size:12px;font-weight:500;background:rgba(63,174,106,.16);color:#56d364;border:1px solid rgba(63,174,106,.3)">validated</span>
+          </div>
+        </div>
+        <!-- tabs -->
+        <div style="display:flex;gap:0;padding:0 8px;border-bottom:1px solid #21262d;font-size:13.5px">
+          <span style="padding:12px 14px;color:#8b949e">Conversation</span>
+          <span style="padding:12px 14px;color:#8b949e">Commits <span style="background:#30363d;color:#c9d1d9;border-radius:100px;padding:1px 7px;font-size:11px">1</span></span>
+          <span style="padding:12px 14px;color:#e6edf3;border-bottom:2px solid #f78166;font-weight:600">Checks <span style="background:#347d39;color:#fff;border-radius:100px;padding:1px 7px;font-size:11px">3</span></span>
+        </div>
+        <!-- bot comment -->
+        <div style="padding:18px 20px;border-bottom:1px solid #21262d">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <img src="assets/mark.svg" width="30" height="33" style="border-radius:6px;border:1px solid #30363d">
+            <span style="font-size:14px;color:#e6edf3"><span style="font-weight:600">aperIA-bot</span> <span style="color:#8b949e">comentou agora</span></span>
+            <span style="margin-left:auto;font-size:11px;font-family:'JetBrains Mono',monospace;color:#8b949e;border:1px solid #30363d;border-radius:100px;padding:2px 9px">bot</span>
+          </div>
+          <div style="border:1px solid #30363d;border-radius:8px;overflow:hidden">
+            <div style="padding:14px 16px;font-size:14px;line-height:1.6;color:#c9d1d9">
+              Caminho de ataque <strong style="color:#e6edf3">confirmado por emulação de adversário</strong> — 5 hops, do edge ao domain-admin. Risco ponderado <strong style="color:#e6edf3">94/100</strong>.
+              <div style="font-weight:600;color:#e6edf3;margin:16px 0 8px">Passos de reprodução</div>
+              <ol style="margin:0;padding-left:20px;color:#adbac7;line-height:1.7;font-size:13.5px">
+                <li>SSRF em <span style="font-family:'JetBrains Mono',monospace;color:#79c0ff">api/fetch.py:53</span> expõe a rede interna</li>
+                <li>Token de sessão reaproveitado no <span style="font-family:'JetBrains Mono',monospace;color:#79c0ff">internal-api</span></li>
+                <li>Secret hardcoded no <span style="font-family:'JetBrains Mono',monospace;color:#79c0ff">ci-runner</span> → registry credentials</li>
+                <li>Política IAM permissiva no <span style="font-family:'JetBrains Mono',monospace;color:#79c0ff">secrets-vault</span> → admin key</li>
+                <li>Reuso de credencial → <span style="font-family:'JetBrains Mono',monospace;color:#ff7b72">domain-admin</span></li>
+              </ol>
+              <div style="font-weight:600;color:#e6edf3;margin:16px 0 8px">Correção sugerida</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px;border-top:1px solid #30363d">
+              <div style="padding:6px 16px;background:#161b22;color:#8b949e;border-bottom:1px solid #21262d">src/config/db.py</div>
+              <div style="display:flex;background:rgba(248,81,73,.15)"><span style="width:30px;text-align:center;color:#8b949e;flex-shrink:0">-</span><span style="color:#ffa198;padding-right:16px">DB_PASSWORD = "S3cr3t!prod-2024"</span></div>
+              <div style="display:flex;background:rgba(46,160,67,.15)"><span style="width:30px;text-align:center;color:#8b949e;flex-shrink:0">+</span><span style="color:#7ee787;padding-right:16px">DB_PASSWORD = os.environ["DB_PASSWORD"]</span></div>
+            </div>
+          </div>
+        </div>
+        <!-- checks -->
+        <div style="padding:16px 20px;border-bottom:1px solid #21262d">
+          <div style="font-size:13px;color:#8b949e;margin-bottom:12px">Todos os checks passaram</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px">
+            <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#347d39;color:#fff;font-size:11px">✓</span><span style="font-family:'JetBrains Mono',monospace;color:#adbac7">adversary-emulation / caldera</span><span style="color:#8b949e">— Attack path confirmed (5/5 hops)</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#347d39;color:#fff;font-size:11px">✓</span><span style="font-family:'JetBrains Mono',monospace;color:#adbac7">secret-scan / trufflehog</span><span style="color:#8b949e">— secret remediado</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#347d39;color:#fff;font-size:11px">✓</span><span style="font-family:'JetBrains Mono',monospace;color:#adbac7">risk-score / aperIA</span><span style="color:#8b949e">— 94/100 · prioridade alta</span></div>
+          </div>
+        </div>
+        <!-- merge box -->
+        <div style="padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#bb8009;color:#fff;flex-shrink:0;font-size:15px">⚠</span>
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:14px;font-weight:600;color:#e6edf3">Merge bloqueado · aguardando aprovação humana</div>
+            <div style="font-size:13px;color:#8b949e">A sugestão precisa ser revisada e aprovada por um desenvolvedor.</div>
+          </div>
+          <button style="padding:9px 18px;border-radius:6px;border:1px solid rgba(63,174,106,.4);background:#238636;color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:not-allowed;opacity:.65">Confirm merge</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- divider -->
+  <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:16px;padding:6px 32px;opacity:.6">
+    <span style="height:1px;width:90px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18))"></span>
+    <img src="assets/mark.svg" width="20" height="22" style="border-radius:4px;opacity:.8">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;color:#6a6e78">PROVE O CAMINHO</span>
+    <span style="height:1px;width:90px;background:linear-gradient(90deg,rgba(255,255,255,.18),transparent)"></span>
+  </div>
+
+  <!-- 9 · ENTERPRISE VALUE -->
+  <section ref="{{ evRef }}" data-screen-label="Enterprise Value" style="position:relative;z-index:1;background:var(--band,#0a0b10);border-top:1px solid rgba(255,255,255,.06);overflow:hidden">
+    <div style="position:absolute;top:-120px;right:8%;width:520px;height:420px;background:radial-gradient(ellipse at center,rgba(216,58,54,.13),transparent 65%);filter:blur(26px);pointer-events:none"></div>
+    
+    <div style="position:relative;max-width:1240px;margin:0 auto;padding:var(--pad,110px) 32px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--accent,#d83a36);margin-bottom:18px">ENTERPRISE VALUE</div>
+      <h2 style="font-size:clamp(28px,3.4vw,46px);line-height:1.08;font-weight:700;letter-spacing:-.02em;margin:0 0 14px;max-width:720px">Menos ruído. Prova no lugar de suposição.</h2>
+      <p style="font-size:17px;line-height:1.6;color:#9a9ea7;max-width:580px;margin:0 0 48px">Seu time para de afogar em findings e passa a agir sobre o que é comprovadamente explorável.</p>
+
+      <!-- featured -->
+      <div style="position:relative;overflow:hidden;border:1px solid rgba(216,58,54,.35);border-radius:var(--r,18px);background:linear-gradient(135deg,rgba(216,58,54,.14),var(--panel,#0c0e13) 60%);padding:40px 36px;margin-bottom:22px;box-shadow:0 0 60px -26px rgba(216,58,54,.6)">
+        
+        <div style="position:relative;display:flex;align-items:center;gap:36px;flex-wrap:wrap">
+          <div style="font-family:var(--fd,'Space Grotesk');font-weight:700;font-size:clamp(64px,9vw,108px);line-height:.9;letter-spacing:-.04em;color:#fff">{{ evConf }}<span style="color:var(--accent-bright,#ff4d47)">%</span></div>
+          <div style="flex:1;min-width:240px">
+            <div style="font-size:19px;font-weight:600;color:#fff;margin-bottom:8px;line-height:1.3">de confiança de exploração — validada por emulação real</div>
+            <div style="font-size:14.5px;line-height:1.6;color:#9a9ea7">Cada caminho priorizado pela aperIA foi reproduzido em sandbox. Você prioriza pelo que o adversário consegue de fato fazer.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- stat cards -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px" data-evrow>
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,16px);background:var(--panel,#0c0e13);padding:30px 26px;transition:transform .18s,border-color .18s,box-shadow .18s" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='rgba(216,58,54,.5)';this.style.boxShadow='0 20px 50px -30px rgba(216,58,54,.7)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow=''">
+          <div style="font-family:var(--fd,'Space Grotesk');font-weight:700;font-size:clamp(40px,5vw,58px);letter-spacing:-.03em;color:#fff;line-height:1">−{{ evNoise }}<span style="font-size:.5em;color:#7a7e88">%*</span></div>
+          <div style="font-size:15px;color:#e2e4e8;margin-top:14px;font-weight:500">ruído eliminado</div>
+          <div style="font-size:13px;color:#9a9ea7;margin-top:4px;line-height:1.45">só o que é comprovadamente explorável chega ao time</div>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,16px);background:var(--panel,#0c0e13);padding:30px 26px;transition:transform .18s,border-color .18s,box-shadow .18s" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='rgba(216,58,54,.5)';this.style.boxShadow='0 20px 50px -30px rgba(216,58,54,.7)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow=''">
+          <div style="font-family:var(--fd,'Space Grotesk');font-weight:700;font-size:clamp(40px,5vw,58px);letter-spacing:-.03em;color:#fff;line-height:1">−{{ evMttr }}<span style="font-size:.5em;color:#7a7e88">%*</span></div>
+          <div style="font-size:15px;color:#e2e4e8;margin-top:14px;font-weight:500">tempo de remediação</div>
+          <div style="font-size:13px;color:#9a9ea7;margin-top:4px;line-height:1.45">passos de reprodução e patch já no Pull Request</div>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.08);border-radius:var(--r,16px);background:var(--panel,#0c0e13);padding:30px 26px;transition:transform .18s,border-color .18s,box-shadow .18s" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='rgba(216,58,54,.5)';this.style.boxShadow='0 20px 50px -30px rgba(216,58,54,.7)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow=''">
+          <div style="font-family:var(--fd,'Space Grotesk');font-weight:700;font-size:clamp(40px,5vw,58px);letter-spacing:-.03em;color:var(--accent-bright,#ff4d47);line-height:1">{{ evWeight }}<span style="font-size:.5em">%</span></div>
+          <div style="font-size:15px;color:#e2e4e8;margin-top:14px;font-weight:500">peso da emulação no risk score</div>
+          <div style="font-size:13px;color:#9a9ea7;margin-top:4px;line-height:1.45">evidência empírica &gt; teoria de CVSS</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:22px;flex-wrap:wrap">
+        <div style="display:inline-flex;align-items:center;gap:10px;padding:11px 16px;border:1px solid rgba(255,255,255,.1);border-radius:var(--r,10px);background:var(--panel,#0c0e13);font-size:14px;color:#c2c5cc"><span style="font-family:var(--fd,'Space Grotesk');font-weight:700;font-size:20px;color:#fff">0</span>patches aplicados sem aprovação humana — garantia arquitetural</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5d616b">*estimativas de referência — não medições de produção.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · CTA FINAL -->
+  <section id="cadastro" data-screen-label="CTA final" style="position:relative;z-index:1;overflow:hidden">
+    <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:760px;height:420px;background:radial-gradient(ellipse at center,rgba(216,58,54,.16),transparent 65%);filter:blur(24px);pointer-events:none"></div>
+    
+    <div style="position:relative;max-width:760px;margin:0 auto;padding:120px 32px 110px;text-align:center">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--accent,#d83a36);margin-bottom:22px">COMECE AGORA</div>
+      <h2 style="font-size:clamp(32px,4.4vw,56px);line-height:1.06;font-weight:700;letter-spacing:-.025em;margin:0 0 20px">Pare de priorizar por CVSS.<br>Priorize por <span style="color:var(--accent-bright,#ff4d47)">evidência</span>.</h2>
+      <p style="font-size:17px;line-height:1.6;color:#9a9ea7;max-width:520px;margin:0 auto 40px">Cadastre-se e acesse o dashboard da aperIA. Conecte seu GitHub e veja o primeiro attack path validado.</p>
+
+      <sc-if value="{{ notSignedUp }}" hint-placeholder-val="{{ true }}">
+        <form onSubmit="{{ onSignup }}" style="display:flex;gap:10px;max-width:480px;margin:0 auto;flex-wrap:wrap;justify-content:center">
+          <input type="email" required placeholder="seu@email.com" style="flex:1;min-width:220px;padding:15px 18px;border-radius:var(--r,10px);border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);color:#e9eaee;font-family:'JetBrains Mono',monospace;font-size:14px;outline:none" onfocus="this.style.borderColor='#d83a36'" onblur="this.style.borderColor='rgba(255,255,255,.14)'">
+          <button type="submit" style="padding:15px 28px;border:none;border-radius:var(--r,10px);background:var(--accent,#d83a36);color:#fff;font-family:var(--fd,'Space Grotesk'),sans-serif;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 0 0 1px rgba(255,77,71,.4),0 12px 32px -10px rgba(216,58,54,.7);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Criar conta e acessar →</button>
+        </form>
+      </sc-if>
+      <sc-if value="{{ signedUp }}" hint-placeholder-val="{{ false }}">
+        <div style="display:inline-flex;align-items:center;gap:12px;padding:16px 24px;border:1px solid rgba(63,174,106,.4);border-radius:var(--r,10px);background:rgba(63,174,106,.08);font-family:'JetBrains Mono',monospace;font-size:14px;color:#7fd6a0"><span style="width:8px;height:8px;border-radius:50%;background:#3fae6a;box-shadow:0 0 8px #3fae6a;animation:blink 1s steps(1) infinite"></span>conta criada · redirecionando para o dashboard…</div>
+      </sc-if>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#5d616b;margin-top:18px">correlação por I.A. · emulação real de adversário · attack path validado</div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.06);background:var(--bg,#08090c)">
+    <div style="max-width:1240px;margin:0 auto;padding:54px 32px 40px;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px" data-footer-grid>
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><img src="assets/mark.svg" width="32" height="35" style="border-radius:var(--rs,5px)"><span style="font-family:var(--fd,'Space Grotesk');font-weight:700;font-size:18px;letter-spacing:-.01em">aper<span style="color:var(--accent-bright,#ff4d47)">IA</span></span></div>
+        <p style="font-size:14px;line-height:1.6;color:#7a7e88;max-width:300px;margin:0">A camada de inteligência ofensiva acima dos seus scanners. From findings to exploitable attack paths.</p>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;color:#5d616b;margin-bottom:16px">PRODUTO</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:14px;color:#9a9ea7">
+          <a href="#problema" onmouseover="this.style.color='#e9eaee'" onmouseout="this.style.color=''">O problema</a>
+          <a href="#camadas" onmouseover="this.style.color='#e9eaee'" onmouseout="this.style.color=''">Como funciona</a>
+          <a href="#validacao" onmouseover="this.style.color='#e9eaee'" onmouseout="this.style.color=''">Adversary Validation</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;color:#5d616b;margin-bottom:16px">TECNOLOGIA</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:14px;color:#9a9ea7">
+          <a href="#pilares" onmouseover="this.style.color='#e9eaee'" onmouseout="this.style.color=''">Os dois pilares</a>
+          <span>Reasoning Engine</span>
+          <span>MITRE Caldera</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;color:#5d616b;margin-bottom:16px">EMPRESA</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:14px;color:#9a9ea7">
+          <a href="#cadastro" onmouseover="this.style.color='#e9eaee'" onmouseout="this.style.color=''">Cadastrar</a>
+          <span>Documentação</span>
+          <span>Contato</span>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1240px;margin:0 auto;padding:20px 32px 40px;border-top:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#5d616b">
+      <span>© 2026 aperIA · attack path validation</span>
+      <span>Caldera sempre em sandbox isolada · remediação sempre humana</span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { p:0, signedUp:false, evConf:0, evNoise:0, evMttr:0, evWeight:0 };
+  _reduce(){ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  componentDidMount(){ this._alive=true; this._onScroll=()=>{ if(this._raf)return; this._raf=requestAnimationFrame(()=>{this._raf=0;this._update();}); }; window.addEventListener('scroll',this._onScroll,{passive:true}); window.addEventListener('resize',this._onScroll,{passive:true}); this._update(); }
+  componentWillUnmount(){ this._alive=false; window.removeEventListener('scroll',this._onScroll); window.removeEventListener('resize',this._onScroll); if(this._io)this._io.disconnect(); }
+  heroRef=(el)=>{ if(el){ this._heroEl=el; this._update(); } };
+  _update(){ if(!this._alive||!this._heroEl) return; if(this._reduce()){ if(this.state.p!==1) this.setState({p:1}); return; } const rect=this._heroEl.getBoundingClientRect(); const vh=window.innerHeight; const total=this._heroEl.offsetHeight - vh; const scrolled=Math.min(Math.max(-rect.top,0), total>0?total:0); const p=total>0?scrolled/total:0; if(Math.abs(p-this.state.p)>0.001) this.setState({p}); }
+  evRef = (el) => { if(!el || this._evSet) return; this._evSet=true; if(this._reduce()){ this.setState({evConf:94,evNoise:92,evMttr:68,evWeight:30}); return; } this._io = new IntersectionObserver((es)=>{ es.forEach(en=>{ if(en.isIntersecting){ this._io.disconnect(); this._countEv(); } }); }, {threshold:0.25}); this._io.observe(el); };
+  _countEv(){ const start=performance.now(); const dur=1700; const tick=(now)=>{ if(!this._alive)return; const t=Math.min(1,(now-start)/dur); const e=1-Math.pow(1-t,3); this.setState({evConf:Math.round(e*94),evNoise:Math.round(e*92),evMttr:Math.round(e*68),evWeight:Math.round(e*30)}); if(t<1)requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+  renderVals(){
+    const p=this.state.p;
+    const pos=[0.05,0.226,0.402,0.578,0.754,0.93];
+    const lit=(i)=>Math.min(1,Math.max(0,(p-(pos[i]-0.06))/0.08));
+    const litL=(i)=>0.4+0.6*lit(i);
+    const cap = p<0.34 ? 'coletando sinais dos scanners…' : (p<0.67 ? 'correlacionando evidências…' : 'exploração validada · 94/100');
+    const railOut = {
+      heroConf: Math.round(p*94),
+      markerBottom: (5 + p*88).toFixed(1)+'%',
+      railFill: (p*88).toFixed(1)+'%',
+      lit1:lit(0),lit2:lit(1),lit3:lit(2),lit4:lit(3),lit5:lit(4),lit6:lit(5),
+      litL1:litL(0),litL2:litL(1),litL3:litL(2),litL4:litL(3),litL5:litL(4),litL6:litL(5),
+      s1: p>=0?1:0.4, s2: p>=0.34?1:0.4, s3: p>=0.67?1:0.4,
+      heroCaption: cap
+    };
+    return Object.assign({ heroRef:this.heroRef, signedUp:this.state.signedUp, notSignedUp:!this.state.signedUp, onSignup:(e)=>{ e.preventDefault(); this.setState({signedUp:true}); }, evRef:this.evRef, evConf:this.state.evConf, evNoise:this.state.evNoise, evMttr:this.state.evMttr, evWeight:this.state.evWeight }, railOut);
+  }
+}
+</script>
+</body>
+</html>

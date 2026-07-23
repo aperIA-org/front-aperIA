@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%;background:#050609}
+  a{color:#ff6a72}a:hover{color:#ff9198}
+</style>
+</helmet>
+
+<div ref="{{ rootRef }}" data-screen-label="Cena Cinematica" style="position:relative;width:100%;height:100%;min-height:480px;background:transparent;font-family:'Inter',system-ui,sans-serif;overflow:visible;display:flex;align-items:center;justify-content:center">
+
+  <svg ref="{{ svgRef }}" viewBox="0 0 1200 680" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">
+    <defs>
+      <linearGradient id="metalFront" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#22262f"/><stop offset="0.5" stop-color="#161a21"/><stop offset="1" stop-color="#0e1116"/>
+      </linearGradient>
+      <linearGradient id="metalTop" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2c313c"/><stop offset="1" stop-color="#1a1e26"/>
+      </linearGradient>
+      <linearGradient id="metalSide" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#12151b"/><stop offset="1" stop-color="#070a0e"/>
+      </linearGradient>
+      <radialGradient id="innerLight" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#ffd0d2"/><stop offset="0.32" stop-color="#ff4d54"/><stop offset="1" stop-color="#e5333b" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="rimGlow" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#e5333b" stop-opacity="0.30"/><stop offset="1" stop-color="#e5333b" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="floorGrad" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#171a21" stop-opacity="0.95"/><stop offset="1" stop-color="#171a21" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
+      <linearGradient id="catSteel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a515f"/><stop offset="0.5" stop-color="#333a45"/><stop offset="1" stop-color="#22272f"/></linearGradient>
+      <linearGradient id="catSteelLite" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b6373"/><stop offset="1" stop-color="#363d49"/></linearGradient>
+      <linearGradient id="catLeg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a414d"/><stop offset="1" stop-color="#242a32"/></linearGradient>
+      <linearGradient id="catBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f5f8"/><stop offset="0.55" stop-color="#d9dee5"/><stop offset="1" stop-color="#b0b8c4"/></linearGradient>
+      <linearGradient id="catHelm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6ebf1"/><stop offset="1" stop-color="#9aa4b3"/></linearGradient>
+      <linearGradient id="catShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aab3c1"/><stop offset="1" stop-color="#6b7484"/></linearGradient>
+      <radialGradient id="catEye" cx="0.5" cy="0.42" r="0.62"><stop offset="0" stop-color="#ffd98a"/><stop offset="0.5" stop-color="#f5a83c"/><stop offset="1" stop-color="#c9781f"/></radialGradient>
+      <filter id="soft2" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="16"/></filter>
+      <clipPath id="cubeInside"><rect x="650" y="250" width="220" height="220"/></clipPath>
+      <radialGradient id="vig" cx="0.56" cy="0.46" r="0.7"><stop offset="0.62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#050609" stop-opacity="0.3"/></radialGradient>
+      <radialGradient id="salvGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffffff"/><stop offset="0.22" stop-color="#fff0f0"/><stop offset="0.5" stop-color="#ff6a72" stop-opacity="0.75"/><stop offset="1" stop-color="#e5333b" stop-opacity="0"/></radialGradient>
+    </defs>
+
+    <ellipse id="rim" cx="760" cy="360" rx="330" ry="270" fill="url(#rimGlow)" opacity="0.45"/>
+
+    <ellipse id="floor" cx="640" cy="478" rx="480" ry="40" fill="url(#floorGrad)"/>
+    <line id="floorLine" x1="150" y1="478" x2="1090" y2="478" stroke="#232833" stroke-width="1"/>
+    <ellipse id="cubeShadow" cx="760" cy="476" rx="128" ry="16" fill="#000" opacity="0.55"/>
+
+    <!-- cube interior + creature -->
+    <g id="cubeShake">
+    <g clip-path="url(#cubeInside)">
+      <rect x="650" y="250" width="220" height="220" fill="#050608"/>
+      <g id="creature" opacity="0">
+        <ellipse id="creGlow" cx="760" cy="372" rx="140" ry="140" fill="url(#innerLight)" opacity="0.9"/>
+        <path id="tent1" d="M700 470 q-14 -60 18 -96 q26 -30 8 -70" fill="none" stroke="#2a0d10" stroke-width="9" stroke-linecap="round"/>
+        <path id="tent2" d="M828 470 q18 -54 -10 -98 q-22 -34 -2 -74" fill="none" stroke="#2a0d10" stroke-width="8" stroke-linecap="round"/>
+        <path id="claw1" d="M712 356 l16 -30 l6 30 l16 -26 l2 34" fill="none" stroke="#ff8a90" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+        <path id="claw2" d="M772 352 l14 -28 l6 28 l16 -22 l2 30" fill="none" stroke="#ff8a90" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+        <ellipse id="creEyeL" cx="738" cy="374" rx="7" ry="9" fill="#fff0f0"/>
+        <ellipse id="creEyeR" cx="784" cy="374" rx="7" ry="9" fill="#fff0f0"/>
+        <circle cx="738" cy="374" r="3" fill="#7a0f14"/><circle cx="784" cy="374" r="3" fill="#7a0f14"/>
+      </g>
+    </g>
+
+    <polygon id="cubeTop" points="650,250 690,218 910,218 870,250" fill="url(#metalTop)" stroke="#14181f" stroke-width="2.6" stroke-linejoin="round"/>
+    <polygon id="cubeSide" points="870,250 910,218 910,438 870,470" fill="url(#metalSide)" stroke="#14181f" stroke-width="2.6" stroke-linejoin="round"/>
+    <line x1="884" y1="240" x2="884" y2="452" stroke="#0a0c10" stroke-width="1.6" opacity="0.6"/>
+    <circle cx="879" cy="252" r="2.2" fill="#2a303b" stroke="#14181f" stroke-width="1.1"/>
+    <circle cx="879" cy="440" r="2.2" fill="#2a303b" stroke="#14181f" stroke-width="1.1"/>
+    <circle cx="700" cy="228" r="2.2" fill="#3a4150" stroke="#14181f" stroke-width="1.1"/>
+    <circle cx="898" cy="228" r="2.2" fill="#3a4150" stroke="#14181f" stroke-width="1.1"/>
+
+    <!-- fenda de entrada (topo) -->
+    <rect x="712" y="242" width="96" height="8" rx="3" fill="#050608" stroke="#14181f" stroke-width="2"/>
+    <rect x="716" y="243" width="88" height="3" rx="1.5" fill="#000" opacity="0.7"/>
+
+    <path id="cubeFront" d="M650 250 L870 250 L870 470 L650 470 Z" fill="url(#metalFront)" stroke="#14181f" stroke-width="3" stroke-linejoin="round"/>
+    <g id="cubeFrontDetail">
+      <!-- porta / hatch -->
+      <rect x="672" y="270" width="176" height="180" rx="9" fill="none" stroke="#14181f" stroke-width="2.4" opacity="0.85"/>
+      <rect x="678" y="276" width="164" height="168" rx="6" fill="none" stroke="#2f3641" stroke-width="1.2" opacity="0.6"/>
+      <!-- cantoneiras -->
+      <path d="M650 280 L650 250 L680 250 M840 250 L870 250 L870 280 M650 440 L650 470 L680 470 M840 470 L870 470 L870 440" fill="none" stroke="#14181f" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+      <!-- rebites de canto -->
+      <circle cx="663" cy="263" r="2.6" fill="#3a4150" stroke="#14181f" stroke-width="1.2"/>
+      <circle cx="857" cy="263" r="2.6" fill="#3a4150" stroke="#14181f" stroke-width="1.2"/>
+      <circle cx="663" cy="457" r="2.6" fill="#3a4150" stroke="#14181f" stroke-width="1.2"/>
+      <circle cx="857" cy="457" r="2.6" fill="#3a4150" stroke="#14181f" stroke-width="1.2"/>
+      <!-- dobradiças (esquerda) -->
+      <rect x="666" y="300" width="12" height="24" rx="2" fill="#2a303b" stroke="#14181f" stroke-width="1.8"/>
+      <rect x="666" y="396" width="12" height="24" rx="2" fill="#2a303b" stroke="#14181f" stroke-width="1.8"/>
+      <!-- trava (direita) -->
+      <rect x="838" y="348" width="16" height="24" rx="3" fill="#2a303b" stroke="#14181f" stroke-width="1.8"/>
+      <circle cx="846" cy="360" r="3" fill="#e5333b"/>
+      <!-- costura central -->
+      <line id="panelLine" x1="760" y1="278" x2="760" y2="438" stroke="#0b0d12" stroke-width="1.6" opacity="0.7"/>
+      <!-- fenda de saída (base) -->
+      <rect x="706" y="446" width="108" height="8" rx="3" fill="#050608" stroke="#14181f" stroke-width="2"/>
+    </g>
+
+    <g clip-path="url(#cubeInside)"><ellipse id="escape" cx="760" cy="360" rx="170" ry="170" fill="url(#innerLight)" opacity="0"/></g>
+
+    <g id="cracks" opacity="0" stroke="#ff5a61" stroke-width="1.6" fill="none" stroke-linecap="round">
+      <path id="cr0" d="M760 360 l-38 -46 l-10 -34 l-26 -20"/>
+      <path id="cr1" d="M760 360 l44 -30 l30 6 l24 -26"/>
+      <path id="cr2" d="M760 360 l-30 42 l-8 34 l-30 18"/>
+      <path id="cr3" d="M760 360 l40 40 l34 4 l22 30"/>
+    </g>
+    <g id="cracksHot" opacity="0" stroke="#fff0f0" stroke-width="0.7" fill="none" stroke-linecap="round">
+      <use href="#cr0"/><use href="#cr1"/><use href="#cr2"/><use href="#cr3"/>
+    </g>
+
+    <g id="cubeEyes" opacity="0">
+      <g id="ceL"><rect x="706" y="300" width="28" height="4" rx="2" fill="#ff6a72"/></g>
+      <g id="ceR"><rect x="786" y="300" width="28" height="4" rx="2" fill="#ff6a72"/></g>
+    </g>
+
+    </g><!-- /cubeShake -->
+
+    <g id="dust" opacity="0" fill="#3a3f48"></g>
+
+    <!-- cachoeira de findings (mar de sinais despejando no caixote) -->
+    <g id="pour"></g>
+
+    <!-- caixote de FINDINGS (fonte) -->
+    <g id="findBox" transform="translate(0,-18)">
+      <ellipse cx="168" cy="492" rx="64" ry="11" fill="#000" opacity="0.42"/>
+      <path d="M116 454 L220 454 L212 490 L124 490 Z" fill="url(#catShade)" stroke="#14181f" stroke-width="2.6" stroke-linejoin="round"/>
+      <path d="M124 458 L212 458 L206 486 L130 486 Z" fill="#0d1015" stroke="#14181f" stroke-width="1.4" stroke-linejoin="round"/>
+      <ellipse cx="168" cy="454" rx="52" ry="9" fill="#050608" stroke="#14181f" stroke-width="2.6"/>
+      <ellipse cx="168" cy="453" rx="44" ry="6" fill="none" stroke="#2a303b" stroke-width="1.2"/>
+      <rect x="150" y="466" width="10" height="3" rx="1.5" fill="#e5333b" opacity="0.8"/>
+      <rect x="166" y="472" width="14" height="3" rx="1.5" fill="#ff6a3d" opacity="0.6"/>
+      <rect x="159" y="414" width="9" height="42" rx="4" fill="#3a414d" stroke="#14181f" stroke-width="2.4"/>
+      <g transform="rotate(-4 168 392)">
+        <rect x="84" y="366" width="168" height="48" rx="11" fill="#f4f1e9" stroke="#14181f" stroke-width="3.6"/>
+        <rect x="91" y="373" width="154" height="9" rx="4.5" fill="#e5333b" opacity="0.85"/>
+        <text x="168" y="402" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="23" font-weight="700" letter-spacing="2" fill="#14181f">FINDINGS</text>
+      </g>
+    </g>
+
+    <!-- robot cat operator · titânio, contorno marcado, olhos âmbar -->
+    <g id="cat" transform="translate(232,0)">
+      <ellipse cx="10" cy="490" rx="58" ry="10" fill="#000" opacity="0.45"/>
+      <ellipse id="catRed" cx="12" cy="392" rx="96" ry="110" fill="url(#rimGlow)" opacity="0"/>
+
+      <!-- cauda -->
+      <path id="catTail" d="M-34 452 q-52 18 -50 -26 q2 -26 22 -26 q-14 8 -8 26" fill="#2a303b" stroke="#14181f" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="-62" cy="402" r="6" fill="#14181f"/>
+
+      <!-- braço esquerdo (lateral) -->
+      <path d="M-36 388 q-20 20 -16 54 q0 12 12 12 q12 0 12 -12 q-2 -30 12 -46 Z" fill="url(#catBody)" stroke="#14181f" stroke-width="3" stroke-linejoin="round"/>
+      <ellipse cx="-28" cy="452" rx="12" ry="10" fill="#1c2129" stroke="#14181f" stroke-width="3"/>
+
+      <!-- pernas + botas -->
+      <rect id="catLegL" x="-22" y="440" width="20" height="48" rx="9" fill="url(#catBody)" stroke="#14181f" stroke-width="3"/>
+      <rect id="catLegR" x="14" y="442" width="20" height="46" rx="9" fill="url(#catBody)" stroke="#14181f" stroke-width="3"/>
+      <path d="M-26 476 q-2 14 6 15 l18 0 q4 -1 4 -8 l0 -7 Z" fill="#1c2129" stroke="#14181f" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M10 478 q-2 14 6 15 l18 0 q4 -1 4 -8 l0 -7 Z" fill="#1c2129" stroke="#14181f" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="-12" cy="452" r="4" fill="#6b7484" stroke="#14181f" stroke-width="2"/>
+      <circle cx="24" cy="454" r="4" fill="#6b7484" stroke="#14181f" stroke-width="2"/>
+
+      <!-- torso / traje -->
+      <path d="M-38 384 q0 -22 20 -30 q28 -10 56 0 q20 8 20 30 l-2 56 q0 16 -18 20 q-28 6 -56 0 q-18 -4 -18 -20 Z" fill="url(#catBody)" stroke="#14181f" stroke-width="3.2" stroke-linejoin="round"/>
+      <path d="M-30 372 q40 -16 80 0 l0 8 q-40 -14 -80 0 Z" fill="url(#catShade)" stroke="#14181f" stroke-width="2"/>
+      <line x1="10" y1="384" x2="10" y2="452" stroke="#14181f" stroke-width="2.4"/>
+      <rect x="-6" y="398" width="17" height="34" rx="4" fill="#2a303b" stroke="#14181f" stroke-width="2.4"/>
+      <circle cx="2.5" cy="406" r="2.6" fill="#ff4d54"/>
+      <circle cx="2.5" cy="415" r="2.6" fill="#f5a83c"/>
+      <circle cx="2.5" cy="424" r="2.6" fill="#6b7484"/>
+      <path d="M-34 436 q42 12 78 0" fill="none" stroke="#14181f" stroke-width="2.2" opacity="0.7"/>
+
+      <!-- braço direito articulado (apoia no cubo) -->
+      <circle cx="44" cy="392" r="10" fill="#1c2129" stroke="#14181f" stroke-width="3"/>
+      <path id="catArm" d="M46 392 q40 2 66 30" fill="none" stroke="url(#catBody)" stroke-width="17" stroke-linecap="round"/>
+      <path id="catArmOutline" d="M46 392 q40 2 66 30" fill="none" stroke="#14181f" stroke-width="20" stroke-linecap="round" opacity="0.001"/>
+      <circle id="catElbow" cx="80" cy="398" r="5.5" fill="#1c2129" stroke="#14181f" stroke-width="2.2"/>
+      <ellipse cx="114" cy="424" rx="12" ry="11" fill="#1c2129" stroke="#14181f" stroke-width="3"/>
+
+      <!-- cabeça -->
+      <g id="catHead" transform="translate(6,-6)">
+        <!-- orelhas -->
+        <path d="M-34 300 l-8 -36 l32 22 Z" fill="url(#catBody)" stroke="#14181f" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M42 300 l8 -36 l-32 22 Z" fill="url(#catBody)" stroke="#14181f" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M-30 296 l-5 -20 l17 12 Z" fill="#242a33"/>
+        <path d="M38 296 l5 -20 l-17 12 Z" fill="#242a33"/>
+        <!-- pontas pretas -->
+        <path d="M-34 300 l-8 -36 l9 6 l3 30 Z" fill="#14181f"/>
+        <path d="M42 300 l8 -36 l-9 6 l-3 30 Z" fill="#14181f"/>
+        <!-- antena cyber (orelha direita) -->
+        <line x1="48" y1="272" x2="56" y2="250" stroke="#14181f" stroke-width="2.4" stroke-linecap="round"/>
+        <circle id="catAntenna" cx="57" cy="247" r="3" fill="#ff4d54"/>
+        <!-- crânio -->
+        <path d="M-46 334 q0 -54 52 -54 q52 0 52 54 q0 46 -52 46 q-52 0 -52 -46 Z" fill="url(#catBody)" stroke="#14181f" stroke-width="3.2" stroke-linejoin="round"/>
+        <!-- circuitos gravados -->
+        <path d="M-44 344 l14 0 l4 8 l10 0 M46 344 l-14 0 l-4 8 l-10 0" fill="none" stroke="#e5333b" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+        <circle cx="-20" cy="352" r="1.5" fill="#ff6a72"/><circle cx="22" cy="352" r="1.5" fill="#ff6a72"/>
+        <!-- portas / vents na bochecha -->
+        <rect x="-45" y="356" width="9" height="3" rx="1.5" fill="#2a303b" stroke="#14181f" stroke-width="1"/>
+        <rect x="-45" y="362" width="7" height="3" rx="1.5" fill="#2a303b" stroke="#14181f" stroke-width="1"/>
+        <rect x="36" y="356" width="9" height="3" rx="1.5" fill="#2a303b" stroke="#14181f" stroke-width="1"/>
+        <rect x="38" y="362" width="7" height="3" rx="1.5" fill="#2a303b" stroke="#14181f" stroke-width="1"/>
+        <!-- máscara preta -->
+        <path d="M-42 320 q46 -16 96 0 l0 10 q-48 -14 -96 0 Z" fill="#14181f"/>
+        <!-- visor único com LEDs -->
+        <ellipse cx="6" cy="330" rx="46" ry="17" fill="#e5333b" opacity="0.32" filter="url(#soft)"/>
+        <rect x="-38" y="316" width="88" height="30" rx="14" fill="#111418" stroke="#14181f" stroke-width="3"/>
+        <rect id="catVisor" x="-30" y="323" width="30" height="16" rx="5" fill="#ff4d54"/>
+        <rect x="12" y="323" width="30" height="16" rx="5" fill="#ff4d54"/>
+        <rect x="-30" y="323" width="30" height="5" rx="2.5" fill="#ff9aa0" opacity="0.6"/>
+        <rect x="12" y="323" width="30" height="5" rx="2.5" fill="#ff9aa0" opacity="0.6"/>
+        <!-- scanline cyber sobre o visor -->
+        <clipPath id="visorClip"><rect x="-38" y="316" width="88" height="30" rx="14"/></clipPath>
+        <g clip-path="url(#visorClip)"><rect id="catScan" x="-38" y="316" width="5" height="30" fill="#fff0f0" opacity="0.75"/></g>
+        <!-- focinho -->
+        <path d="M0 358 l12 0 l-6 6 Z" fill="#242a33"/>
+        <path d="M6 364 q-8 8 -18 5 M6 364 q8 8 18 5" fill="none" stroke="#14181f" stroke-width="2" stroke-linecap="round"/>
+        <!-- bigodes -->
+        <path d="M-16 356 l-34 -5 M-16 362 l-34 5 M28 356 l34 -5 M28 362 l34 5" stroke="#7e8797" stroke-width="1.8" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <g id="findings"></g>
+
+    <!-- brilho de salvação (a prova nasce da luz) -->
+    <g clip-path="url(#cubeInside)" style="clip-path:none"><ellipse id="prFlash" cx="760" cy="476" rx="150" ry="120" fill="url(#salvGlow)" opacity="0"/></g>
+    <g id="prRays" opacity="0" stroke="#fff0f0" stroke-width="2" stroke-linecap="round">
+      <line x1="760" y1="476" x2="760" y2="396"/><line x1="760" y1="476" x2="690" y2="430"/><line x1="760" y1="476" x2="830" y2="430"/><line x1="760" y1="476" x2="660" y2="470"/><line x1="760" y1="476" x2="860" y2="470"/>
+    </g>
+
+    <!-- impressão da validação (sai pela fenda inferior) -->
+    <g id="pr" opacity="0" transform="translate(760,452)">
+      <rect x="-104" y="-2" width="208" height="152" rx="3" fill="#f4f1e9" stroke="#14181f" stroke-width="2"/>
+      <path d="M-104 0 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6 l7 -6 l7 6" fill="#f4f1e9" stroke="#14181f" stroke-width="1.6" stroke-linejoin="round"/>
+      <text x="-90" y="24" font-family="'JetBrains Mono',monospace" font-size="10" letter-spacing="1.5" fill="#8a8578">aperIA · VALIDATION</text>
+      <line x1="-90" y1="32" x2="90" y2="32" stroke="#cbc6b8" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="-90" y="50" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="#a49f90">web-edge → domain-admin #142</text>
+      <g id="prVerdict"></g>
+      <g id="prBar" fill="#14181f"></g>
+    </g>
+
+    <rect x="0" y="0" width="1200" height="680" fill="url(#vig)" pointer-events="none" opacity="0"/>
+  </svg>
+
+  <div ref="{{ capRef }}" style="position:absolute;bottom:22px;left:0;right:0;text-align:center;z-index:5;pointer-events:none;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.24em;color:#5d646f;text-transform:uppercase"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1100,&quot;height&quot;:620}}">
+class Component extends DCLogic {
+  rootRef = React.createRef(); svgRef = React.createRef(); capRef = React.createRef();
+  DUR = 12;
+  TOOLS = [
+    {n:'SSRF api/fetch.py', x:210, y:150, sev:'#e5333b'},
+    {n:'eval(req.body)',    x:452, y:120, sev:'#ff6a3d'},
+    {n:'CVE-2024-3094',     x:320, y:250, sev:'#e5333b'},
+    {n:'secret: AKIA…',     x:158, y:312, sev:'#ff6a3d'},
+    {n:'IAM allow *:*',     x:470, y:306, sev:'#d9a441'},
+  ];
+  reduce(){ return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+
+  componentDidMount(){
+    this.svg = this.svgRef.current;
+    this.buildFindings(); this.buildDust(); this.buildPour();
+    this.t0 = null; this._alive = true; this.visible = true; this._prCycle = -1;
+    this.io = new IntersectionObserver((es)=>{ this.visible = es[0].isIntersecting; }, {threshold:0.02});
+    this.io.observe(this.rootRef.current);
+    this.setVerdict(true);
+    if(this.reduce()){ this.renderStatic(); return; }
+    this.raf = requestAnimationFrame(this.tick);
+  }
+  componentWillUnmount(){ this._alive=false; if(this.raf)cancelAnimationFrame(this.raf); if(this.io)this.io.disconnect(); }
+
+  ns(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+  buildFindings(){
+    const g = this.svg.querySelector('#findings'); this.findings = [];
+    this.TOOLS.forEach((t)=>{
+      const el = this.ns('g'); el.setAttribute('opacity','0');
+      const w = 22 + t.n.length*7.2;
+      el.innerHTML = `<rect x="${-w/2}" y="-13" width="${w}" height="26" rx="13" fill="#12151b" stroke="#2b303b" stroke-width="1"/>`+
+        `<circle cx="${-w/2+13}" cy="0" r="4" fill="${t.sev}"/>`+
+        `<text x="${-w/2+24}" y="4" font-family="'JetBrains Mono',monospace" font-size="11" fill="#c3c8d2">${t.n}</text>`;
+      g.appendChild(el); this.findings.push({el, x:t.x, y:t.y});
+    });
+  }
+  buildPour(){
+    const g=this.svg.querySelector('#pour'); this.pour=[]; const G='01{}</>x$;=+#λ!?&|~10';
+    for(let i=0;i<64;i++){ const t=this.ns('text');
+      t.setAttribute('font-family',"'JetBrains Mono',monospace");
+      t.setAttribute('font-size',(7.5+Math.random()*5).toFixed(1));
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('fill', Math.random()<0.5?'#c0403f':'#6b7280');
+      t.textContent=G[Math.floor(Math.random()*G.length)];
+      g.appendChild(t);
+      this.pour.push({el:t, ox:168+(Math.random()*2-1)*118, ph:Math.random(), sp:40+Math.random()*54}); }
+  }
+  buildDust(){
+    const g = this.svg.querySelector('#dust'); this.dust=[];
+    for(let i=0;i<14;i++){ const c=this.ns('rect'); const x=682+Math.random()*156, s=1.4+Math.random()*2.2;
+      c.setAttribute('x',x); c.setAttribute('y',470); c.setAttribute('width',s); c.setAttribute('height',s);
+      g.appendChild(c); this.dust.push({el:c, base:470, spd:26+Math.random()*54, ph:Math.random()}); }
+  }
+
+  clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  seg(t,a,b){return this.clamp((t-a)/(b-a),0,1);}
+  lerp(a,b,t){return a+(b-a)*t;}
+  eio(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+  bump(t){return Math.sin(Math.PI*this.clamp(t,0,1));}
+  set(id,attr,val){ const e=this.svg.querySelector(id); if(e)e.setAttribute(attr,val); }
+  op(id,v){ const e=this.svg.querySelector(id); if(e)e.style.opacity=v; }
+  cap(txt){ const c=this.capRef.current; if(c&&c.textContent!==txt) c.textContent=txt; }
+
+  cubeFrontPath(b){
+    const L=650,R=870,T=250,B=470;
+    return `M${L} ${T} Q${(L+R)/2} ${T-b} ${R} ${T} Q${R+b} ${(T+B)/2} ${R} ${B} Q${(L+R)/2} ${B+b} ${L} ${B} Q${L-b} ${(T+B)/2} ${L} ${T} Z`;
+  }
+
+  tick = (now)=>{
+    if(!this._alive) return;
+    if(this.t0==null) this.t0=now;
+    if(this.visible && document.body.style.overflow!=='hidden') this.frame((now-this.t0)/1000);
+    this.raf = requestAnimationFrame(this.tick);
+  };
+
+  frame(elapsed){
+    const tt = elapsed % this.DUR;
+    const cyc = Math.floor(elapsed/this.DUR);
+    const L=this;
+
+    const push6 = L.bump(L.seg(tt,7.2,9.6));
+
+    // CACHOEIRA de findings despejando no caixote (mar de sinais)
+    if(L.pour){ const top=64, mouth=430, rng=400;
+      for(const q of L.pour){ const y=top+((elapsed*q.sp+q.ph*rng)%rng); const prog=L.clamp((y-top)/(mouth-top),0,1);
+        const x=L.lerp(q.ox,168,prog*prog); const o=(y>mouth?0:L.clamp(Math.min((y-top)/40,(mouth-y)/48),0,1)*0.8);
+        q.el.setAttribute('x',x.toFixed(1)); q.el.setAttribute('y',y.toFixed(1)); q.el.setAttribute('opacity',o.toFixed(3)); } }
+
+    // CAT anda: centro -> caixote (pega) -> sandbox (deposita) -> contém/clímax -> volta
+    let catX=430, face=1, moving=false;
+    if(tt<0.2){ catX=430; }
+    else if(tt<1.6){ catX=L.lerp(430,280,L.eio(L.seg(tt,0.2,1.6))); face=-1; moving=true; }
+    else if(tt<2.5){ catX=280; face=-1; }
+    else if(tt<4.1){ catX=L.lerp(280,566,L.eio(L.seg(tt,2.5,4.1))); face=1; moving=true; }
+    else if(tt<10.2){ catX=566; face=1; }
+    else if(tt<11.8){ catX=L.lerp(566,430,L.eio(L.seg(tt,10.2,11.8))); face=1; moving=true; }
+    const idle=Math.sin(elapsed*1.5)*1.3, bob=moving?Math.abs(Math.sin(elapsed*9))*-3:0;
+    L.set('#cat','transform',`translate(${catX},${-18+push6*3+idle+bob}) translate(20,0) scale(${face},1) translate(-20,0)`);
+    const step=moving?Math.sin(elapsed*9)*5:0;
+    L.set('#catLegL','transform',`translate(0,${step.toFixed(2)})`);
+    L.set('#catLegR','transform',`translate(0,${(-step).toFixed(2)})`);
+    L.set('#catRed','opacity',(push6*0.2).toFixed(3));
+    L.set('#catArm','stroke-width',(17+push6*3).toFixed(1));
+    // detalhes cyber: scanline varre o visor, antena pulsa
+    const scanX = -38 + ((elapsed*46)%88);
+    L.set('#catScan','x', scanX.toFixed(1));
+    L.set('#catScan','opacity', (0.35+0.4*Math.abs(Math.sin(elapsed*3))).toFixed(3));
+    L.set('#catAntenna','opacity', (0.4+0.6*(Math.sin(elapsed*5)*0.5+0.5)).toFixed(3));
+
+    // FINDINGS: o gato pega no caixote e leva à sandbox
+    const bmX=168, bmY=430, slotX=760, slotY=244;
+    L.findings.forEach((f,i)=>{
+      let x,y,o=0; const pk0=1.7+i*0.05, pk1=2.5, dp0=4.1+i*0.14, dp1=4.9+i*0.14;
+      if(tt<pk0){ x=bmX; y=bmY; o=0; }
+      else if(tt<pk1){ const q=L.eio(L.seg(tt,pk0,pk1)); x=L.lerp(bmX,262,q); y=L.lerp(bmY,412+i*9,q)-Math.sin(q*Math.PI)*20; o=1; }
+      else if(tt<dp0){ x=catX-42; y=412+i*9; o=1; }
+      else if(tt<dp1){ const q=L.eio(L.seg(tt,dp0,dp1)); x=L.lerp(548,slotX,q); y=L.lerp(412+i*9,slotY,q)-Math.sin(q*Math.PI)*76; o=q<0.9?1:0; }
+      else { x=bmX; y=bmY; o=0; }
+      f.el.setAttribute('transform',`translate(${x},${y})`);
+      f.el.setAttribute('opacity', o.toFixed(3));
+    });
+
+    // CUBE close (p3) ... reopen near end for continuity
+    const close = L.eio(L.seg(tt,3.8,4.8));
+    const reopen = L.eio(L.seg(tt,11.2,12.0));
+    let lift = 0; // câmara sempre selada (entra pelo topo, sai por baixo)
+    L.set('#cubeFront','transform',`translate(0,${lift})`);
+    L.set('#cubeFrontDetail','transform',`translate(0,${lift})`);
+
+    // CUBE eyes: open after close, close again at very end
+    const eyeOpen = L.seg(tt,4.7,5.1);
+    const eyeClose = L.seg(tt,11.0,11.8);
+    const eyeAmt = L.clamp(eyeOpen-eyeClose,0,1);
+    L.op('#cubeEyes', eyeAmt.toFixed(3));
+    const squint = 1-push6*0.6;
+    L.set('#ceL','transform',`translate(${push6*3},0) scale(1,${(0.4+0.6*eyeAmt)*squint})`);
+    L.set('#ceR','transform',`translate(${push6*3},0) scale(1,${(0.4+0.6*eyeAmt)*squint})`);
+
+    // CREATURE awaken + breathe, fade out at end (0 at both ends => continuous)
+    const awaken = L.clamp(L.seg(tt,5.6,7.0)-L.seg(tt,9.6,11.0),0,1);
+    const breathe = Math.sin(elapsed*3.4)*0.5+0.5;
+    L.op('#creature',(awaken*0.92).toFixed(3));
+    L.set('#creGlow','opacity',L.clamp(awaken*(0.35+0.25*breathe)+push6*0.5,0,1).toFixed(3));
+    const cs=1+breathe*0.05+push6*0.12;
+    L.set('#creGlow','transform',`translate(760,372) scale(${cs}) translate(-760,-372)`);
+    // criatura viva: tentáculos ondulam, garras se mexem, olhos piscam e rastreiam a pressão
+    if(awaken>0.02){
+      const sway=Math.sin(elapsed*1.7), sway2=Math.sin(elapsed*1.35+1.4);
+      L.set('#tent1','transform',`rotate(${sway*4} 706 468) translate(${sway*3},0)`);
+      L.set('#tent2','transform',`rotate(${-sway2*4} 828 468) translate(${sway2*3},0)`);
+      const cl=Math.sin(elapsed*2.6);
+      L.set('#claw1','transform',`translate(${cl*3},${cl*2}) rotate(${cl*4} 728 340)`);
+      L.set('#claw2','transform',`translate(${-cl*3},${-cl*2}) rotate(${-cl*4} 786 336)`);
+      const blink=(Math.sin(elapsed*0.8)>0.93||Math.sin(elapsed*1.9+2)>0.97)?0.12:1;
+      L.set('#creEyeL','ry',(9*blink).toFixed(2)); L.set('#creEyeR','ry',(9*blink).toFixed(2));
+      const look=Math.sin(elapsed*1.1)*3;
+      L.set('#creEyeL','transform',`translate(${push6*4+look},${-push6*3})`);
+      L.set('#creEyeR','transform',`translate(${push6*4+look},${-push6*3})`);
+    }
+
+    // CLIMAX: bulge + cracks + escaping light + dust + floor dip
+    // caixa "respira" quando algo vivo desperta dentro; deforma forte no clímax
+    const breath = awaken*(2.4+2.6*Math.sin(elapsed*2.2));
+    L.set('#cubeFront','d',L.cubeFrontPath(push6*34 + breath));
+    L.set('#cubeFrontDetail','opacity',(1-push6*0.15).toFixed(3));
+    L.op('#cracks',(L.seg(tt,7.4,8.6)*push6*1.2).toFixed(3));
+    L.op('#cracksHot',(L.seg(tt,7.6,8.6)*push6).toFixed(3));
+    L.set('#escape','opacity',(Math.min(1,push6*0.85+awaken*0.16*breathe)).toFixed(3));
+    L.set('#escape','transform',`translate(760,360) scale(${0.7+push6*0.5}) translate(-760,-360)`);
+    L.set('#rim','opacity',(0.42+push6*0.5).toFixed(3));
+    L.set('#floorLine','transform',`translate(0,${push6*3})`);
+
+    // SANDBOX treme e quase explode enquanto emula (jitter + micro-rotação sobre o centro)
+    const emu = L.clamp(L.seg(tt,5.6,7.2),0,1);
+    const trem = Math.max(emu*0.45, push6);
+    const jx = Math.sin(elapsed*53)*4.5*trem, jy = Math.cos(elapsed*61)*4*trem;
+    const rot = Math.sin(elapsed*47)*1.1*trem;
+    L.set('#cubeShake','transform',`rotate(${rot.toFixed(3)} 760 360) translate(${jx.toFixed(2)} ${jy.toFixed(2)})`);
+    L.set('#cubeShadow','opacity',(0.55-push6*0.18).toFixed(3));
+    L.op('#dust',push6>0.15?'1':'0');
+    if(push6>0.15) L.dust.forEach(d=>{ const p=((elapsed*d.spd/60)+d.ph)%1; d.el.setAttribute('y',(d.base+p*70).toFixed(1)); d.el.setAttribute('opacity',(push6*(1-p)*0.7).toFixed(3)); });
+
+    // PR nasce de um brilho de salvação e sai pela fenda
+    const flash = L.bump(L.seg(tt,10.2,11.2));
+    L.set('#prFlash','opacity',(flash*0.95).toFixed(3));
+    L.set('#prFlash','transform',`translate(760,476) scale(${(0.5+flash*0.8).toFixed(3)}) translate(-760,-476)`);
+    L.op('#prRays',(flash*0.55).toFixed(3));
+    L.set('#prRays','transform',`rotate(${(flash*8).toFixed(2)} 760 476) scale(1,${(0.4+flash*0.9).toFixed(3)})`);
+    const prIn = L.eio(L.seg(tt,10.6,11.5));
+    const prOut = L.seg(tt,11.9,12.0);
+    L.op('#pr',L.clamp(prIn-prOut,0,1).toFixed(3));
+    L.set('#pr','transform',`translate(760,${L.lerp(452,500,prIn)}) scale(${(0.82+0.18*prIn).toFixed(3)})`);
+    if(prIn>0.02 && this._prCycle!==cyc){ this._prCycle=cyc; this.setVerdict(cyc%2===0); }
+
+    // captions
+    L.cap('');
+  }
+
+  setVerdict(exploitable){
+    const g=this.svg.querySelector('#prVerdict'); if(!g)return;
+    const bar=this.svg.querySelector('#prBar');
+    if(bar){ let b=''; let x=-90; for(let i=0;i<34;i++){ const w=1+((i*7)%3); if(i%2===0) b+=`<rect x="${x}" y="132" width="${w}" height="12"/>`; x+=w+1.4; } bar.innerHTML=b; }
+    if(exploitable){
+      g.innerHTML = `<rect x="-90" y="62" width="180" height="40" rx="4" fill="#fbe9e9" stroke="#e5333b" stroke-width="1.5"/>`+
+        `<circle cx="-71" cy="82" r="10" fill="#e5333b"/>`+
+        `<path d="M-76 82 l3.5 4 l7 -8" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`+
+        `<text x="-54" y="79" font-family="'Inter',sans-serif" font-size="15" font-weight="800" fill="#7a1518">EXPLOITABLE</text>`+
+        `<text x="-54" y="94" font-family="'JetBrains Mono',monospace" font-size="9" fill="#c0403f">proof attached · merge recommended</text>`+
+        `<text x="-90" y="120" font-family="'JetBrains Mono',monospace" font-size="8.5" fill="#8a8578">reproducible in sandbox · signed</text>`;
+    } else {
+      g.innerHTML = `<rect x="-90" y="62" width="180" height="40" rx="4" fill="#edeef0" stroke="#9aa1ac" stroke-width="1.5"/>`+
+        `<circle cx="-71" cy="82" r="10" fill="#6b7280"/>`+
+        `<path d="M-75 78 l8 8 M-67 78 l-8 8" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>`+
+        `<text x="-54" y="79" font-family="'Inter',sans-serif" font-size="15" font-weight="800" fill="#3a3f48">FALSE POSITIVE</text>`+
+        `<text x="-54" y="94" font-family="'JetBrains Mono',monospace" font-size="9" fill="#8a909a">exploit not reproducible</text>`+
+        `<text x="-90" y="120" font-family="'JetBrains Mono',monospace" font-size="8.5" fill="#a49f90">no viable path · closed</text>`;
+    }
+  }
+
+  renderStatic(){
+    this.set('#cubeFront','transform','translate(0,0)');
+    this.set('#cubeFrontDetail','transform','translate(0,0)');
+    this.op('#cubeEyes','1'); this.op('#creature','0.5'); this.set('#creGlow','opacity','0.3');
+    this.findings.forEach(f=>f.el.setAttribute('opacity','0'));
+    this.op('#pr','1'); this.set('#pr','transform','translate(760,236)'); this.setVerdict(true);
+    this.cap('do sinal à prova');
+  }
+
+  renderVals(){ return { rootRef:this.rootRef, svgRef:this.svgRef, capRef:this.capRef }; }
+}
+</script>
+</body>
+</html>
