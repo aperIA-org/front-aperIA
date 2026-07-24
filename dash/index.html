@@ -569,7 +569,7 @@ svg:hover .evo-pt{opacity:1;}
 const HERO_FINDINGS = [
   {id:'f1',source:'trufflehog',severity:'critical',title:'AWS Access Key exposta no código-fonte',description:'Credencial AWS verificada encontrada em texto plano no arquivo de configuração. A chave tem permissões amplas (AdministratorAccess) e foi confirmada como ativa via AWS STS GetCallerIdentity.',commit_sha:'a3f8c1d2e4b56789abcdef01',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:null,cwe_id:'CWE-312',file_path:'src/config.py',line_number:42,asset:'payments-api',asset_criticality:'high',secret_verified:true,secret_type:'aws_access_key',tier:1,created_at:'2024-06-29T14:23:11Z'},
   {id:'f2',source:'semgrep',severity:'high',title:'SQL Injection via raw query em ORM',description:'Interpolação direta de parâmetro não sanitizado em query SQL. Permite UNION-based data extraction, podendo expor toda a tabela de usuários e hashes de senha.',commit_sha:'a3f8c1d2e4b56789abcdef01',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:'CVE-2024-38856',cwe_id:'CWE-89',file_path:'app/repositories/user_repo.py',line_number:87,asset:'payments-api',asset_criticality:'high',secret_verified:false,secret_type:null,tier:2,created_at:'2024-06-29T14:25:33Z'},
-  {id:'f3',source:'trivy',severity:'critical',title:'Log4Shell RCE em dependência transitiva',description:'log4j-core 2.14.1 vulnerável a execução remota de código via JNDI lookup. CVSS 10.0. Caminho de ataque confirmado pelo Claude Sonnet como exploitável no ambiente atual.',commit_sha:'a3f8c1d2e4b56789abcdef01',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:'CVE-2021-44228',cwe_id:'CWE-400',file_path:'pom.xml',line_number:234,asset:'payments-api',asset_criticality:'high',secret_verified:false,secret_type:null,tier:2,created_at:'2024-06-29T14:26:01Z'},
+  {id:'f3',source:'trivy',severity:'critical',title:'Log4Shell RCE em dependência transitiva',description:'log4j-core 2.14.1 vulnerável a execução remota de código via JNDI lookup. CVSS 10.0. Caminho de ataque confirmado pela I.A como exploitável no ambiente atual.',commit_sha:'a3f8c1d2e4b56789abcdef01',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:'CVE-2021-44228',cwe_id:'CWE-400',file_path:'pom.xml',line_number:234,asset:'payments-api',asset_criticality:'high',secret_verified:false,secret_type:null,tier:2,created_at:'2024-06-29T14:26:01Z'},
   {id:'f4',source:'semgrep',severity:'high',title:'Path traversal em upload de arquivos',description:'Parâmetro filename não validado permite navegação no sistema de arquivos do servidor. Atacante pode ler /etc/passwd ou sobrescrever arquivos de configuração.',commit_sha:'b7e9f2a1c3d45678abcdef02',repo_url:'https://github.com/OCR-aperIA/auth-service',cve_id:null,cwe_id:'CWE-22',file_path:'api/upload_handler.py',line_number:156,asset:'auth-service',asset_criticality:'critical',secret_verified:false,secret_type:null,tier:1,created_at:'2024-06-28T09:44:52Z'},
   {id:'f5',source:'zap',severity:'high',title:'CORS misconfiguration permite origem arbitrária',description:'Header Access-Control-Allow-Origin: * com credenciais habilitadas. Permite ataques cross-origin autenticados a partir de qualquer domínio.',commit_sha:'b7e9f2a1c3d45678abcdef02',repo_url:'https://github.com/OCR-aperIA/auth-service',cve_id:null,cwe_id:'CWE-346',file_path:'api/middleware/cors.py',line_number:23,asset:'auth-service',asset_criticality:'critical',secret_verified:false,secret_type:null,tier:3,created_at:'2024-06-28T10:12:09Z'},
   {id:'f6',source:'prowler',severity:'medium',title:'Bucket S3 com ACL pública habilitada',description:'Bucket de artefatos de build exposto publicamente. Contém binários internos e arquivos de configuração de CI/CD que podem revelar a arquitetura interna.',commit_sha:'a3f8c1d2e4b56789abcdef01',repo_url:'https://github.com/OCR-aperIA/payments-api',cve_id:null,cwe_id:'CWE-284',file_path:'infra/terraform/s3.tf',line_number:18,asset:'infra-aws',asset_criticality:'medium',secret_verified:false,secret_type:null,tier:2,created_at:'2024-06-29T14:27:44Z'},
@@ -773,7 +773,7 @@ const INTEGRATIONS = [
   {id:'zap',name:'OWASP ZAP',desc:'DAST, testes de segurança dinâmicos',tier:'T3',status:'operational',last_run:'2024-06-28T10:12:00Z',findings_total:1,version:'2.14.0'},
   {id:'opencti',name:'OpenCTI',desc:'Threat intelligence contextual',tier:'T3',status:'degraded',last_run:'2024-06-27T08:00:00Z',findings_total:0,version:'5.12.4',impact:'Enriquecimento de threat intel indisponível, attack paths sem contexto CTI'},
   {id:'caldera',name:'Caldera',desc:'Adversary simulation (MITRE ATT&CK)',tier:'T3',status:'operational',last_run:'2024-06-28T10:15:00Z',findings_total:0,version:'5.0.0'},
-  {id:'claude',name:'Claude Sonnet',desc:'Raciocínio de IA, cadeia de eventos e attack path',tier:'T2+T3',status:'operational',last_run:'2024-06-29T14:35:00Z',findings_total:null,version:'claude-sonnet-4-5'},
+  {id:'claude',name:'I.A',desc:'Raciocínio de IA, cadeia de eventos e attack path',tier:'T2+T3',status:'operational',last_run:'2024-06-29T14:35:00Z',findings_total:null,version:'claude-sonnet-4-5'},
 ];
 
 /* ═══════════════════════ HELPERS ═══════════════════════ */
@@ -815,7 +815,7 @@ function sourceIcon(src){
 const TIER_META=[
   {name:'Tier 1',desc:'Fast Feedback',sla:'≤3min',scanners:'TruffleHog · Semgrep changed-files'},
   {name:'Tier 2',desc:'Standard Analysis',sla:'≤10min',scanners:'Semgrep full · Trivy SCA · Prowler'},
-  {name:'Tier 3',desc:'Deep Heuristic',sla:'30-60min',scanners:'ZAP DAST · Claude attack-path'},
+  {name:'Tier 3',desc:'Deep Heuristic',sla:'30-60min',scanners:'ZAP DAST · I.A attack-path'},
 ];
 function tierIconSvg(st){
   if(st==='done')return `<span style="position:relative;width:20px;height:20px;flex-shrink:0;display:grid;place-items:center;"><span class="node-ring" style="position:absolute;inset:-4px;border-radius:50%;border:1.5px solid rgba(34,197,94,.4);"></span><span style="width:20px;height:20px;border-radius:50%;background:rgba(34,197,94,.12);border:1.5px solid #22c55e;display:grid;place-items:center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 7"/></svg></span></span>`;
@@ -1681,7 +1681,7 @@ function openFinding(id){
     remHtml=`
   <div style="background:var(--bg-surface);border:1px solid var(--border-default);border-radius:8px;padding:16px;margin-top:16px;">
     <div class="flex items-center justify-between mb-2">
-      <div class="text-[14px] text-fg-mute">Remediação sugerida pelo Claude</div>
+      <div class="text-[14px] text-fg-mute">Remediação sugerida pela I.A</div>
       <span class="sev ${rem.status==='approved'?'st-done':rem.status==='rejected'?'st-failed':'st-queued'}">${REM_STATUS_PT[rem.status]||rem.status}</span>
     </div>
     <p class="text-[13px] text-fg-mute mb-3">${rem.explanation}</p>
@@ -1936,7 +1936,7 @@ function renderRemediations(){
           ${r.requires_secret_rotation?rotationBlock(r.rotation_instructions):''}
         </div>
       </div>
-      <div class="text-[14px] text-fg-mute mb-2">Patch diff · gerado pelo Claude Sonnet</div>
+      <div class="text-[14px] text-fg-mute mb-2">Patch diff · gerado pela I.A</div>
       ${diffBlock(r.patch_diff,fn.file_path)}
       <div class="flex items-center gap-4 mt-3 text-[12px]">
         ${fn.id?`<button class="lnk-ext" style="background:none;border:none;cursor:pointer;padding:0;font:inherit;" onclick="openFinding('${fn.id}')">Origem: ${fn.title}</button>`:''}
@@ -2028,7 +2028,7 @@ function renderAttack(){
   if(!SCAN_JOBS.length){
     return `<div class="page-wrap">
     <div class="mb-6"><h1 class="text-[24px] font-bold tracking-tight">AI Emulation</h1></div>
-    <div class="stat-card">${emptyState({title:'Nenhuma execução para analisar',body:'Assim que um scan rodar o Tier 3, a análise de attack path do Claude aparece aqui, com kill chain, risk score e ações priorizadas.',action:`<button class="btn btn-md btn-primary" onclick="navigate('integrations')">Configurar scanners</button>`})}</div>
+    <div class="stat-card">${emptyState({title:'Nenhuma execução para analisar',body:'Assim que um scan rodar o Tier 3, a análise de attack path da I.A aparece aqui, com kill chain, risk score e ações priorizadas.',action:`<button class="btn btn-md btn-primary" onclick="navigate('integrations')">Configurar scanners</button>`})}</div>
   </div>`;
   }
   const job = currentExecId ? SCAN_JOBS.find(j=>j.id===currentExecId) : SCAN_JOBS[0];
@@ -2088,7 +2088,7 @@ function renderAttack(){
       <svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 11-9-9"/></svg>
       <h2 class="text-[16px] font-bold">Análise Profunda em Execução</h2>
     </div>
-    <p class="text-[13px] text-fg-mute leading-relaxed">O Tier 3 (Claude + emulação Caldera) está processando esta execução. A attack path e o risk score ajustado aparecerão aqui assim que a análise concluir.</p>
+    <p class="text-[13px] text-fg-mute leading-relaxed">O Tier 3 (I.A + emulação Caldera) está processando esta execução. A attack path e o risk score ajustado aparecerão aqui assim que a análise concluir.</p>
   </div>
 </div>`;
   }
