@@ -4,6 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>aperIA · Dashboard</title>
+<!-- favicon: mark do gato (SVG nítido em qualquer resolução) + fallback PNG p/ navegadores sem favicon SVG -->
+<link rel="icon" type="image/svg+xml" href="uploads/mark.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="uploads/1.png">
+<link rel="icon" type="image/png" sizes="16x16" href="uploads/1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -64,7 +68,7 @@ function toggleTheme(){var el=document.documentElement;var isLight=el.getAttribu
 --border-subtle:#1f2023;--border-default:#202124;--divider:#2e2f31;--border-mid:#3a3b3d;--border-strong:#4a4b4d;
 --text-primary:#f2f2f2;--text-hi:#d0d0d0;--text-secondary:#a1a1a1;--text-muted:#8a8a8a;--text-dim:#707070;--text-faint:#5c5c5c;
 --gauge-track:#26272a;--chart-track:#1a1a1a;--chart-grid:#1e1e1e;
---card-inner:#0d0d0d;--tb-card-bg:#222;--chip-bg:#141414;--chip-hover:#191111;--card-dots:rgba(255,255,255,.035);--th-bg:#0c0d0f;
+--card-inner:#0d0d0d;--tb-card-bg:#222;--chip-bg:#141414;--chip-hover:#191111;--card-dots:rgba(255,255,255,.035);--th-bg:rgba(225,29,42,.16);
 --veil-t88:rgba(255,255,255,.88);--veil-t82:rgba(255,255,255,.82);--veil-t78:rgba(255,255,255,.78);--veil-t72:rgba(255,255,255,.72);--veil-t50:rgba(255,255,255,.5);--veil-t42:rgba(255,255,255,.42);
 --veil-12:rgba(255,255,255,.12);--veil-10:rgba(255,255,255,.10);--veil-09:rgba(255,255,255,.09);--veil-08:rgba(255,255,255,.08);--veil-06:rgba(255,255,255,.06);--veil-05:rgba(255,255,255,.05);--veil-04:rgba(255,255,255,.04);--veil-03:rgba(255,255,255,.03);
 --accent:#d81f2a;--accent-hover:#b81620;--accent-tint:rgba(225,29,42,.16);--sel:rgba(225,29,42,.28);--card-shadow:none;
@@ -74,7 +78,7 @@ function toggleTheme(){var el=document.documentElement;var isLight=el.getAttribu
 --border-subtle:#EDF0F6;--border-default:#E6E9F0;--divider:#EDF0F6;--border-mid:#E6E9F0;--border-strong:#D7DBE6;
 --text-primary:#0E1525;--text-hi:#2A3346;--text-secondary:#465063;--text-muted:#6B7488;--text-dim:#6B7488;--text-faint:#98A1B3;
 --gauge-track:#E8ECF2;--chart-track:#EDF0F6;--chart-grid:#EDF0F6;
---card-inner:#FFFFFF;--tb-card-bg:#FFFFFF;--chip-bg:#F4F6FA;--chip-hover:#EBEEF4;--card-dots:transparent;--th-bg:#E2E7EF;
+--card-inner:#FFFFFF;--tb-card-bg:#FFFFFF;--chip-bg:#F4F6FA;--chip-hover:#EBEEF4;--card-dots:transparent;--th-bg:#F3DFD8;
 --veil-t88:rgba(14,21,37,.9);--veil-t82:rgba(14,21,37,.82);--veil-t78:rgba(14,21,37,.68);--veil-t72:rgba(14,21,37,.62);--veil-t50:rgba(14,21,37,.5);--veil-t42:rgba(14,21,37,.42);
 --veil-12:rgba(14,21,37,.08);--veil-10:rgba(14,21,37,.06);--veil-09:rgba(14,21,37,.10);--veil-08:rgba(14,21,37,.08);--veil-06:rgba(14,21,37,.04);--veil-05:rgba(14,21,37,.045);--veil-04:rgba(14,21,37,.035);--veil-03:rgba(14,21,37,.03);
 --sev-critical:#C4101A;--sev-high:#D1560A;--sev-medium:#B8860B;--sev-low:#8F8F0A;--sev-info:#2F6FB5;--sev-safe:#2E9C6D;
@@ -85,7 +89,7 @@ html{transition:background-color .2s ease,color .2s ease;}
 ::selection{background:var(--sel);}
 [data-theme="light"] .stat-card,[data-theme="light"] .ov-tile,[data-theme="light"] .stat-card.tb-card{box-shadow:var(--card-shadow);}
 [data-theme="light"] .stat-card{border-color:transparent;}
-[data-theme="light"] .dtbl th{border-bottom:1px solid #CBD2DE;}
+[data-theme="light"] .dtbl th{border-bottom:1px solid #E4C9BF;color:#5A4A44;}
 [data-theme="light"] .ov-idx{color:#B7BECD;}
 [data-theme="light"] .sev-fx{color:#0E1525!important;}
 [data-theme="light"] header{background:#F3DFD8!important;border-bottom:1px solid #E4C9BF;box-shadow:0 1px 2px rgba(58,46,42,.05);}
@@ -329,6 +333,13 @@ svg:hover .evo-pt{opacity:1;}
 .chip-x{font-size:13px;line-height:1;opacity:.6;margin-left:1px;}
 .chip-clear{color:var(--text-dim);border-color:transparent;text-transform:none;}
 .chip-clear:hover{color:var(--text-primary);background:transparent;border-color:var(--border-strong);}
+/* filtros da aba Scans: definição reforçada (mesmos tokens de borda/superfície da paleta) */
+.pipe-wrap .chip{background:var(--chip-bg);border-color:var(--border-strong);}
+.pipe-wrap .chip:hover{background:var(--chip-hover);border-color:var(--text-dim);}
+.pipe-wrap .chip.on{background:var(--accent-tint);border-color:var(--accent);color:var(--text-primary);font-weight:600;}
+.pipe-wrap .chip-clear{background:transparent;border-color:transparent;}
+.pipe-wrap .chip-clear:hover{border-color:var(--border-strong);}
+.pipe-wrap select.inp{background:var(--chip-bg);border-color:var(--border-strong);}
 .sort-h{cursor:pointer;user-select:none;}
 .sort-h:hover{color:var(--text-primary);}
 /* Tier bubble */
@@ -383,7 +394,7 @@ svg:hover .evo-pt{opacity:1;}
 }
 /* Data table (real table, shared column axes, vertical dividers) */
 .dtbl{width:100%;border-collapse:collapse;table-layout:fixed;}
-.dtbl th{padding:10px 16px;font-size:13px;font-weight:700;color:var(--text-secondary);background:var(--th-bg);border-bottom:1px solid var(--border-default);text-align:center;white-space:nowrap;}
+.dtbl th{padding:10px 16px;font-size:13px;font-weight:700;color:var(--text-hi);background:var(--th-bg);border-bottom:1px solid var(--border-default);text-align:center;white-space:nowrap;}
 .dtbl td{padding:12px 16px;border-bottom:1px solid var(--border-default);text-align:center;vertical-align:middle;font-size:13px;}
 .dtbl th+th,.dtbl td+td{border-left:1px solid var(--border-default);}
 .dtbl tr:last-child td{border-bottom:none;}
@@ -1844,7 +1855,7 @@ function renderPipelines(){
   const anyFilter=pf.repo||pf.status||pf.tier;
 
   const runningCount=SCAN_JOBS.filter(j=>pipeStatus(j)==='running').length;
-  return `<div class="page-wrap">
+  return `<div class="page-wrap pipe-wrap">
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-[24px] font-bold tracking-tight">Scans <span class="text-[14px] text-fg-mute font-normal">${SCAN_JOBS.length} no total</span></h1>
