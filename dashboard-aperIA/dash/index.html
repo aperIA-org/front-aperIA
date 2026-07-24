@@ -491,10 +491,7 @@ svg:hover .evo-pt{opacity:1;}
       </a>
       <!-- gestão: assets, conexões e pessoas -->
       <div style="height:1px;background:var(--veil-08);margin:6px 4px;"></div>
-      <a class="sb-item" data-screen="inventory" onclick="navigate('inventory')" title="Inventário">
-        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3.5 6.5v9L12 20l8.5-4.5v-9L12 2z"/><path d="M3.5 6.5L12 11l8.5-4.5M12 11v9"/></svg></span>
-        <span class="sb-lbl">Inventário</span>
-      </a>
+
       <a class="sb-item" data-screen="integrations" onclick="navigate('integrations')" title="Repositórios">
         <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
         <span class="sb-lbl">Repositórios</span>
@@ -1038,22 +1035,23 @@ function initCountUps(){
 /* ═══════════════════════ ROUTER ═══════════════════════ */
 let currentScreen='home';
 let appConnected=localStorage.getItem('aperia-connected')==='true';
-const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',reports:'Relatórios',remediations:'Remediações',attack:'AI Emulation',inventory:'Inventário',asset:'Inventário',integrations:'Repositórios',team:'Time'};
+const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',reports:'Relatórios',remediations:'Remediações',attack:'AI Emulation',reportDetail:'Relatórios',integrations:'Repositórios',team:'Time'};
 
 function navigate(screen){
-  const dataScreens=['findings','inventory','asset','pipelines','reports','attack','remediations'];
+  const dataScreens=['findings','pipelines','reports','reportDetail','attack','remediations'];
   if(!appConnected&&dataScreens.includes(screen))return; /* locked during onboarding */
   currentScreen=screen;
-  const navScreen=screen==='asset'?'inventory':screen; /* detalhe do asset mantém Inventário ativo */
+  const navScreen=screen==='reportDetail'?'reports':screen; /* detalhe da execução mantém Relatórios ativo */
   document.querySelectorAll('.sb-item').forEach(a=>{
     a.classList.toggle('active',a.dataset.screen===navScreen);
   });
   syncSidebarState();
   document.getElementById('breadcrumb').textContent=SCREEN_LABELS[screen]||screen;
+  if(screen==='reportDetail'&&currentReportId){const _j=SCAN_JOBS.find(x=>x.id===currentReportId);if(_j)document.getElementById('breadcrumb').textContent='Relatórios / '+(_j.repo_full_name.split('/')[1])+' · PR #'+_j.pr_number;}
   const bcw=document.getElementById('breadcrumb-wrap'); if(bcw) bcw.style.display=(screen==='home')?'none':'flex';
   const main=document.getElementById('app-main');
   main.innerHTML='';
-  const screens={home:renderHome,findings:renderFindings,pipelines:renderPipelines,reports:renderReports,remediations:renderRemediations,attack:renderAttack,inventory:renderInventory,asset:renderAssetDetail,integrations:renderIntegrations,team:renderTeam,repos:renderReposManage};
+  const screens={home:renderHome,findings:renderFindings,pipelines:renderPipelines,reports:renderReports,remediations:renderRemediations,attack:renderAttack,reportDetail:renderReportDetail,integrations:renderIntegrations,team:renderTeam,repos:renderReposManage};
   if(screens[screen]) main.innerHTML=screens[screen]();
   bindScreenEvents(screen);
   initCountUps();
@@ -1061,10 +1059,15 @@ function navigate(screen){
   syncFindingsBadge();
   if(screen==='attack')apObserve();
   localStorage.setItem('aperia-screen',screen);
+  /* rota com parâmetro: #/relatorios/:execId */
+  try{
+    if(screen==='reportDetail'&&currentReportId){history.replaceState(null,'','#/relatorios/'+currentReportId);}
+    else if(location.hash.indexOf('#/relatorios')===0){history.replaceState(null,'',location.pathname+location.search);}
+  }catch(e){}
 }
 /* During onboarding (no GitHub connection) data tabs have nothing to show, disable them */
 function syncSidebarState(){
-  const dataScreens=['findings','inventory','asset','pipelines','reports','attack','remediations'];
+  const dataScreens=['findings','pipelines','reports','reportDetail','attack','remediations'];
   const locked=!appConnected;
   document.querySelectorAll('.sb-item').forEach(a=>{
     if(dataScreens.includes(a.dataset.screen)) a.classList.toggle('sb-disabled',locked);
@@ -2259,93 +2262,21 @@ function renderReposManage(){
   ${repoSelectorHtml()}
 </div>`;
 }
-const INV_HICO={
-  asset:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
-  crit:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
-  findings:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-  scan_at:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
-  risk:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-  scanners:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>',
-};
-function renderInventory(){
-  /* Findings count is DERIVED from the canonical Findings list, grouped by asset, never hardcoded. */
-  const findingsByAsset=openFindings().reduce((m,f)=>{m[f.asset]=(m[f.asset]||0)+1;return m;},{});
-  const monitored=getMonitored();
-  /* Inventory = monitored GitHub repos (asset list IS the monitored-repo list) + cloud assets (not GitHub-governed).
-     A monitored repo without scan data yet is shown as an asset awaiting its first scan. */
-  const repoAssets=monitored.map(name=>{
-    const existing=ASSETS.find(a=>a.type==='repository'&&a.name===name);
-    return existing||{id:'r-'+name,name,type:'repository',repo_url:'https://github.com/'+GH_ORG+'/'+name,criticality:null,last_scan:null,risk_score:null,scanners:[]};
-  });
-  const cloudAssets=ASSETS.filter(a=>a.type!=='repository');
-  const visibleAssets=[...repoAssets,...cloudAssets];
-  const rows=visibleAssets.map(a=>{
-    const fCount=findingsByAsset[a.name]||0;
-    const typeIco=a.type==='repository'?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="8" r="2.3"/><path d="M6 8.3v7.4M18 10.3c0 4-6 3-12 5"/></svg>':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18a4 4 0 01-.5-8A5.5 5.5 0 0116.5 8 4.5 4.5 0 0117 18H6z"/></svg>';
-    const scannerBadges=(a.scanners||[]).map(s=>`<span class="mono" style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg-surface-raised);color:var(--text-dim);white-space:nowrap;">${s}</span>`).join('');
-    return `
-  <tr class="rowlink" onclick="openAsset('${a.name}')">
-    <td class="cl">
-      <div style="display:flex;align-items:center;gap:12px;min-width:0;">
-        <div style="width:20px;height:20px;border-radius:5px;background:var(--bg-surface-raised);display:grid;place-items:center;flex-shrink:0;">${typeIco}</div>
-        <div style="min-width:0;">
-          <div class="font-medium text-fg lnk">${a.name}</div>
-          ${a.repo_url?`<div class="mono text-[10px] text-fg-dim mt-0.5 truncate">${a.repo_url}</div>`:''}
-        </div>
-      </div>
-    </td>
-    <td>${a.criticality?sevBadge(a.criticality):'<span class="text-[12px] text-fg-dim">—</span>'}</td>
-    <td><span class="mono text-[12px] font-semibold" style="font-variant-numeric:tabular-nums;color:${fCount>4?'var(--sev-critical)':fCount>2?'var(--sev-high)':'var(--sev-safe)'}">${fCount}</span></td>
-    <td>${a.last_scan?timeTag(a.last_scan,"text-[12px] text-fg-dim"):'<span class="text-[12px] text-fg-dim">aguardando scan</span>'}</td>
-    <td>${a.risk_score?`<span class="mono text-[12px] font-semibold" style="font-variant-numeric:tabular-nums;color:${a.risk_score>700?'var(--sev-critical)':a.risk_score>=400?'var(--sev-medium)':'var(--sev-safe)'}">${a.risk_score}</span>`:'<span class="text-[12px] text-fg-dim">—</span>'}</td>
-    <td><div style="display:inline-flex;flex-wrap:wrap;justify-content:center;gap:4px;max-width:100%;">${scannerBadges}</div></td>
-    <td><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#707070" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></td>
-  </tr>`;
-  }).join('');
-
-  const totFindings=visibleAssets.reduce((s,a)=>s+(findingsByAsset[a.name]||0),0);
-  const withRisk=visibleAssets.filter(a=>a.risk_score!=null);
-  const avgRisk=withRisk.length?Math.round(withRisk.reduce((s,a)=>s+a.risk_score,0)/withRisk.length):null;
-  const summary=`${visibleAssets.length} assets · ${totFindings} findings${avgRisk!=null?` · risco médio ${avgRisk}`:''}`;
-
-  return`<div class="page-wrap">
-  <div class="mb-6">
-    <h1 class="text-[24px] font-bold tracking-tight">Inventário de Assets</h1>
-    <p class="text-fg-dim text-[13px] mt-1">Repositórios e recursos cloud monitorados pelo aperIA</p>
-  </div>
-  <div class="stat-card" style="padding:0;overflow:hidden;">
-    <table class="dtbl">
-      <colgroup><col><col style="width:130px"><col style="width:100px"><col style="width:130px"><col style="width:100px"><col style="width:220px"><col style="width:48px"></colgroup>
-      <thead><tr>
-        <th class="cl"><span style="display:flex;align-items:center;gap:12px;"><span style="width:20px;display:flex;justify-content:center;flex-shrink:0;">${INV_HICO.asset}</span>Asset</span></th>
-        <th><span class="dtbl-h">${INV_HICO.crit}Criticidade</span></th>
-        <th><span class="dtbl-h">${INV_HICO.findings}Findings</span></th>
-        <th><span class="dtbl-h">${INV_HICO.scan_at}Último Scan</span></th>
-        <th><span class="dtbl-h">${INV_HICO.risk}Risk</span></th>
-        <th><span class="dtbl-h">${INV_HICO.scanners}Scanners</span></th>
-        <th></th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div style="padding:12px 16px;border-top:1px solid var(--border-default);font-size:12px;color:var(--text-secondary);">${summary}</div>
-  </div>
-</div>`;
-}
-
-/* ═══ SCREEN: ASSET DETAIL (clique num item do Inventário) ═══
-   Histórico do asset: cópia do Pull Request enviado + scans + findings detalhados pós-scan. */
-let currentAssetName=null;
-function openAsset(name){currentAssetName=name;navigate('asset');}
-function renderAssetDetail(){
-  const name=currentAssetName;
-  if(!name) return renderInventory();
+/* ═══ SCREEN: DETALHE DA EXECUÇÃO (drill-down de Relatórios · rota #/relatorios/:execId) ═══
+   Cópia do Pull Request enviado + histórico de scans + findings pós-scan da execução. */
+let currentReportId=null;
+function openReportDetail(id){currentReportId=id;navigate('reportDetail');}
+function renderReportDetail(){
+  const job=SCAN_JOBS.find(j=>j.id===currentReportId);
+  if(!job) return renderReports();
+  const name=job.repo_full_name.split('/')[1];
   const asset=ASSETS.find(a=>a.name===name)||{name,type:'repository',repo_url:'https://github.com/'+GH_ORG+'/'+name,criticality:null,risk_score:null};
   const jobs=SCAN_JOBS.filter(j=>j.repo_full_name===GH_ORG+'/'+name).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   const assetFindings=FINDINGS.filter(f=>f.asset===name);
   const openF=assetFindings.filter(f=>f.status!=='resolved');
 
-  /* PR enviado: usa o scan mais recente com remediações */
-  const prJob=jobs.find(j=>REMEDIATIONS.some(r=>r.scan_job_id===j.id));
+  /* PR enviado: o desta execução */
+  const prJob=REMEDIATIONS.some(r=>r.scan_job_id===job.id)?job:null;
   const prRems=prJob?REMEDIATIONS.filter(r=>r.scan_job_id===prJob.id):[];
   const prHtml=prJob?`<div class="stat-card mb-6" style="padding:0;overflow:hidden;">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;gap:10px;">
@@ -2373,12 +2304,12 @@ function renderAssetDetail(){
         ${diffBlock(r.patch_diff,fn.file_path)}
       </div>`;}).join('')}
     </div>
-  </div>`:`<div class="stat-card mb-6">${emptyState({title:'Nenhum Pull Request enviado ainda',body:asset.type==='repository'?'Assim que um scan gerar remediações, a cópia do PR enviado aparece aqui.':'Assets cloud não recebem Pull Requests — as remediações são orientações de configuração.',action:''})}</div>`;
+  </div>`:`<div class="stat-card mb-6">${emptyState({title:'Nenhum Pull Request enviado ainda',body:[job.tier1_status,job.tier2_status,job.tier3_status].includes('running')?'Esta execução ainda está em andamento. O PR com as remediações aparece aqui quando a análise terminar.':'Esta execução não gerou patches de remediação.',action:''})}</div>`;
 
   /* histórico de scans do asset */
   const histHtml=jobs.length?jobs.map(j=>{
     const remCount=REMEDIATIONS.filter(r=>r.scan_job_id===j.id).length;
-    return `<div class="tbl-row sr-row" style="grid-template-columns:1fr 130px 110px 24px;gap:16px;align-items:center;cursor:pointer;" onclick="openScanRemediations('${j.id}')">
+    return `<div class="tbl-row sr-row" style="grid-template-columns:1fr 130px 110px 24px;gap:16px;align-items:center;cursor:pointer;${j.id===job.id?'background:var(--accent-tint);':''}" onclick="openReportDetail('${j.id}')">
       <div style="min-width:0;">
         <div class="text-sm font-medium text-fg lnk">PR #${j.pr_number} <span class="mono text-fg-dim" style="font-size:11px;">${shortSha(j.commit_sha)}</span>${remCount?` <span class="text-[11px]" style="color:var(--text-secondary);">· ${remCount} remediaç${remCount===1?'ão':'ões'}</span>`:''}</div>
         <div class="mt-0.5" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);">${timeAgo(j.created_at)}</div>
@@ -2399,13 +2330,13 @@ function renderAssetDetail(){
   </tr>`).join('');
 
   return `<div class="page-wrap">
-  <button class="btn btn-sm btn-ghost mb-4" onclick="navigate('inventory')" style="gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Inventário</button>
+  <button class="btn btn-sm btn-ghost mb-4" onclick="navigate('reports')" style="gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Relatórios</button>
   <div class="mb-6 flex items-center justify-between">
     <div>
       <h1 class="text-[24px] font-bold tracking-tight">${GH_ORG}/${name}</h1>
       <p class="text-fg-dim text-[13px] mt-1">${jobs.length} scan${jobs.length===1?'':'s'} · ${openF.length} finding${openF.length===1?'':'s'} aberto${openF.length===1?'':'s'}${asset.criticality?` · criticidade ${asset.criticality}`:''}</p>
     </div>
-    ${asset.risk_score?`<div class="flex items-center gap-2">${miniGauge(asset.risk_score)}<span class="mono" style="font-size:20px;font-weight:800;color:${riskColor(asset.risk_score)}">${asset.risk_score}</span></div>`:''}
+    ${job.final_risk_score?`<div class="flex items-center gap-2">${miniGauge(job.final_risk_score)}<span class="mono" style="font-size:20px;font-weight:800;color:${riskColor(job.final_risk_score)}">${job.final_risk_score}</span></div>`:''}
   </div>
   ${prHtml}
   <div class="stat-card mb-6" style="padding:0;overflow:hidden;">
@@ -2513,7 +2444,7 @@ function renderReports(){
   const rows=jobs.map(j=>{
     const band=j.final_risk_score?riskColor(j.final_risk_score):'var(--divider)';
     const running=[j.tier1_status,j.tier2_status,j.tier3_status].includes('running');
-    return `<div class="tbl-row sr-row" style="grid-template-columns:14px 1fr 130px 110px 24px;gap:16px;align-items:center;cursor:pointer;" onclick="openInsights('${j.id}')">
+    return `<div class="tbl-row sr-row" style="grid-template-columns:14px 1fr 130px 110px 24px;gap:16px;align-items:center;cursor:pointer;" onclick="openReportDetail('${j.id}')">
       <span style="width:7px;height:7px;border-radius:50%;background:${band};flex-shrink:0;"></span>
       <div style="min-width:0;">
         <div class="text-sm font-medium text-fg lnk">${j.repo_full_name} <span class="mono text-fg-dim" style="font-size:12px;">#${j.pr_number}</span></div>
@@ -2694,8 +2625,17 @@ function toggleSb(){
     const sb=document.getElementById('sb'),shell=document.getElementById('app-shell'),ico=document.getElementById('sb-tgl-ico'),btn=document.getElementById('sb-tgl');
     if(sb&&shell){sb.classList.add('sb-c');shell.style.gridTemplateColumns='64px 1fr';if(ico)ico.querySelector('path').setAttribute('d','M15 6l-6 6 6 6');if(btn)btn.title='Expandir sidebar';const w=document.getElementById('sb-expand-wrap');if(w)w.style.display='flex';}
   }
-  const saved=localStorage.getItem('aperia-screen')||'home';
-  navigate(saved);
+  let saved=localStorage.getItem('aperia-screen')||'home';
+  if(saved==='inventory'||saved==='asset')saved='reports'; /* rota antiga removida */
+  const hm=location.hash.match(/^#\/relatorios\/([A-Za-z0-9_]+)/);
+  if(hm&&SCAN_JOBS.some(j=>j.id===hm[1])){currentReportId=hm[1];navigate('reportDetail');}
+  else navigate(saved);
+  /* rota reage a mudança de hash sem reload */
+  window.addEventListener('hashchange',()=>{
+    const m=location.hash.match(/^#\/relatorios\/([A-Za-z0-9_]+)/);
+    if(m&&SCAN_JOBS.some(j=>j.id===m[1])){ if(currentScreen!=='reportDetail'||currentReportId!==m[1]){currentReportId=m[1];navigate('reportDetail');} }
+    else if(currentScreen==='reportDetail'){ navigate('reports'); }
+  });
   document.addEventListener('keydown',e=>{
     const open=document.getElementById('panel').classList.contains('open');
     if(!open)return;
