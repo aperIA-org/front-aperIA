@@ -1821,8 +1821,9 @@ function renderPipelines(){
       <h1 class="text-[24px] font-bold tracking-tight">Scans <span class="text-[14px] text-fg-mute font-normal">${SCAN_JOBS.length} no total</span></h1>
       <p class="text-fg-dim text-[13px] mt-1">Histórico de varreduras por repositório${runningCount>0?` · ${runningCount} em execução`:''}</p>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
       <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary);"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse-safe 2s infinite;"></span>Atualização automática</span>
+      <button class="btn btn-md btn-primary" onclick="openScanModal()" style="gap:8px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>Iniciar scan</button>
     </div>
   </div>
   <div class="flex items-center gap-2 flex-wrap mb-4">
@@ -2497,12 +2498,18 @@ function renderReports(){
 /* ═══ Gerenciar repositórios: seleção livre p/ rodar scans (Integrações) ═══ */
 let scanSel=null;
 function ensureScanSel(){ if(scanSel===null) scanSel=new Set(getMonitored()); }
+function repoScanRunning(name){ return SCAN_JOBS.some(j=>j.repo_full_name===GH_ORG+'/'+name&&(j.tier1_status==='running'||j.tier2_status==='running'||j.tier3_status==='running')); }
 function scanRepoRowHtml(rp){
   ensureScanSel();
   const on=scanSel.has(rp.name);
+  const running=repoScanRunning(rp.name);
   const lastJob=SCAN_JOBS.find(j=>j.repo_full_name===GH_ORG+'/'+rp.name);
   const lastTag=lastJob?`último scan ${timeAgo(lastJob.created_at)}`:'nunca escaneado';
-  return `<button class="repo-row" onclick="scanToggle('${rp.name}')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-radius:8px;background:transparent;border:1px solid transparent;cursor:pointer;text-align:left;transition:background .1s;">
+  /* botão por repositório: inicia o scan DESTE repo na hora que o usuário quiser */
+  const scanBtn=running
+    ?`<button class="btn btn-sm btn-ghost" disabled style="gap:6px;opacity:.6;cursor:default;flex-shrink:0;"><svg class="spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-9-9"/></svg>Em execução…</button>`
+    :`<button class="btn btn-sm btn-primary" style="gap:6px;flex-shrink:0;" onclick="event.stopPropagation();runScanRepo('${rp.name}')" title="Iniciar scan em ${GH_ORG}/${rp.name} agora"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>Iniciar scan</button>`;
+  return `<div class="repo-row" onclick="scanToggle('${rp.name}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();scanToggle('${rp.name}');}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-radius:8px;background:transparent;border:1px solid transparent;cursor:pointer;text-align:left;transition:background .1s;">
     <span style="display:flex;align-items:center;gap:11px;min-width:0;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="8" r="2.3"/><path d="M6 8.3v7.4M18 10.3c0 4-6 3-12 5"/></svg>
       <span style="min-width:0;">
@@ -2513,30 +2520,68 @@ function scanRepoRowHtml(rp){
         </span>
       </span>
     </span>
-    <span class="repo-sw" style="width:36px;height:20px;border-radius:100px;background:${on?'#c22f3d':'var(--divider)'};position:relative;flex-shrink:0;transition:background .15s;"><span style="position:absolute;top:2px;left:${on?'18px':'2px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;"></span></span>
-  </button>`;
+    <span style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      ${scanBtn}
+      <span class="repo-sw" title="${on?'Monitorado':'Não monitorado'}" style="width:36px;height:20px;border-radius:100px;background:${on?'#c22f3d':'var(--divider)'};position:relative;flex-shrink:0;transition:background .15s;"><span style="position:absolute;top:2px;left:${on?'18px':'2px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;"></span></span>
+    </span>
+  </div>`;
 }
 function scanListHtml(){ return INSTALLATION_REPOS.map(scanRepoRowHtml).join(''); }
 function scanFooterHtml(){
   ensureScanSel();
   const n=scanSel.size,tot=INSTALLATION_REPOS.length;
-  return `<span style="font-size:13px;color:var(--text-secondary);">${n} de ${tot} repositórios selecionados</span>
-    <button class="btn btn-md btn-primary" ${n===0?'disabled style="opacity:.45;cursor:not-allowed;" title="Selecione ao menos um repositório"':''} onclick="${n===0?'':'runScans()'}" style="gap:7px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>Rodar scan${n?` (${n})`:''}</button>`;
+  return `<span style="font-size:13px;color:var(--text-secondary);">${n} de ${tot} repositórios monitorados · o scan só roda quando você iniciar</span>
+    <button class="btn btn-md btn-ghost" onclick="saveScanSelection()">Salvar seleção</button>`;
 }
 function scanRefresh(){ const l=document.getElementById('scan-repo-list'); if(l)l.innerHTML=scanListHtml(); const f=document.getElementById('scan-repo-footer'); if(f)f.innerHTML=scanFooterHtml(); }
 function scanToggle(name){ ensureScanSel(); if(scanSel.has(name))scanSel.delete(name); else scanSel.add(name); scanRefresh(); }
 function scanSelectAllRepos(){ ensureScanSel(); INSTALLATION_REPOS.forEach(r=>scanSel.add(r.name)); scanRefresh(); }
 function scanClearRepos(){ ensureScanSel(); scanSel.clear(); scanRefresh(); }
-function runScans(){
+/* Salvar seleção NÃO dispara scan: só define o que é monitorado. */
+function saveScanSelection(){
   ensureScanSel();
-  if(!scanSel.size) return;
-  const now=new Date().toISOString();
-  const picked=[...scanSel];
-  picked.forEach((name,i)=>{
-    SCAN_JOBS.unshift({id:'run_'+Date.now()+'_'+i,commit_sha:Math.random().toString(16).slice(2,12).padEnd(10,'0'),repo_full_name:GH_ORG+'/'+name,pr_number:Math.floor(Math.random()*80)+20,tier1_status:'running',tier2_status:null,tier3_status:null,blocked_at_tier:null,final_risk_score:null,final_risk_level:null,created_at:now,t1_dur:null,t2_dur:null,t3_dur:null});
-  });
-  setMonitored(picked);
-  navigate('reports');
+  setMonitored([...scanSel]);
+  const f=document.getElementById('scan-repo-footer');
+  if(f){ f.innerHTML=scanFooterHtml(); const ok=document.createElement('span'); ok.style.cssText='font-size:12px;color:#177a52;margin-left:10px;'; ok.textContent='Seleção salva ✓'; f.appendChild(ok); setTimeout(()=>{ok.remove();},2200); }
+}
+/* Inicia um scan em UM repositório, na hora — nada roda automaticamente ao conectar/selecionar. */
+function runScanRepo(name){
+  if(repoScanRunning(name)) return;
+  SCAN_JOBS.unshift({id:'run_'+Date.now(),commit_sha:Math.random().toString(16).slice(2,12).padEnd(10,'0'),repo_full_name:GH_ORG+'/'+name,pr_number:Math.floor(Math.random()*80)+20,tier1_status:'running',tier2_status:null,tier3_status:null,blocked_at_tier:null,final_risk_score:null,final_risk_level:null,created_at:new Date().toISOString(),t1_dur:null,t2_dur:null,t3_dur:null});
+  ensureScanSel(); if(!scanSel.has(name)){ scanSel.add(name); setMonitored([...scanSel]); }
+  closeModal();
+  if(currentScreen==='pipelines'){ document.getElementById('app-main').innerHTML=renderPipelines(); bindScreenEvents('pipelines'); }
+  else if(currentScreen==='integrations'){ scanRefresh(); }
+  else navigate('pipelines');
+}
+/* Botão principal "Iniciar scan": modal simples — escolha o repositório e rode. */
+function openScanModal(){
+  closeModal();
+  const rows=INSTALLATION_REPOS.map(rp=>{
+    const running=repoScanRunning(rp.name);
+    return `<button ${running?'disabled':''} onclick="runScanRepo('${rp.name}')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:none;border-bottom:1px solid var(--border-default);background:transparent;cursor:${running?'default':'pointer'};text-align:left;${running?'opacity:.55;':''}" ${running?'':'onmouseover="this.style.background=\'var(--bg-hover)\'" onmouseout="this.style.background=\'transparent\'"'}>
+      <span style="min-width:0;">
+        <span style="font-size:13.5px;font-weight:600;color:var(--text-primary);display:block;">${GH_ORG}/${rp.name}</span>
+        <span style="font-size:11px;color:var(--text-dim);">${rp.lang} · ${rp.private?'privado':'público'}</span>
+      </span>
+      ${running?'<span class="sev st-running" style="flex-shrink:0;">em execução</span>':'<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#d81f2a;flex-shrink:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>Iniciar</span>'}
+    </button>`;
+  }).join('');
+  const ov=document.createElement('div');
+  ov.id='gh-modal';
+  ov.style.cssText='position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px;';
+  ov.onclick=e=>{if(e.target===ov)closeModal();};
+  ov.innerHTML=`<div style="background:var(--bg-surface);border:1px solid var(--divider);border-radius:12px;max-width:480px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;">
+    <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h3 style="font-size:16px;font-weight:700;color:var(--text-primary);">Iniciar scan</h3>
+        <p style="font-size:12.5px;color:var(--text-secondary);margin-top:3px;">Escolha o repositório para escanear agora.</p>
+      </div>
+      <button onclick="closeModal()" aria-label="Fechar" style="background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;">×</button>
+    </div>
+    <div style="max-height:380px;overflow-y:auto;">${rows}</div>
+  </div>`;
+  document.body.appendChild(ov);
 }
 
 /* ═══════════════════════ SCREEN: TEAM ═══════════════════════ */
