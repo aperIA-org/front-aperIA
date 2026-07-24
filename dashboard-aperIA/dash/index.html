@@ -1322,26 +1322,30 @@ function applyScope(){
   if(FF.busca){const q=FF.busca.toLowerCase();s=s.filter(x=>x.title.toLowerCase().includes(q)||(x.file_path||'').toLowerCase().includes(q)||(x.cve_id||'').toLowerCase().includes(q));}
   return s;
 }
-function toggleDim(dim,val,additive){
+function toggleDim(dim,val,additive){ffPage=1;
   const arr=FF[dim];const i=arr.findIndex(v=>v===val);
   if(additive){if(i>=0)arr.splice(i,1);else arr.push(val);}
   else{FF[dim]=(i>=0&&arr.length===1)?[]:[val];}
   rerenderFindings();
 }
 function onDimClick(ev,dim,val){const add=!!(ev&&(ev.ctrlKey||ev.metaKey));toggleDim(dim,val,add);}
-function removeChipFilter(dim,val){const arr=FF[dim];const i=arr.findIndex(v=>v===val);if(i>=0)arr.splice(i,1);rerenderFindings();}
-function setBusca(v){FF.busca=v;rerenderFindings();const el=document.querySelector('#findings-search');if(el){el.focus();const n=el.value.length;el.setSelectionRange(n,n);}}
+function removeChipFilter(dim,val){ffPage=1;const arr=FF[dim];const i=arr.findIndex(v=>v===val);if(i>=0)arr.splice(i,1);rerenderFindings();}
+function setBusca(v){ffPage=1;FF.busca=v;rerenderFindings();const el=document.querySelector('#findings-search');if(el){el.focus();const n=el.value.length;el.setSelectionRange(n,n);}}
 function rerenderFindings(){const m=document.getElementById('app-main');if(!m)return;m.innerHTML=renderFindings();bindFindingsEvents();initDonut();initCountUps();syncFindingsBadge();syncURL();}
+/* paginação da lista de findings */
+let ffPage=1;
+const FF_PAGE_SIZE=10;
+function ffGoPage(p){ffPage=p;rerenderFindings();const t=document.querySelector('#app-main .dtbl');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}
 let findingsSort={col:'sev',dir:'desc'};
 function setFindingSort(col){
   if(findingsSort.col===col)findingsSort.dir=findingsSort.dir==='asc'?'desc':'asc';
   else findingsSort={col,dir:col==='sev'?'desc':'asc'};
   rerenderFindings();
 }
-function goFindings(f){FF_DIMS.forEach(d=>FF[d]=[]);FF.status=null;FF.busca='';FF.periodo={de:ffDefaultDe(),ate:null};if(f&&f.sev)FF.severidades=[f.sev];navigate('findings');}
+function goFindings(f){ffPage=1;FF_DIMS.forEach(d=>FF[d]=[]);FF.status=null;FF.busca='';FF.periodo={de:ffDefaultDe(),ate:null};if(f&&f.sev)FF.severidades=[f.sev];navigate('findings');}
 /* Seletor de período */
 let periodPanelOpen=false;
-function setPeriod(preset){periodPanelOpen=false;FF.status=null;if(preset==='all')FF.periodo={de:null,ate:null};else FF.periodo={de:REF_NOW-(+preset)*DAY,ate:null};rerenderFindings();}
+function setPeriod(preset){ffPage=1;periodPanelOpen=false;FF.status=null;if(preset==='all')FF.periodo={de:null,ate:null};else FF.periodo={de:REF_NOW-(+preset)*DAY,ate:null};rerenderFindings();}
 function togglePeriodPanel(){periodPanelOpen=!periodPanelOpen;rerenderFindings();}
 function applyCustomPeriod(){const de=document.getElementById('per-de').value,ate=document.getElementById('per-ate').value;FF.periodo={de:de?new Date(de+'T00:00:00Z').getTime():null,ate:ate?new Date(ate+'T23:59:59Z').getTime():null};FF.status=null;periodPanelOpen=false;rerenderFindings();}
 function periodPreset(){const{de,ate}=FF.periodo;if(ate!=null)return 'custom';if(de==null)return 'all';const d=Math.round((REF_NOW-de)/DAY);if(d===7)return '7';if(d===30)return '30';if(d===90)return '90';return 'custom';}
@@ -1573,11 +1577,33 @@ function renderFindings(){
 
   const srcs=['trufflehog','semgrep','trivy','prowler','zap'];
   window.currentFindingIds=list.map(x=>x.id);
+
+  /* paginação: fatia a lista e monta os controles */
+  const totalPages=Math.max(1,Math.ceil(list.length/FF_PAGE_SIZE));
+  if(ffPage>totalPages)ffPage=totalPages;
+  if(ffPage<1)ffPage=1;
+  const pageStart=(ffPage-1)*FF_PAGE_SIZE;
+  const pageList=list.slice(pageStart,pageStart+FF_PAGE_SIZE);
+  const pageNums=(()=>{ /* 1 … v-1 v v+1 … N */
+    const set=new Set([1,totalPages,ffPage-1,ffPage,ffPage+1].filter(p=>p>=1&&p<=totalPages));
+    const arr=[...set].sort((a,b)=>a-b);
+    const out=[];let prev=0;
+    arr.forEach(p=>{if(p-prev>1)out.push('…');out.push(p);prev=p;});
+    return out;
+  })();
+  const pagerHtml=list.length>FF_PAGE_SIZE?`<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;border-top:1px solid var(--border-default);">
+    <span class="text-[12px] text-fg-dim">Mostrando <b style="color:var(--text-secondary);">${pageStart+1}–${Math.min(pageStart+FF_PAGE_SIZE,list.length)}</b> de ${list.length}</span>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <button class="chip chip-clear" ${ffPage===1?'disabled style="opacity:.4;cursor:default;"':''} onclick="${ffPage===1?'':'ffGoPage('+(ffPage-1)+')'}">‹ Anterior</button>
+      ${pageNums.map(p=>p==='…'?'<span class="text-[12px] text-fg-dim" style="padding:0 3px;">…</span>':`<button class="chip${p===ffPage?' on':''}" style="min-width:30px;justify-content:center;${p===ffPage?'border-color:var(--accent);color:var(--text-primary);background:var(--accent-tint);font-weight:600;':''}" onclick="ffGoPage(${p})">${p}</button>`).join('')}
+      <button class="chip chip-clear" ${ffPage===totalPages?'disabled style="opacity:.4;cursor:default;"':''} onclick="${ffPage===totalPages?'':'ffGoPage('+(ffPage+1)+')'}">Próxima ›</button>
+    </div>
+  </div>`:'';
   const sevChips=['critical','high','medium','low','info'].map(s=>{const on=FF.severidades.includes(s);const c=sevColor(s);const style=on?`--c:${c};background:${hexA(c,.12)};border-color:${hexA(c,.4)};color:${c};`:`--c:${c};`;return `<button class="chip${on?' on':''}" style="${style}" onclick="onDimClick(event,'severidades','${s}')"><span class="chip-dot" style="background:${c};"></span>${s}${on?'<span class="chip-x">\u00d7</span>':''}</button>`;}).join('');
   const srcChips=srcs.map(s=>{const on=FF.scanners.includes(s);return `<button class="chip${on?' on':''}" onclick="onDimClick(event,'scanners','${s}')">${s}${on?'<span class="chip-x">\u00d7</span>':''}</button>`;}).join('');
   const tierChips=[1,2,3].map(t=>{const on=FF.tiers.includes(t);return `<button class="chip${on?' on':''}" onclick="onDimClick(event,'tiers',${t})">Tier ${t}${on?'<span class="chip-x">\u00d7</span>':''}</button>`;}).join('');
 
-  const rows=list.map(fn=>`
+  const rows=pageList.map(fn=>`
   <tr class="rowlink" onclick="openFinding('${fn.id}')">
     <td>${sevBadge(fn.severity)}</td>
     <td class="cl" style="overflow:hidden;">
@@ -1623,13 +1649,14 @@ function renderFindings(){
       </tr></thead>
       <tbody>${rows||`<tr><td colspan="6" style="padding:0;">${openFindings().length===0?emptyState({title:'Nenhum finding, seu código está limpo neste commit.',body:'O último scan não encontrou vulnerabilidades. Novos findings aparecem aqui a cada scan.'}):emptyState({title:'Sem dados para os filtros aplicados',body:'Ajuste ou limpe os filtros para ver os findings desta execução.',action:'<button class="chip chip-clear" onclick="clearFindingFilters()">Limpar filtros</button>'})}</td></tr>`}</tbody>
     </table>
+    ${pagerHtml}
   </div>
 </div>`;
 }
 
 function bindFindingsEvents(){}
 
-function clearFindingFilters(){FF_DIMS.forEach(d=>FF[d]=[]);FF.status=null;FF.busca='';FF.periodo={de:ffDefaultDe(),ate:null};periodPanelOpen=false;rerenderFindings();}
+function clearFindingFilters(){ffPage=1;FF_DIMS.forEach(d=>FF[d]=[]);FF.status=null;FF.busca='';FF.periodo={de:ffDefaultDe(),ate:null};periodPanelOpen=false;rerenderFindings();}
 
 /* ═══ Mascot line-art + empty-state pattern ═══ */
 function mascotSvg(size){
