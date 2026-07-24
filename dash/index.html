@@ -1034,7 +1034,10 @@ function initCountUps(){
 
 /* ═══════════════════════ ROUTER ═══════════════════════ */
 let currentScreen='home';
+/* modo preview (?preview=1): usado pelo carrossel do cadastro — simula conectado sem persistir nada */
+const IS_PREVIEW=/[?&]preview=1/.test(location.search);
 let appConnected=localStorage.getItem('aperia-connected')==='true';
+if(IS_PREVIEW) appConnected=true;
 const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',reports:'Relatórios',remediations:'Remediações',attack:'AI Emulation',reportDetail:'Relatórios',integrations:'Repositórios',team:'Time'};
 
 function navigate(screen){
@@ -1058,10 +1061,11 @@ function navigate(screen){
   initDonut();
   syncFindingsBadge();
   if(screen==='attack')apObserve();
-  localStorage.setItem('aperia-screen',screen);
-  /* rota com parâmetro: #/relatorios/:execId */
+  if(!IS_PREVIEW) localStorage.setItem('aperia-screen',screen);
+  /* rota com parâmetro: #/relatorios/:execId (fora do preview) */
   try{
-    if(screen==='reportDetail'&&currentReportId){history.replaceState(null,'','#/relatorios/'+currentReportId);}
+    if(IS_PREVIEW){}
+    else if(screen==='reportDetail'&&currentReportId){history.replaceState(null,'','#/relatorios/'+currentReportId);}
     else if(location.hash.indexOf('#/relatorios')===0){history.replaceState(null,'',location.pathname+location.search);}
   }catch(e){}
 }
@@ -2625,7 +2629,7 @@ function toggleSb(){
     const sb=document.getElementById('sb'),shell=document.getElementById('app-shell'),ico=document.getElementById('sb-tgl-ico'),btn=document.getElementById('sb-tgl');
     if(sb&&shell){sb.classList.add('sb-c');shell.style.gridTemplateColumns='64px 1fr';if(ico)ico.querySelector('path').setAttribute('d','M15 6l-6 6 6 6');if(btn)btn.title='Expandir sidebar';const w=document.getElementById('sb-expand-wrap');if(w)w.style.display='flex';}
   }
-  let saved=localStorage.getItem('aperia-screen')||'home';
+  let saved=IS_PREVIEW?'home':(localStorage.getItem('aperia-screen')||'home');
   if(saved==='inventory'||saved==='asset')saved='reports'; /* rota antiga removida */
   const hm=location.hash.match(/^#\/relatorios\/([A-Za-z0-9_]+)/);
   if(hm&&SCAN_JOBS.some(j=>j.id===hm[1])){currentReportId=hm[1];navigate('reportDetail');}

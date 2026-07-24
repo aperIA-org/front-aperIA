@@ -43,7 +43,7 @@
 
     <div style="position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column">
       <div style="position:relative;flex:1;min-height:0;border-radius:15px;overflow:hidden;background:#fff;border:1px solid #dfe2e7;box-shadow:0 30px 80px -42px rgba(20,24,31,.55);transition:opacity .55s ease,transform .55s ease;{{ winStyle }}">
-        <iframe ref="{{ appRef }}" src="dash/index.html" title="aperIA dashboard real" scrolling="no" style="position:absolute;top:0;left:0;border:0;background:#f4f6fa;transform-origin:0 0"></iframe>
+        <iframe ref="{{ appRef }}" src="dash/index.html?preview=1" title="aperIA dashboard real" scrolling="no" style="position:absolute;top:0;left:0;border:0;background:#f4f6fa;transform-origin:0 0"></iframe>
       </div>
 
       <!-- intro (antes do dash aparecer) -->
@@ -225,6 +225,10 @@ class Component extends DCLogic {
   _emailOk(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 
   _goDashboard(){
+    // login sempre entra no dash zerado: pagina inicial = onboarding "Conecte-se com GitHub"
+    try{
+      ['aperia-connected','aperia-screen','aperia-monitored','aperia-gh-installed'].forEach(k=>localStorage.removeItem(k));
+    }catch(e){}
     if(this.CONFIG.DASHBOARD_URL) window.location.href = this.CONFIG.DASHBOARD_URL;
     else this.setState({ notice: 'Autenticado! Dashboard em desenvolvimento — configure DASHBOARD_URL.', noticeKind: 'ok' });
   }
