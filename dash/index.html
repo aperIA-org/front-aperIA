@@ -85,7 +85,7 @@ function toggleTheme(){var el=document.documentElement;var isLight=el.getAttribu
 --accent-tint:rgba(196,16,26,.09);--sel:rgba(196,16,26,.2);--card-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
 }
 html{transition:background-color .2s ease,color .2s ease;}
-.stat-card,.ov-tile,#sb,#sb-ws-footer,#app-shell>div,header,.inp,.chip,.fchip,.sb-item,.perbtn,.tbl-row,.sev{transition:background-color .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease;}
+.stat-card,.ov-tile,#sb,#app-shell>div,header,.inp,.chip,.fchip,.sb-item,.perbtn,.tbl-row,.sev{transition:background-color .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease;}
 ::selection{background:var(--sel);}
 [data-theme="light"] .stat-card,[data-theme="light"] .ov-tile,[data-theme="light"] .stat-card.tb-card{box-shadow:var(--card-shadow);}
 [data-theme="light"] .stat-card{border-color:transparent;}
@@ -93,9 +93,9 @@ html{transition:background-color .2s ease,color .2s ease;}
 [data-theme="light"] .ov-idx{color:#B7BECD;}
 [data-theme="light"] .sev-fx{color:#0E1525!important;}
 [data-theme="light"] header{background:#F3DFD8!important;border-bottom:1px solid #E4C9BF;box-shadow:0 1px 2px rgba(58,46,42,.05);}
-[data-theme="light"] #sb,[data-theme="light"] .sb-header-inner,[data-theme="light"] #sb-ws-footer{background:#F3DFD8!important;}
+[data-theme="light"] #sb,[data-theme="light"] .sb-header-inner{background:#F3DFD8!important;}
 [data-theme="light"] #sb{border-right:1px solid #E4C9BF!important;}
-[data-theme="light"] #sb-ws-footer{border-top:1px solid #E4C9BF!important;}
+
 [data-theme="light"] .sb-item{color:#5A4A44;}
 [data-theme="light"] .sb-item:hover{color:#3A2E2A;background:rgba(58,46,42,.06);}
 [data-theme="light"] .sb-item{color:#465063;}
@@ -148,7 +148,7 @@ body{font-family:"Open Sans","Helvetica Neue",Arial,sans-serif;}
 /* Collapsed, based on v4 M3 True Black */
 #sb.sb-c{width:64px!important;}
 #sb.sb-c #sb-wm{display:none;}
-#sb.sb-c #sb-ws-info,#sb.sb-c #sb-ws-chev{display:none;}
+
 #sb.sb-c .sb-lbl{display:none;}
 #sb.sb-c .sb-bdg{display:none;}
 #sb.sb-c #sb-logo{width:48px!important;height:48px!important;}
@@ -161,9 +161,9 @@ body{font-family:"Open Sans","Helvetica Neue",Arial,sans-serif;}
 #sb-expand-btn{display:none;}
 #sb.sb-c #sb-expand-btn{display:flex;}
 /* workspace footer collapsed */
-#sb.sb-c #sb-ws-footer{padding:6px 0;}
-#sb.sb-c #sb-ws-info,#sb.sb-c #sb-ws-chev{display:none;}
-#sb.sb-c #sb-ws-footer button{justify-content:center;padding:6px;}
+
+
+
 
 /* Table */
 .tbl-row{display:grid;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-default);cursor:pointer;transition:background .12s;min-height:44px;}
@@ -501,14 +501,6 @@ svg:hover .evo-pt{opacity:1;}
         <span class="sb-lbl">Time</span>
       </a>
     </nav>
-    <!-- Workspace footer -->
-    <div id="sb-ws-footer" style="flex-shrink:0;padding:6px 10px;border-top:1px solid var(--veil-08);background:var(--bg-page);">
-      <button style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;cursor:pointer;width:100%;background:transparent;border:none;transition:background .15s;" onmouseover="this.style.background='var(--veil-06)'" onmouseout="this.style.background='transparent'">
-        <div style="width:26px;height:26px;border-radius:7px;background:var(--veil-10);color:var(--veil-t78);font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;display:grid;place-items:center;flex-shrink:0;">A</div>
-        <div id="sb-ws-info" style="flex:1;text-align:left;overflow:hidden;white-space:nowrap;font-family:'Geist',sans-serif;font-size:12.5px;font-weight:600;color:var(--veil-t88);">Acme · Pessoal</div>
-        <svg id="sb-ws-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:rgba(255,255,255,.28);"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>
-      </button>
-    </div>
   </aside>
 
   <div class="flex flex-col" style="height:100vh;overflow-y:scroll;scrollbar-gutter:stable;background:var(--bg-page);">
@@ -548,6 +540,13 @@ svg:hover .evo-pt{opacity:1;}
           <div style="padding:12px 14px;border-bottom:1px solid var(--border-default);">
             <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);">Marina Alves</div>
             <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">marina.alves@acme.io</div>
+          </div>
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;gap:9px;">
+            <div style="width:24px;height:24px;border-radius:6px;background:var(--bg-surface-raised);color:var(--text-secondary);font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;display:grid;place-items:center;flex-shrink:0;">A</div>
+            <div style="min-width:0;">
+              <div style="font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);">Organização</div>
+              <div style="font-size:12.5px;font-weight:600;color:var(--text-primary);">Acme · Pessoal</div>
+            </div>
           </div>
           <button role="menuitem" onclick="logout()" style="width:100%;display:flex;align-items:center;gap:9px;padding:11px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#c4101a;text-align:left;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='none'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
@@ -2480,10 +2479,8 @@ function scanRepoRowHtml(rp){
   const running=repoScanRunning(rp.name);
   const lastJob=SCAN_JOBS.find(j=>j.repo_full_name===GH_ORG+'/'+rp.name);
   const lastTag=lastJob?`último scan ${timeAgo(lastJob.created_at)}`:'nunca escaneado';
-  /* botão por repositório: inicia o scan DESTE repo na hora que o usuário quiser */
-  const scanBtn=running
-    ?`<button class="btn btn-sm btn-ghost" disabled style="gap:6px;opacity:.6;cursor:default;flex-shrink:0;"><svg class="spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-9-9"/></svg>Em execução…</button>`
-    :`<button class="btn btn-sm btn-primary" style="gap:6px;flex-shrink:0;" onclick="event.stopPropagation();runScanRepo('${rp.name}')" title="Iniciar scan em ${GH_ORG}/${rp.name} agora"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>Iniciar scan</button>`;
+  /* scans são iniciados pelo botão principal da aba Scans; aqui só um indicador quando está rodando */
+  const scanBtn=running?`<span class="sev st-running" style="flex-shrink:0;gap:4px;"><svg class="spin" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-9-9"/></svg>em execução</span>`:'';
   return `<div class="repo-row" onclick="scanToggle('${rp.name}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();scanToggle('${rp.name}');}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-radius:8px;background:transparent;border:1px solid transparent;cursor:pointer;text-align:left;transition:background .1s;">
     <span style="display:flex;align-items:center;gap:11px;min-width:0;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="8" r="2.3"/><path d="M6 8.3v7.4M18 10.3c0 4-6 3-12 5"/></svg>
