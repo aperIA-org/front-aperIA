@@ -139,6 +139,11 @@ class Component extends DCLogic {
   isLogin(){ try { return new URLSearchParams(location.search).get('mode') === 'login'; } catch(e){ return false; } }
 
   componentDidMount(){
+    // pre-preenche o e-mail vindo do CTA da landing (?email=...)
+    try{
+      const em=new URLSearchParams(location.search).get('email');
+      if(em){ setTimeout(()=>{ const i=document.querySelector('input[name="email"]'); if(i&&!i.value) i.value=em; },120); }
+    }catch(e){}
     if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
     // carrossel: a intro ("Bem-vindo ao aperIA") fica 1.8s; os cards, 4.6s cada.
     // Timeout encadeado com espelho local do step (nao depende do timing do setState);
