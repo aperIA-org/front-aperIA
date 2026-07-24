@@ -140,10 +140,21 @@ class Component extends DCLogic {
 
   componentDidMount(){
     if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-    // o carrossel avanca sozinho a cada 4.6s; o tick respeita a flag _paused (TAREFA 6)
-    this._iv = setInterval(() => { if(this._paused) return; this.setState(s => ({ active: (s.active + 1) % this.STEPS.length })); }, 4600);
+    // carrossel: a intro ("Bem-vindo ao aperIA") fica 1.8s; os cards, 4.6s cada.
+    // Timeout encadeado com espelho local do step (nao depende do timing do setState);
+    // o tick respeita a flag _paused (hover).
+    this._pos = 0;
+    const tick = () => {
+      const step = this.STEPS[this._pos];
+      const delay = (step && !step.screen) ? 1800 : 4600;
+      this._iv = setTimeout(() => {
+        if(!this._paused){ this._pos = (this._pos + 1) % this.STEPS.length; this.setState({ active: this._pos }); }
+        tick();
+      }, delay);
+    };
+    tick();
   }
-  componentWillUnmount(){ clearInterval(this._iv); if(this._appFit) window.removeEventListener('resize', this._appFit); if(this._asideEl){ this._asideEl.removeEventListener('mouseenter', this._pause); this._asideEl.removeEventListener('mouseleave', this._resume); } }
+  componentWillUnmount(){ clearTimeout(this._iv); if(this._appFit) window.removeEventListener('resize', this._appFit); if(this._asideEl){ this._asideEl.removeEventListener('mouseenter', this._pause); this._asideEl.removeEventListener('mouseleave', this._resume); } }
 
   // TAREFA 6 · pausa/retoma no hover via addEventListener (nativo) num ref — evita atributos
   // on* que o runtime do DC nao reconhece e que quebravam a hidratacao do componente.

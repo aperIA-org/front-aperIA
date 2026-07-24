@@ -100,6 +100,11 @@ html{transition:background-color .2s ease,color .2s ease;}
 .th-moon{opacity:0;transform:rotate(90deg);}
 [data-theme="light"] .th-sun{opacity:0;transform:rotate(-90deg);}
 [data-theme="light"] .th-moon{opacity:1;transform:rotate(0);}
+/* rótulo do botão de tema: acompanha o ícone (ação de alternar) */
+.th-lbl-light{display:inline;}
+.th-lbl-dark{display:none;}
+[data-theme="light"] .th-lbl-light{display:none;}
+[data-theme="light"] .th-lbl-dark{display:inline;}
 @media(prefers-reduced-motion:reduce){html,.stat-card,.ov-tile,#sb,.sb-item,.th-ico{transition:none;}}
 body{font-family:"Open Sans","Helvetica Neue",Arial,sans-serif;}
 .mono{font-family:"Geist Mono",ui-monospace,monospace;}
@@ -433,15 +438,8 @@ svg:hover .evo-pt{opacity:1;}
         <span class="sb-ico" style="margin-left:2px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="10.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="2.5" y="10.5" width="6" height="6" rx="1.2"/><rect x="10.5" y="10.5" width="6" height="6" rx="1.2"/></svg></span>
         <span class="sb-lbl">Início</span>
       </a>
-      <a class="sb-item" data-screen="findings" onclick="navigate('findings')" title="Findings">
-        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.2l6.5 2.3v4.5c0 4-2.7 6.8-6.5 7.8-3.8-1-6.5-3.8-6.5-7.8V4.5L12 2.2z"/></svg></span>
-        <span class="sb-lbl">Findings</span>
-        <span class="sb-bdg" id="findings-badge">10</span>
-      </a>
-      <a class="sb-item" data-screen="inventory" onclick="navigate('inventory')" title="Inventário">
-        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3.5 6.5v9L12 20l8.5-4.5v-9L12 2z"/><path d="M3.5 6.5L12 11l8.5-4.5M12 11v9"/></svg></span>
-        <span class="sb-lbl">Inventário</span>
-      </a>
+      <!-- pipeline de segurança, na ordem do fluxo: scan -> relatório -> finding -> remediação -> emulação -->
+      <div style="height:1px;background:var(--veil-08);margin:6px 4px;"></div>
       <a class="sb-item" data-screen="pipelines" onclick="navigate('pipelines')" title="Scans">
         <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><circle cx="12" cy="12" r="3.2"/><path d="M15.4 15.4L18 18"/></svg></span>
         <span class="sb-lbl">Scans</span>
@@ -450,14 +448,24 @@ svg:hover .evo-pt{opacity:1;}
         <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5v4h4"/><path d="M9 12h6M9 15.5h6M9 8.5h2"/></svg></span>
         <span class="sb-lbl">Relatórios</span>
       </a>
-      <a class="sb-item" data-screen="attack" onclick="openInsights(null)" title="AI insights">
-        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l1.4 4L18 8l-4.6 1.5L12 14l-1.4-4.5L6 8l4.6-1.5L12 2.5z"/><path d="M16.5 13.5l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6.6-1.7z"/></svg></span>
-        <span class="sb-lbl">AI insights</span>
+      <a class="sb-item" data-screen="findings" onclick="navigate('findings')" title="Findings">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.2l6.5 2.3v4.5c0 4-2.7 6.8-6.5 7.8-3.8-1-6.5-3.8-6.5-7.8V4.5L12 2.2z"/></svg></span>
+        <span class="sb-lbl">Findings</span>
+        <span class="sb-bdg" id="findings-badge">10</span>
       </a>
-      <div style="height:1px;background:var(--veil-08);margin:6px 4px;"></div>
-      <a class="sb-item" data-screen="remediations" onclick="navigate('remediations')" title="Políticas">
+      <a class="sb-item" data-screen="remediations" onclick="remScanContext=null;navigate('remediations')" title="Remediações">
         <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></span>
         <span class="sb-lbl">Remediações</span>
+      </a>
+      <a class="sb-item" data-screen="attack" onclick="openInsights(null)" title="AI Emulation">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l1.4 4L18 8l-4.6 1.5L12 14l-1.4-4.5L6 8l4.6-1.5L12 2.5z"/><path d="M16.5 13.5l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6.6-1.7z"/></svg></span>
+        <span class="sb-lbl">AI Emulation</span>
+      </a>
+      <!-- gestão: assets, conexões e pessoas -->
+      <div style="height:1px;background:var(--veil-08);margin:6px 4px;"></div>
+      <a class="sb-item" data-screen="inventory" onclick="navigate('inventory')" title="Inventário">
+        <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3.5 6.5v9L12 20l8.5-4.5v-9L12 2z"/><path d="M3.5 6.5L12 11l8.5-4.5M12 11v9"/></svg></span>
+        <span class="sb-lbl">Inventário</span>
       </a>
       <a class="sb-item" data-screen="integrations" onclick="navigate('integrations')" title="Repositórios">
         <span class="sb-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
@@ -493,9 +501,12 @@ svg:hover .evo-pt{opacity:1;}
         </div>
       </div>
       <div class="flex items-center gap-4 ml-auto">
-      <button id="theme-toggle" onclick="toggleTheme()" title="Alternar tema" aria-label="Ativar tema claro" class="relative w-9 h-9 rounded-md grid place-items-center text-fg-mute hover:bg-surface-1 hover:text-fg transition-colors">
-        <svg class="th-ico th-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12H5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
-        <svg class="th-ico th-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A8.5 8.5 0 1111.2 3a6.6 6.6 0 009.8 9.8z"/></svg>
+      <button id="theme-toggle" onclick="toggleTheme()" title="Alternar tema" aria-label="Ativar tema claro" class="h-9 rounded-md flex items-center gap-2 text-fg-mute hover:bg-surface-1 hover:text-fg transition-colors" style="padding:0 12px;border:1px solid var(--border-default);">
+        <span class="relative" style="width:17px;height:17px;display:grid;place-items:center;flex-shrink:0;">
+          <svg class="th-ico th-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12H5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+          <svg class="th-ico th-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A8.5 8.5 0 1111.2 3a6.6 6.6 0 009.8 9.8z"/></svg>
+        </span>
+        <span class="text-[12px] font-medium" style="white-space:nowrap;"><span class="th-lbl-light">Modo claro</span><span class="th-lbl-dark">Modo escuro</span></span>
       </button>
       <button class="relative w-9 h-9 rounded-md grid place-items-center text-fg-mute hover:bg-surface-1 hover:text-fg transition-colors">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 18V11a6 6 0 1112 0v7M4 18h16M10 21a2 2 0 004 0"/></svg>
@@ -987,21 +998,22 @@ function initCountUps(){
 /* ═══════════════════════ ROUTER ═══════════════════════ */
 let currentScreen='home';
 let appConnected=localStorage.getItem('aperia-connected')==='true';
-const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',reports:'Relatórios',remediations:'Remediações',attack:'AI Insights',inventory:'Inventário',integrations:'Repositórios',team:'Time'};
+const SCREEN_LABELS={home:'Início',findings:'Findings',pipelines:'Scans',reports:'Relatórios',remediations:'Remediações',attack:'AI Emulation',inventory:'Inventário',asset:'Inventário',integrations:'Repositórios',team:'Time'};
 
 function navigate(screen){
-  const dataScreens=['findings','inventory','pipelines','reports','attack','remediations'];
+  const dataScreens=['findings','inventory','asset','pipelines','reports','attack','remediations'];
   if(!appConnected&&dataScreens.includes(screen))return; /* locked during onboarding */
   currentScreen=screen;
+  const navScreen=screen==='asset'?'inventory':screen; /* detalhe do asset mantém Inventário ativo */
   document.querySelectorAll('.sb-item').forEach(a=>{
-    a.classList.toggle('active',a.dataset.screen===screen);
+    a.classList.toggle('active',a.dataset.screen===navScreen);
   });
   syncSidebarState();
   document.getElementById('breadcrumb').textContent=SCREEN_LABELS[screen]||screen;
   const bcw=document.getElementById('breadcrumb-wrap'); if(bcw) bcw.style.display=(screen==='home')?'none':'flex';
   const main=document.getElementById('app-main');
   main.innerHTML='';
-  const screens={home:renderHome,findings:renderFindings,pipelines:renderPipelines,reports:renderReports,remediations:renderRemediations,attack:renderAttack,inventory:renderInventory,integrations:renderIntegrations,team:renderTeam,repos:renderReposManage};
+  const screens={home:renderHome,findings:renderFindings,pipelines:renderPipelines,reports:renderReports,remediations:renderRemediations,attack:renderAttack,inventory:renderInventory,asset:renderAssetDetail,integrations:renderIntegrations,team:renderTeam,repos:renderReposManage};
   if(screens[screen]) main.innerHTML=screens[screen]();
   bindScreenEvents(screen);
   initCountUps();
@@ -1012,7 +1024,7 @@ function navigate(screen){
 }
 /* During onboarding (no GitHub connection) data tabs have nothing to show, disable them */
 function syncSidebarState(){
-  const dataScreens=['findings','inventory','pipelines','reports','attack','remediations'];
+  const dataScreens=['findings','inventory','asset','pipelines','reports','attack','remediations'];
   const locked=!appConnected;
   document.querySelectorAll('.sb-item').forEach(a=>{
     if(dataScreens.includes(a.dataset.screen)) a.classList.toggle('sb-disabled',locked);
@@ -1212,7 +1224,7 @@ function renderHome(){
         <div class="ov-num is-high" data-count-to="${highCount}">${highCount}</div>
         <div class="ov-sub">alta prioridade</div>
       </div>
-      <div class="ov-tile" style="--ov-accent:#d81f2a;" onclick="navigate('remediations')">
+      <div class="ov-tile" style="--ov-accent:#d81f2a;" onclick="remScanContext=null;navigate('remediations')">
         <div class="ov-mark" style="background:#d81f2a;"></div>
         <div class="ov-lbl">Remediações</div>
         <div class="ov-num" data-count-to="${openRem}">${openRem}</div>
@@ -1682,6 +1694,7 @@ function navFinding(dir){
 function openRemFromFinding(remId){
   closePanel();
   window.highlightRem=remId;
+  remScanContext=null;
   navigate('remediations');
   setTimeout(()=>{
     const el=document.getElementById('rem-'+remId);
@@ -1744,6 +1757,7 @@ function setPipelineFilter(key,val){
   bindScreenEvents('pipelines');
 }
 function clearPipelineFilters(){pipelinesFilter={repo:null,status:null,tier:null};document.getElementById('app-main').innerHTML=renderPipelines();bindScreenEvents('pipelines');}
+function setPipelineRepo(v){pipelinesFilter.repo=v||null;document.getElementById('app-main').innerHTML=renderPipelines();bindScreenEvents('pipelines');}
 
 function renderPipelines(){
   const pf=pipelinesFilter;
@@ -1752,28 +1766,49 @@ function renderPipelines(){
     (!pf.status||pipeStatus(j)===pf.status)&&
     (!pf.tier||pipeTierReached(j)===pf.tier)
   );
-  const rows=list.map(j=>{
+  /* card de um scan individual (clique abre as remediações DESTE scan) */
+  const scanCardHtml=(j)=>{
     const hasRunning=j.tier1_status==='running'||j.tier2_status==='running'||j.tier3_status==='running';
     const isBlocked=j.blocked_at_tier!=null&&j.final_risk_level!=='blocked'||j.final_risk_level==='blocked';
-    return `<div class="stat-card card-link mb-3" style="cursor:pointer;" onclick="openInsights('${j.id}')">
+    const remCount=REMEDIATIONS.filter(r=>r.scan_job_id===j.id).length;
+    return `<div class="stat-card card-link mb-3" style="cursor:pointer;" onclick="openScanRemediations('${j.id}')">
     <div class="flex items-center justify-between mb-3">
       <div>
         <div class="flex items-center gap-2">
-          <span class="font-semibold text-[15px]">${j.repo_full_name}</span>
-          <span class="mono text-[10px] text-fg-dim">PR #${j.pr_number}</span>
+          <span class="mono text-[12.5px] font-semibold text-fg">PR #${j.pr_number}</span>
+          <span class="mono text-[11px] text-fg-dim">commit ${shortSha(j.commit_sha)}</span>
           ${hasRunning?`<span class="sev st-running" style="gap:4px;"><svg class="spin" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 11-9-9"/></svg>em execução</span>`:''}
           ${isBlocked&&j.final_risk_level==='blocked'?`<span class="sev st-blocked">gate1 bloqueado</span>`:''}
         </div>
-        <div class="text-[12px] text-fg-dim mt-0.5"><span class="mono">commit ${shortSha(j.commit_sha)}</span> · ${timeTag(j.created_at)}</div>
+        <div class="text-[12px] text-fg-dim mt-0.5">${timeTag(j.created_at)}${remCount?` · <span style="color:var(--text-secondary);">${remCount} remediaç${remCount===1?'ão':'ões'}</span>`:''}</div>
       </div>
       ${riskCompact(j.final_risk_score,j.final_risk_level)}
     </div>
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-default);"><div style="max-width:700px;">${tierStepper(j)}</div></div>
   </div>`;
+  };
+
+  /* TAREFA · histórico por repositório: agrupa os scans por repo (mais recente primeiro) */
+  const groups={};
+  list.forEach(j=>{(groups[j.repo_full_name]=groups[j.repo_full_name]||[]).push(j);});
+  const rows=Object.entries(groups).map(([repo,jobs])=>{
+    jobs.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    return `<div class="mb-8">
+      <div class="flex items-center gap-2 mb-3" style="padding-bottom:8px;border-bottom:1px solid var(--border-default);">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="text-fg-dim"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span class="font-semibold text-[15px]">${repo}</span>
+        <span class="text-[12px] text-fg-dim">· ${jobs.length} scan${jobs.length===1?'':'s'} · último ${timeAgo(jobs[0].created_at)}</span>
+      </div>
+      ${jobs.map(scanCardHtml).join('')}
+    </div>`;
   }).join('');
 
   const repos=[...new Set(SCAN_JOBS.map(j=>j.repo_full_name))];
-  const repoChips=repos.map(rp=>`<button class="chip${pf.repo===rp?' on':''}" style="text-transform:none;" onclick="setPipelineFilter('repo','${rp}')">${rp.split('/')[1]||rp}${pf.repo===rp?'<span class="chip-x">\u00d7</span>':''}</button>`).join('');
+  /* TAREFA \u00b7 filtro por reposit\u00f3rio (select) */
+  const repoChips=`<select class="inp" style="height:32px;font-size:12.5px;max-width:280px;cursor:pointer;" onchange="setPipelineRepo(this.value)" aria-label="Filtrar por reposit\u00f3rio">
+    <option value=""${!pf.repo?' selected':''}>Todos os reposit\u00f3rios</option>
+    ${repos.map(rp=>`<option value="${rp}"${pf.repo===rp?' selected':''}>${rp}</option>`).join('')}
+  </select>`;
   const statusOpts=[['done','Concluído'],['running','Em execução'],['failed','Falhou'],['blocked','Bloqueado']];
   const statusChips=statusOpts.map(([v,l])=>`<button class="chip${pf.status===v?' on':''}" onclick="setPipelineFilter('status','${v}')">${l}${pf.status===v?'<span class="chip-x">\u00d7</span>':''}</button>`).join('');
   const tierChips=[1,2,3].map(t=>`<button class="chip${pf.tier===t?' on':''}" onclick="setPipelineFilter('tier',${t})">Tier ${t}${pf.tier===t?'<span class="chip-x">\u00d7</span>':''}</button>`).join('');
@@ -1784,7 +1819,7 @@ function renderPipelines(){
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-[24px] font-bold tracking-tight">Scans <span class="text-[14px] text-fg-mute font-normal">${SCAN_JOBS.length} no total</span></h1>
-      <p class="text-fg-dim text-[13px] mt-1">Execuções dos repositórios monitorados${runningCount>0?` · ${runningCount} em execução`:''}</p>
+      <p class="text-fg-dim text-[13px] mt-1">Histórico de varreduras por repositório${runningCount>0?` · ${runningCount} em execução`:''}</p>
     </div>
     <div class="flex items-center gap-2">
       <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary);"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse-safe 2s infinite;"></span>Atualização automática</span>
@@ -1829,8 +1864,14 @@ function startPipelinePolling(){
 }
 
 /* ═══════════════════════ SCREEN: REMEDIATIONS ═══════════════════════ */
+/* TAREFA · contexto de scan: clique num scan abre SÓ as remediações dele */
+let remScanContext=null;
+function openScanRemediations(id){remScanContext=id;navigate('remediations');}
+function clearRemScanContext(){remScanContext=null;document.getElementById('app-main').innerHTML=renderRemediations();}
 function renderRemediations(){
-  const cards=REMEDIATIONS.map(r=>{
+  const ctxJob=remScanContext?SCAN_JOBS.find(j=>j.id===remScanContext):null;
+  const remList=ctxJob?REMEDIATIONS.filter(r=>r.scan_job_id===ctxJob.id):REMEDIATIONS;
+  const cards=remList.map(r=>{
     const fn=FINDINGS.find(f=>f.id===r.finding_id)||{};
     const job=SCAN_JOBS.find(j=>j.id===r.scan_job_id);
     const stCls={suggested:'st-queued',approved:'st-done',rejected:'st-failed',merged:'st-done'}[r.status]||'st-queued';
@@ -1861,12 +1902,26 @@ function renderRemediations(){
     </div>`;
   }).join('');
 
+  /* faixa de contexto quando veio do clique num scan */
+  const ctxBar=ctxJob?`<div class="stat-card mb-5" style="display:flex;align-items:center;gap:12px;padding:12px 16px;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-fg-dim" style="flex-shrink:0;"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><circle cx="12" cy="12" r="3.2"/></svg>
+    <span class="text-[13px]" style="color:var(--text-secondary);">Exibindo remediações do scan <b style="color:var(--text-primary);">${ctxJob.repo_full_name}</b> · <span class="mono">PR #${ctxJob.pr_number}</span> · <span class="mono">${shortSha(ctxJob.commit_sha)}</span> · ${timeAgo(ctxJob.created_at)}</span>
+    <button class="chip chip-clear" style="margin-left:auto;" onclick="clearRemScanContext()">Ver todas ×</button>
+  </div>`:'';
+
+  const emptyCtx=(ctxJob&&!remList.length)?`<div class="stat-card">${emptyState({
+    title:'Nenhuma remediação para este scan',
+    body:[ctxJob.tier1_status,ctxJob.tier2_status,ctxJob.tier3_status].includes('running')?'Este scan ainda está em execução. As remediações aparecem aqui assim que a análise terminar.':'Este scan não gerou patches de remediação. Isso acontece quando nenhum finding acionável foi encontrado ou o scan foi bloqueado antes da análise.',
+    action:`<button class="btn btn-md btn-primary" onclick="clearRemScanContext()">Ver todas as remediações</button>`
+  })}</div>`:'';
+
   return`<div class="page-wrap">
   <div class="mb-6">
     <h1 class="text-[24px] font-bold tracking-tight">Remediações</h1>
     <p class="text-fg-dim text-[13px] mt-1">Patches sugeridos, aguardando aprovação humana antes de aplicar</p>
   </div>
-  ${cards}
+  ${ctxBar}
+  ${cards||emptyCtx}
 </div>`;
 }
 
@@ -1928,7 +1983,7 @@ function selectExec(id){currentExecId=id;const dd=document.getElementById('exec-
 function renderAttack(){
   if(!SCAN_JOBS.length){
     return `<div class="page-wrap">
-    <div class="mb-6"><h1 class="text-[24px] font-bold tracking-tight">AI Insights</h1></div>
+    <div class="mb-6"><h1 class="text-[24px] font-bold tracking-tight">AI Emulation</h1></div>
     <div class="stat-card">${emptyState({title:'Nenhuma execução para analisar',body:'Assim que um scan rodar o Tier 3, a análise de attack path do Claude aparece aqui, com kill chain, risk score e ações priorizadas.',action:`<button class="btn btn-md btn-primary" onclick="navigate('integrations')">Configurar scanners</button>`})}</div>
   </div>`;
   }
@@ -1938,7 +1993,7 @@ function renderAttack(){
   const ins = INSIGHTS[job.id];
   const head=`<div class="mb-6">
     <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-fg-mute mb-2">Análise Profunda · Tier 3</div>
-    <h1 class="text-[24px] font-bold tracking-tight">AI Insights</h1>
+    <h1 class="text-[24px] font-bold tracking-tight">AI Emulation</h1>
     <div class="flex items-center gap-2 mt-2" style="position:relative;">
       <button class="exec-select" onclick="toggleExecDropdown(event)">
         <span class="text-fg-dim text-[13px]">${job.repo_full_name} · PR #${job.pr_number} · <span class="mono text-[12px]">${shortSha(job.commit_sha)}</span> · ${timeAgo(job.created_at)}</span>
@@ -2188,7 +2243,7 @@ function renderInventory(){
     const typeIco=a.type==='repository'?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="8" r="2.3"/><path d="M6 8.3v7.4M18 10.3c0 4-6 3-12 5"/></svg>':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a1a1a1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18a4 4 0 01-.5-8A5.5 5.5 0 0116.5 8 4.5 4.5 0 0117 18H6z"/></svg>';
     const scannerBadges=(a.scanners||[]).map(s=>`<span class="mono" style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg-surface-raised);color:var(--text-dim);white-space:nowrap;">${s}</span>`).join('');
     return `
-  <tr class="rowlink" onclick="goFindings()">
+  <tr class="rowlink" onclick="openAsset('${a.name}')">
     <td class="cl">
       <div style="display:flex;align-items:center;gap:12px;min-width:0;">
         <div style="width:20px;height:20px;border-radius:5px;background:var(--bg-surface-raised);display:grid;place-items:center;flex-shrink:0;">${typeIco}</div>
@@ -2232,6 +2287,97 @@ function renderInventory(){
       <tbody>${rows}</tbody>
     </table>
     <div style="padding:12px 16px;border-top:1px solid var(--border-default);font-size:12px;color:var(--text-secondary);">${summary}</div>
+  </div>
+</div>`;
+}
+
+/* ═══ SCREEN: ASSET DETAIL (clique num item do Inventário) ═══
+   Histórico do asset: cópia do Pull Request enviado + scans + findings detalhados pós-scan. */
+let currentAssetName=null;
+function openAsset(name){currentAssetName=name;navigate('asset');}
+function renderAssetDetail(){
+  const name=currentAssetName;
+  if(!name) return renderInventory();
+  const asset=ASSETS.find(a=>a.name===name)||{name,type:'repository',repo_url:'https://github.com/'+GH_ORG+'/'+name,criticality:null,risk_score:null};
+  const jobs=SCAN_JOBS.filter(j=>j.repo_full_name===GH_ORG+'/'+name).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const assetFindings=FINDINGS.filter(f=>f.asset===name);
+  const openF=assetFindings.filter(f=>f.status!=='resolved');
+
+  /* PR enviado: usa o scan mais recente com remediações */
+  const prJob=jobs.find(j=>REMEDIATIONS.some(r=>r.scan_job_id===j.id));
+  const prRems=prJob?REMEDIATIONS.filter(r=>r.scan_job_id===prJob.id):[];
+  const prHtml=prJob?`<div class="stat-card mb-6" style="padding:0;overflow:hidden;">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);display:flex;align-items:center;gap:10px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="text-fg-dim"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7M18 15.5V11a4 4 0 00-4-4h-3"/><path d="M13.5 4.5L11 7l2.5 2.5"/></svg>
+      <h2 class="text-[15px] font-bold">Pull Request enviado</h2>
+      <span class="sev st-queued" style="margin-left:auto;">Merge bloqueado · aguarda aprovação</span>
+    </div>
+    <div style="padding:18px 20px;">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="font-semibold text-[14.5px]">fix(security): remediações do scan aperIA</span>
+        <span class="mono text-[12px] text-fg-dim">PR #${prJob.pr_number}</span>
+      </div>
+      <div class="mono text-[11px] text-fg-dim mt-1">aperia/fix-${shortSha(prJob.commit_sha)} → main · commit ${shortSha(prJob.commit_sha)} · ${timeAgo(prJob.created_at)}</div>
+      <div style="margin-top:14px;border:1px solid var(--border-default);border-radius:8px;overflow:hidden;">
+        <div style="padding:10px 14px;background:var(--bg-surface-raised);border-bottom:1px solid var(--border-default);display:flex;align-items:center;gap:8px;">
+          <span style="width:22px;height:22px;border-radius:50%;background:#d81f2a;color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;">aI</span>
+          <span class="text-[12.5px] font-semibold">aperIA-bot</span><span class="text-[11px] text-fg-dim">comentou ${timeAgo(prJob.created_at)}</span>
+        </div>
+        <div style="padding:14px;font-size:13px;line-height:1.6;color:var(--text-secondary);">
+          Scan concluído${prJob.final_risk_score?` com risk score <b style="color:${riskColor(prJob.final_risk_score)}">${prJob.final_risk_score}</b>`:''}. ${prRems.length} patch${prRems.length===1?'':'es'} de remediação sugerido${prRems.length===1?'':'s'} abaixo — o merge exige aprovação humana.
+        </div>
+      </div>
+      ${prRems.map(r=>{const fn=FINDINGS.find(f=>f.id===r.finding_id)||{};return `<div style="margin-top:14px;">
+        <div class="flex items-center gap-2 mb-2">${fn.severity?sevBadge(fn.severity):''}<span class="text-[13px] font-semibold">${fn.title||'Finding '+r.finding_id}</span></div>
+        ${diffBlock(r.patch_diff,fn.file_path)}
+      </div>`;}).join('')}
+    </div>
+  </div>`:`<div class="stat-card mb-6">${emptyState({title:'Nenhum Pull Request enviado ainda',body:asset.type==='repository'?'Assim que um scan gerar remediações, a cópia do PR enviado aparece aqui.':'Assets cloud não recebem Pull Requests — as remediações são orientações de configuração.',action:''})}</div>`;
+
+  /* histórico de scans do asset */
+  const histHtml=jobs.length?jobs.map(j=>{
+    const remCount=REMEDIATIONS.filter(r=>r.scan_job_id===j.id).length;
+    return `<div class="tbl-row sr-row" style="grid-template-columns:1fr 130px 110px 24px;gap:16px;align-items:center;cursor:pointer;" onclick="openScanRemediations('${j.id}')">
+      <div style="min-width:0;">
+        <div class="text-sm font-medium text-fg lnk">PR #${j.pr_number} <span class="mono text-fg-dim" style="font-size:11px;">${shortSha(j.commit_sha)}</span>${remCount?` <span class="text-[11px]" style="color:var(--text-secondary);">· ${remCount} remediaç${remCount===1?'ão':'ões'}</span>`:''}</div>
+        <div class="mt-0.5" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);">${timeAgo(j.created_at)}</div>
+      </div>
+      <div style="display:flex;justify-content:center;">${tierStepperCompact(j)}</div>
+      <div class="flex items-center gap-1.5 justify-end">${j.final_risk_score?`${miniGauge(j.final_risk_score)}<span class="mono" style="font-size:14px;font-weight:700;color:${riskColor(j.final_risk_score)}">${j.final_risk_score}</span>`:`<span class="mono" style="font-size:13px;color:var(--border-mid);">–</span>`}</div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-fg-dim" style="justify-self:end;"><path d="M9 6l6 6-6 6"/></svg>
+    </div>`;
+  }).join(''):`<div style="padding:24px;text-align:center;color:var(--text-dim);font-size:13px;">${asset.type==='repository'?'Nenhum scan executado neste repositório ainda.':'Asset cloud: varreduras contínuas via Prowler, sem histórico de PR.'}</div>`;
+
+  /* findings detalhados do asset (pós-scan) */
+  const fRows=assetFindings.slice(0,30).map(f=>`<tr class="rowlink" onclick="openFinding('${f.id}')">
+    <td class="cl"><div class="flex items-center gap-2" style="min-width:0;">${sevBadge(f.severity)}<span class="text-[13px] font-medium text-fg lnk" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.title}</span></div></td>
+    <td><span class="mono text-[11px] text-fg-dim">${f.file_path||'—'}${f.line_number?':'+f.line_number:''}</span></td>
+    <td><span class="mono text-[11px] text-fg-dim">${f.cve_id||f.cwe_id||'—'}</span></td>
+    <td><span class="mono text-[11px] text-fg-dim">${(f.source||'').toUpperCase()}</span></td>
+    <td>${f.status==='resolved'?'<span class="sev st-done">resolvido</span>':'<span class="sev st-queued">aberto</span>'}</td>
+  </tr>`).join('');
+
+  return `<div class="page-wrap">
+  <button class="btn btn-sm btn-ghost mb-4" onclick="navigate('inventory')" style="gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Inventário</button>
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-[24px] font-bold tracking-tight">${GH_ORG}/${name}</h1>
+      <p class="text-fg-dim text-[13px] mt-1">${jobs.length} scan${jobs.length===1?'':'s'} · ${openF.length} finding${openF.length===1?'':'s'} aberto${openF.length===1?'':'s'}${asset.criticality?` · criticidade ${asset.criticality}`:''}</p>
+    </div>
+    ${asset.risk_score?`<div class="flex items-center gap-2">${miniGauge(asset.risk_score)}<span class="mono" style="font-size:20px;font-weight:800;color:${riskColor(asset.risk_score)}">${asset.risk_score}</span></div>`:''}
+  </div>
+  ${prHtml}
+  <div class="stat-card mb-6" style="padding:0;overflow:hidden;">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);"><h2 class="text-[15px] font-bold">Histórico de scans</h2></div>
+    ${histHtml}
+  </div>
+  <div class="stat-card" style="padding:0;overflow:hidden;">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border-default);"><h2 class="text-[15px] font-bold">Findings encontrados pós-scan <span class="text-[12px] text-fg-dim font-normal">· ${assetFindings.length} no total${assetFindings.length>30?' · exibindo 30':''}</span></h2></div>
+    <table class="dtbl">
+      <colgroup><col><col style="width:220px"><col style="width:150px"><col style="width:110px"><col style="width:110px"></colgroup>
+      <thead><tr><th class="cl">Finding</th><th>Arquivo</th><th>CVE/CWE</th><th>Scanner</th><th>Status</th></tr></thead>
+      <tbody>${fRows||'<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text-dim);font-size:13px;">Nenhum finding neste asset.</td></tr>'}</tbody>
+    </table>
   </div>
 </div>`;
 }
