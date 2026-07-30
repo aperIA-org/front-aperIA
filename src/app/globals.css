@@ -1,0 +1,574 @@
+@import 'tailwindcss';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tailwind v4 — configuração em CSS.
+
+   O projeto tem DOIS sistemas visuais distintos, herdados do site estático:
+
+   1. "paper"  — landing + cadastro/login. Sempre claro (bege #f2f0e9),
+                 vermelho da marca como acento.
+   2. "dash"   — dashboard. Escuro por padrão, claro via [data-theme="light"].
+                 Os tokens são CSS custom properties trocadas no atributo,
+                 então quase nenhum componente precisa de variante — basta
+                 usar bg-surface / text-fg / border-line e o tema resolve.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Dash é escuro por padrão e CLARO no override — o inverso da convenção do
+   Tailwind. Por isso a variante é `light:`, não `dark:`. */
+@custom-variant light (&:where([data-theme='light'] *));
+
+@theme {
+  /* ── Famílias (as variáveis vêm de next/font em src/lib/fonts.ts) ── */
+  --font-sans: var(--font-open-sans), 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-display: var(--font-space-grotesk), sans-serif;
+
+  /* Landing: --fb / --fd do site original */
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-heading: var(--font-manrope), sans-serif;
+  --font-hero: var(--font-electro-garden), var(--font-manrope), sans-serif;
+  --font-logo: var(--font-lawler), var(--font-modern-romance), var(--font-manrope), sans-serif;
+  --font-intro: var(--font-electro-garden), var(--font-space-grotesk), sans-serif;
+
+  /* ── Paleta "paper" (landing + cadastro) ── */
+  --color-paper: #f2f0e9;
+  --color-band: #eceae5;
+  --color-panel: #ffffff;
+  --color-surface-2: #efeee9;
+  --color-warm: #f3dfd8;
+  --color-card: #fffdf9;
+  --color-card-line: #e5ded2;
+
+  --color-brand: #d81f2a;
+  --color-brand-hov: #c11a24;
+  --color-brand-deep: #b81620;
+  --color-accent: #e5333b;
+  --color-accent-bright: #ff4d54;
+  --color-accent-soft: #ff8a8f;
+  --color-accent-icon: #ff6b72;
+
+  --color-ink: #181a1d;
+  --color-ink-strong: #2c2e33;
+  --color-ink-body: #3a3d43;
+  --color-ink-mute: #565961;
+  --color-ink-soft: #767c88;
+  --color-ink-dim: #8a8e96;
+  --color-ink-meta: #4a4d53;
+  /* Resultado do "legibility repair" do patch 3 — ver CLAUDE.md */
+  --color-ink-graf: #3a2e2a;
+  --color-paper-line: #e3e2dc;
+  --color-field-line: #d8d6cd;
+
+  /* ── Severidade (compartilhada entre landing e dash) ── */
+  --color-sev-critical: #ff2d3d;
+  --color-sev-high: #ff6a3d;
+  --color-sev-medium: #f5a524;
+  --color-sev-low: #f5d524;
+  --color-sev-info: #4aa3ff;
+  --color-sev-safe: #2ecc8b;
+
+  /* ── Dash: aliases semânticos que apontam para os tokens trocáveis ──
+     (os valores por tema estão no :root / [data-theme='light'] abaixo) */
+  --color-surface: var(--bg-surface);
+  --color-surface-raised: var(--bg-surface-raised);
+  --color-surface-deep: var(--bg-page);
+  --color-surface-hover: var(--bg-hover);
+  --color-fg: var(--text-primary);
+  --color-fg-hi: var(--text-hi);
+  --color-fg-mute: var(--text-secondary);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-dim: var(--text-dim);
+  --color-fg-faint: var(--text-faint);
+  --color-line: var(--border-default);
+  --color-line-subtle: var(--border-subtle);
+  --color-line-mid: var(--border-mid);
+  --color-line-strong: var(--border-strong);
+  --color-divider: var(--divider);
+
+  /* ── Raios e sombras do dash ── */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+
+  --shadow-el-1: 0 1px 0 var(--veil-03) inset, 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-el-2: 0 1px 0 var(--veil-04) inset, 0 8px 24px -10px rgba(0, 0, 0, 0.7);
+  --shadow-el-3: 0 1px 0 var(--veil-05) inset, 0 24px 48px -18px rgba(0, 0, 0, 0.85);
+  --shadow-glow-red: 0 0 0 1px rgba(216, 31, 42, 0.4), 0 0 32px -4px rgba(216, 31, 42, 0.45);
+  --shadow-ring-focus: 0 0 0 2px #d81f2a, 0 0 0 4px rgba(216, 31, 42, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dash — design tokens
+
+   Escuro é a baseline (`:root`); claro é override em `[data-theme="light"]`.
+   Os aliases semânticos do @theme acima (bg-surface, text-fg, border-line…)
+   apontam para estas variáveis, então trocar o atributo troca o tema inteiro
+   sem que nenhum componente precise de variante.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg-page: #0c0d0f;
+  --bg-surface: #17181a;
+  --bg-surface-raised: #1f2023;
+  --bg-hover: #26272a;
+
+  --border-subtle: #1f2023;
+  --border-default: #202124;
+  --divider: #2e2f31;
+  --border-mid: #3a3b3d;
+  --border-strong: #4a4b4d;
+
+  --text-primary: #f2f2f2;
+  --text-hi: #d0d0d0;
+  --text-secondary: #a1a1a1;
+  --text-muted: #8a8a8a;
+  --text-dim: #707070;
+  --text-faint: #5c5c5c;
+
+  --gauge-track: #26272a;
+  --chart-track: #1a1a1a;
+  --chart-grid: #1e1e1e;
+
+  --card-inner: #0d0d0d;
+  --tb-card-bg: #222;
+  --chip-bg: #141414;
+  --chip-hover: #191111;
+  --card-dots: rgba(255, 255, 255, 0.035);
+  --th-bg: rgba(225, 29, 42, 0.16);
+
+  --veil-t88: rgba(255, 255, 255, 0.88);
+  --veil-t82: rgba(255, 255, 255, 0.82);
+  --veil-t78: rgba(255, 255, 255, 0.78);
+  --veil-t72: rgba(255, 255, 255, 0.72);
+  --veil-t50: rgba(255, 255, 255, 0.5);
+  --veil-t42: rgba(255, 255, 255, 0.42);
+  --veil-12: rgba(255, 255, 255, 0.12);
+  --veil-10: rgba(255, 255, 255, 0.1);
+  --veil-09: rgba(255, 255, 255, 0.09);
+  --veil-08: rgba(255, 255, 255, 0.08);
+  --veil-06: rgba(255, 255, 255, 0.06);
+  --veil-05: rgba(255, 255, 255, 0.05);
+  --veil-04: rgba(255, 255, 255, 0.04);
+  --veil-03: rgba(255, 255, 255, 0.03);
+
+  --accent-tint: rgba(225, 29, 42, 0.16);
+  --sel: rgba(225, 29, 42, 0.28);
+  --card-shadow: none;
+
+  /* Severidade trocável, consumida pelas classes .sev-* (as utilities
+     `sev-*` do Tailwind seguem fixas, como no config original). */
+  --sev-critical: #ff2d3d;
+  --sev-high: #ff6a3d;
+  --sev-medium: #f5a524;
+  --sev-low: #f5d524;
+  --sev-info: #4aa3ff;
+  --sev-safe: #2ecc8b;
+}
+
+[data-theme='light'] {
+  --bg-page: #f2f0e9;
+  --bg-surface: #ffffff;
+  --bg-surface-raised: #ffffff;
+  --bg-hover: #ede9df;
+
+  --border-subtle: #edf0f6;
+  --border-default: #e6e9f0;
+  --divider: #edf0f6;
+  --border-mid: #e6e9f0;
+  --border-strong: #d7dbe6;
+
+  --text-primary: #0e1525;
+  --text-hi: #2a3346;
+  --text-secondary: #465063;
+  --text-muted: #6b7488;
+  --text-dim: #6b7488;
+  --text-faint: #98a1b3;
+
+  --gauge-track: #e8ecf2;
+  --chart-track: #edf0f6;
+  --chart-grid: #edf0f6;
+
+  --card-inner: #ffffff;
+  --tb-card-bg: #ffffff;
+  --chip-bg: #f4f6fa;
+  --chip-hover: #ebeef4;
+  --card-dots: transparent;
+  --th-bg: #f3dfd8;
+
+  --veil-t88: rgba(14, 21, 37, 0.9);
+  --veil-t82: rgba(14, 21, 37, 0.82);
+  --veil-t78: rgba(14, 21, 37, 0.68);
+  --veil-t72: rgba(14, 21, 37, 0.62);
+  --veil-t50: rgba(14, 21, 37, 0.5);
+  --veil-t42: rgba(14, 21, 37, 0.42);
+  --veil-12: rgba(14, 21, 37, 0.08);
+  --veil-10: rgba(14, 21, 37, 0.06);
+  --veil-09: rgba(14, 21, 37, 0.1);
+  --veil-08: rgba(14, 21, 37, 0.08);
+  --veil-06: rgba(14, 21, 37, 0.04);
+  --veil-05: rgba(14, 21, 37, 0.045);
+  --veil-04: rgba(14, 21, 37, 0.035);
+  --veil-03: rgba(14, 21, 37, 0.03);
+
+  --accent-tint: rgba(196, 16, 26, 0.09);
+  --sel: rgba(196, 16, 26, 0.2);
+  --card-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  --sev-critical: #c4101a;
+  --sev-high: #d1560a;
+  --sev-medium: #b8860b;
+  --sev-low: #8f8f0a;
+  --sev-info: #2f6fb5;
+  --sev-safe: #2e9c6d;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Base
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* `clip`, NÃO `hidden` — `hidden` quebraria o position:sticky da coluna
+       de texto do Attack Path. */
+    overflow-x: clip;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(216, 31, 42, 0.28);
+    color: #fff;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #9aa0ab;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Landing — animações e blocos que não cabem em utilitários
+
+   Só as keyframes realmente usadas foram portadas. O site original declarava
+   ~40, a maioria de decoração dark que a camada de override escondia.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes catBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes breatheEmit {
+  0%,
+  100% {
+    opacity: 0.14;
+  }
+  50% {
+    opacity: 0.58;
+  }
+}
+
+@keyframes blink {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0.18;
+  }
+}
+
+@keyframes markerRing {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0.9;
+  }
+  70%,
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes ledSpin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes marqueeX {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes introTwo {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+    filter: blur(3px);
+  }
+  30% {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes apmOv {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes apmPop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes apmHop {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes secIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes secOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes aprRise {
+  from {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes aprFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Marquee do ecossistema ──
+   36s (a camada de override subia de 48s p/ 36s) e SEM pausa no hover, que o
+   original desativou de propósito. */
+.mq-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.mq-track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  will-change: transform;
+  animation: marqueeX 36s linear infinite;
+}
+
+/* ── Reveal on scroll ──
+   Animações scroll-driven puras (`animation-timeline: view()`), sem JS.
+   Ausentes em Firefox/Safari: o conteúdo simplesmente aparece — mesmo
+   comportamento do site atual. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .apr-rev {
+      animation: aprRise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 38%;
+    }
+
+    .apr-rev-fade {
+      animation: aprFade linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 38%;
+    }
+
+    /* Cada section entra subindo e sai desaparecendo. */
+    [data-landing-section] {
+      animation:
+        secIn linear both,
+        secOut linear both;
+      animation-timeline: view(), view();
+      animation-range:
+        entry 5% entry 45%,
+        exit 55% exit 95%;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Attack Path — animação dirigida por scroll
+
+   O original recalculava 14 nós × 5 valores derivados em setState a cada frame
+   de rAF (≈70 objetos de style por frame). Aqui o hook escreve UMA custom
+   property (`--ap`, 0→1) na section e todo o resto é `calc()` em CSS, então o
+   scroll não passa pelo React.
+
+   `--L` é a rampa de acendimento do nó: sobe de 0 a 1 nos 4 pontos percentuais
+   que antecedem a chegada do marcador.
+
+   `--act` / `--pop` / `--check` são degraus no original (comparações booleanas).
+   CSS não tem ternário, então são emulados multiplicando por 1000 e fazendo
+   clamp: o resultado é 0 ou 1 com uma transição de ~0.001 — visualmente idêntico
+   a um degrau, e sem depender de `round()`, que não tem suporte tão amplo.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-attack-path] {
+  --ap: 0;
+}
+
+.ap-node {
+  --L: clamp(0, calc((3 + var(--ap) * 87 - var(--top)) / 4 + 1), 1);
+  --act: calc(
+    clamp(0, calc((var(--L) - 0.05) * 1000), 1) *
+      clamp(0, calc((0.95 - var(--L)) * 1000), 1)
+  );
+  --pop: clamp(0, calc((var(--L) - 0.5) * 1000), 1);
+  --check: clamp(0, calc((var(--L) - 0.95) * 1000), 1);
+}
+
+/* Opacidade do nó/card: nunca abaixo de 0.45. */
+.ap-lit {
+  opacity: calc(0.45 + 0.55 * var(--L));
+}
+
+.ap-pop {
+  transform: scale(calc(0.96 + 0.04 * var(--pop)));
+  transition: transform 0.5s cubic-bezier(0.34, 1.6, 0.5, 1);
+}
+
+.ap-pop-goal {
+  transform: scale(calc(0.96 + 0.04 * var(--pop)));
+  transition: transform 0.6s cubic-bezier(0.34, 1.8, 0.5, 1);
+}
+
+.ap-glow {
+  opacity: var(--L);
+  transition: opacity 0.4s;
+}
+
+.ap-act {
+  opacity: var(--act);
+}
+
+.ap-check {
+  opacity: var(--check);
+  transition: opacity 0.35s;
+}
+
+.ap-rail-fill {
+  height: calc(var(--ap) * 87%);
+  transition: height 0.15s linear;
+}
+
+.ap-marker {
+  top: calc(3% + var(--ap) * 87%);
+  /* O transform fica aqui, junto do `top`, para não competir com utilitários
+     de translate do Tailwind no mesmo elemento. */
+  transform: translate(-50%, -50%);
+  transition: top 0.15s linear;
+}
+
+.ap-progress-fill {
+  width: calc(var(--ap) * 94%);
+  transition: width 0.15s linear;
+}
+
+/* ── Foco visível (portado do original) ── */
+[data-landing] a:focus-visible,
+[data-landing] button:focus-visible,
+[data-landing] input:focus-visible,
+[data-landing] summary:focus-visible {
+  outline: 2px solid #ff8e8a;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* O header fixo tem 88px — todo alvo de âncora precisa compensar. */
+[data-landing] :target,
+[data-landing] [id] {
+  scroll-margin-top: 88px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-landing] *,
+  [data-apm-ov],
+  [data-apm-panel] {
+    animation: none !important;
+  }
+
+  [data-apm-ov],
+  [data-apm-panel] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
