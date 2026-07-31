@@ -8,6 +8,7 @@ import { riskColor, shortSha, timeAgo } from '@/lib/dash/format';
 import { FINDINGS, INSIGHTS, SCAN_JOBS } from '@/lib/dash/mock-data';
 import type { ScanJob } from '@/lib/dash/types';
 import { AttackChain } from './AttackChain';
+import { DemoDataBadge } from './DemoDataBadge';
 import { EmptyState } from './EmptyState';
 import { PrioritizedActions } from './PrioritizedActions';
 import { MiniGauge, RiskGauge } from './RiskGauge';
@@ -237,7 +238,10 @@ function ScreenHead({ job }: { job: ScanJob }) {
       <div className="mb-2 text-[11px] font-semibold uppercase tracking-[.04em] text-fg-mute">
         Análise Profunda · Tier 3
       </div>
-      <h1 className="text-[24px] font-bold tracking-tight">AI Emulation</h1>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <h1 className="text-[24px] font-bold tracking-tight">AI Emulation</h1>
+        <DemoDataBadge className="flex-shrink-0" />
+      </div>
       <ExecSelect job={job} />
     </div>
   );
@@ -314,8 +318,9 @@ export function AttackEmulationScreen() {
   if (SCAN_JOBS.length === 0) {
     return (
       <div className="page-wrap">
-        <div className="mb-6">
+        <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <h1 className="text-[24px] font-bold tracking-tight">AI Emulation</h1>
+          <DemoDataBadge className="flex-shrink-0" />
         </div>
         <div className="stat-card">
           <EmptyState

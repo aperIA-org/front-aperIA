@@ -20,6 +20,16 @@ export const API_ROUTES = {
   login: '/auth/login',
   refresh: '/auth/refresh',
   logout: '/auth/logout',
+
+  // Conexão GitHub. Ficam aqui, junto das de auth, para existir um único
+  // vocabulário de caminhos da API — nenhuma tela monta path na mão.
+  githubConnect: '/github/connect',
+  githubRepos: '/github/repos',
+  githubAccounts: '/github/accounts',
+  githubAccount: (accountId: string) => `/github/accounts/${accountId}`,
+  repositories: '/repositories',
+  repository: (repositoryId: string) => `/repositories/${repositoryId}`,
+  repositoryScan: (repositoryId: string) => `/repositories/${repositoryId}/scan`,
 } as const;
 
 /**

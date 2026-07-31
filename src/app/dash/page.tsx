@@ -3,11 +3,16 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CountUp } from '@/components/dash/CountUp';
+import { DemoDataBadge } from '@/components/dash/DemoDataBadge';
 import { OnboardingFlow } from '@/components/dash/OnboardingFlow';
 import { RiskGauge } from '@/components/dash/RiskGauge';
 import { SevBadge } from '@/components/dash/SevBadge';
 import { SevDonut, type SevCounts } from '@/components/dash/SevDonut';
-import { reportDetailRoute, SCREEN_ROUTES } from '@/lib/dash/dash-routes';
+import {
+  monitoredReposRoute,
+  reportDetailRoute,
+  SCREEN_ROUTES,
+} from '@/lib/dash/dash-routes';
 import { useDashState } from '@/lib/dash/dash-state';
 import { shortSha, timeAgo, TIER_STATUS_LABEL } from '@/lib/dash/format';
 import { openFindings, REMEDIATIONS, SCAN_JOBS } from '@/lib/dash/mock-data';
@@ -27,6 +32,8 @@ export default function DashHomePage() {
   if (!mounted) return null;
   if (!connected) return <OnboardingFlow />;
 
+  // Vale tanto para quem acabou de instalar o App (instalar dá visibilidade, não
+  // ativa nada) quanto para quem desmarcou tudo depois.
   if (monitored.length === 0) {
     return (
       <div className="page-wrap">
@@ -36,10 +43,10 @@ export default function DashHomePage() {
         <div className="stat-card" style={{ textAlign: 'center', padding: 32 }}>
           <h2 className="mb-2 text-[16px] font-bold">Nenhum repositório monitorado</h2>
           <p className="mx-auto mb-5 max-w-[52ch] text-[13.5px] leading-[1.6] text-fg-mute">
-            Você desmarcou todos os repositórios. Selecione ao menos um para o aperIA
-            voltar a escanear e popular o dashboard.
+            O GitHub está conectado, mas nenhum repositório está ativado. Selecione ao
+            menos um para o aperIA escanear cada pull request e popular o dashboard.
           </p>
-          <Link href={SCREEN_ROUTES.repos} className="btn btn-md btn-primary">
+          <Link href={monitoredReposRoute} className="btn btn-md btn-primary">
             Selecionar repositórios
           </Link>
         </div>
@@ -98,8 +105,9 @@ export default function DashHomePage() {
 
   return (
     <div className="page-wrap">
-      <div className="mb-6">
+      <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <h1 className="text-[24px] font-bold">Postura de Segurança</h1>
+        <DemoDataBadge className="flex-shrink-0" />
       </div>
 
       {/* ── KPIs ── */}

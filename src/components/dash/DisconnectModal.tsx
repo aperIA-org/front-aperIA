@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { GH_ORG } from '@/lib/dash/mock-data';
 
 /**
- * Confirmação de desconexão do GitHub.
+ * Confirmação de desconexão de uma conta GitHub.
  *
  * O original injetava um overlay no DOM e fechava por `closeModal()` global.
  * Aqui é um componente controlado, com trava de scroll, Escape e foco inicial
@@ -12,10 +11,18 @@ import { GH_ORG } from '@/lib/dash/mock-data';
  */
 export function DisconnectModal({
   open,
+  accountLabel,
+  repoCount,
+  pending = false,
   onCancel,
   onConfirm,
 }: {
   open: boolean;
+  /** Login da conta/organização sendo desconectada. */
+  accountLabel: string;
+  /** Quantos repositórios monitorados param de ser analisados. */
+  repoCount: number;
+  pending?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -66,21 +73,41 @@ export function DisconnectModal({
         <div style={{ padding: '18px 20px' }}>
           <p className="text-[13.5px] leading-[1.6] text-fg-mute">
             O aperIA vai parar de escanear os repositórios de{' '}
-            <span className="font-semibold text-fg">{GH_ORG}</span>. Os findings já
-            coletados continuam disponíveis, mas nenhum pull request novo será
-            analisado até você reconectar.
+            <span className="font-semibold text-fg">{accountLabel}</span>. Os findings e
+            relatórios já coletados continuam disponíveis, mas nenhum pull request novo
+            será analisado até você reconectar.
           </p>
+          {repoCount > 0 && (
+            <p className="mt-2.5 text-[12.5px] leading-[1.6] text-fg-dim">
+              {repoCount === 1
+                ? '1 repositório monitorado deixa de ser analisado e sai da lista de ativados.'
+                : `${repoCount} repositórios monitorados deixam de ser analisados e saem da lista de ativados.`}{' '}
+              Reconectar exige selecioná-los de novo.
+            </p>
+          )}
         </div>
 
         <div
           className="flex items-center justify-end gap-2.5"
           style={{ padding: '14px 20px', borderTop: '1px solid var(--divider)' }}
         >
-          <button type="button" ref={cancelRef} className="btn btn-sm btn-ghost" onClick={onCancel}>
+          <button
+            type="button"
+            ref={cancelRef}
+            className="btn btn-sm btn-ghost"
+            onClick={onCancel}
+            disabled={pending}
+          >
             Cancelar
           </button>
-          <button type="button" className="btn btn-sm btn-danger" onClick={onConfirm}>
-            Desconectar
+          <button
+            type="button"
+            className="btn btn-sm btn-danger"
+            onClick={onConfirm}
+            disabled={pending}
+            style={pending ? { opacity: 0.7, cursor: 'wait' } : undefined}
+          >
+            {pending ? 'Desconectando…' : 'Desconectar'}
           </button>
         </div>
       </div>

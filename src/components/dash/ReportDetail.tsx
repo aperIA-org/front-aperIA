@@ -11,6 +11,7 @@ import {
   REMEDIATIONS,
   SCAN_JOBS,
 } from '@/lib/dash/mock-data';
+import { DemoDataBadge } from './DemoDataBadge';
 import { EmptyState } from './EmptyState';
 import { DiffView } from './DiffView';
 import { MiniGauge } from './RiskGauge';
@@ -96,9 +97,12 @@ export function ReportDetail({ jobId }: { jobId: string }) {
 
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-[24px] font-bold tracking-tight">
-            {GH_ORG}/{name}
-          </h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <h1 className="text-[24px] font-bold tracking-tight">
+              {GH_ORG}/{name}
+            </h1>
+            <DemoDataBadge className="flex-shrink-0" />
+          </div>
           <p className="mt-1 text-[13px] text-fg-dim">
             {jobs.length} {jobs.length === 1 ? 'scan' : 'scans'} · {openFindingsCount}{' '}
             {openFindingsCount === 1 ? 'finding aberto' : 'findings abertos'}

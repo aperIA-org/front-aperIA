@@ -91,11 +91,12 @@ A random value also differs between server and client and breaks hydration — t
 gradient ids with `Math.random()`, and those are `useId()` here. Where the prototype needed pseudo-random
 data (`runScanRepo`), the port uses an FNV-1a hash of a stable key.
 
-**`mounted` guards mean no SSR content.** Screens that depend on `localStorage` (the GitHub connection
-state) render `null` until the first effect runs, so their server-rendered HTML is empty. This is the
-trade-off of keeping connection state in `localStorage` — the server genuinely cannot know it. Moving
-`aperia-connected` to a cookie would let those screens render server-side; worth doing when the GitHub
-connection stops being simulated.
+**`mounted` guards mean no SSR content — and that is why the connection moved to the server.** Screens
+gated on `localStorage` render `null` until the first effect runs, so their server-rendered HTML is empty.
+The GitHub connection used to be one of them; it is now resolved in `src/app/dash/layout.tsx` and the data
+screens have real SSR content. What is left in `localStorage` is only **theme** and **sidebar collapse**,
+which genuinely have no server-side source — `mounted` still guards those two and nothing else. Do not
+reintroduce a `mounted` guard for anything the server can already answer.
 
 ## Landing page (`/`)
 
@@ -222,32 +223,113 @@ the middleware clears both cookies, so it does not retry on every request with a
 
 ## Dashboard (`/dash/*`)
 
-All 11 screens are ported. `src/app/dash/layout.tsx` (server: resolves the user, injects the pre-paint theme
-script) → `DashStateProvider` → `DashShell` (client: grid + sidebar + topbar). 28 components in
-`src/components/dash/`, 6 modules in `src/lib/dash/`.
+All 10 screens are ported. `src/app/dash/layout.tsx` (server: resolves the user **and the GitHub
+connection**, injects the pre-paint theme script) → `DashStateProvider` → `DashShell` (client: grid +
+sidebar + topbar). Components in `src/components/dash/`, modules in `src/lib/dash/`.
 
 **Routes** are real, one per screen. The screen keys (`home`, `findings`, `pipelines`, `reports`,
-`reportDetail`, `remediations`, `attack`, `integrations`, `repos`, `team`) remain the identity of a screen
-because the sidebar exposes them as `data-screen` and the cadastro preview navigates by them. The map lives
+`reportDetail`, `remediations`, `attack`, `integrations`, `team`) remain the identity of a screen because
+the sidebar exposes them as `data-screen` and the cadastro preview navigates by them. The map lives
 in `src/lib/dash/dash-routes.ts` — always route through `SCREEN_ROUTES` / `reportDetailRoute()` /
-`findingRoute()`, never hard-code a path.
+`findingRoute()`, never hard-code a path. The old `repos` key and its `/dash/repositorios/gerenciar` route
+are **gone**: that screen only duplicated the repo selector, which now lives inside `/dash/repositorios`
+under the `#repositorios-monitorados` anchor (`monitoredReposRoute`).
 
-**Onboarding gate.** `connected` (`localStorage.aperia-connected`) locks the data screens (`findings`,
-`pipelines`, `reports`, `reportDetail`, `attack`, `remediations`). Wrap those screens in `<DataScreenGate>`.
-`connectGitHub()` → repo selection → `finishOnboarding()` is the simulated GitHub App install flow.
+**Onboarding gate.** `connected` means "≥1 GitHub App installation linked", derived from the API — see
+[Conexão GitHub](#conexão-github-github--repositories) below. It locks the data screens (`findings`,
+`pipelines`, `reports`, `reportDetail`, `attack`, `remediations`); wrap those in `<DataScreenGate>`.
 
-**Preview mode** (`?preview=1`) forces connected and must suppress *every* `localStorage` write — the
-cadastro carousel drives the real dashboard and cannot pollute real state. `?theme=light` forces the theme
-without persisting it.
+**Preview mode** (`?preview=1`) forces the mock connection and must suppress *every* `localStorage` write —
+the cadastro carousel drives the real dashboard in an iframe and cannot pollute real state, nor call the
+API (it has no session). `?theme=light` forces the theme without persisting it.
 
-**State keys** are centralised in `src/lib/storage.ts` — reuse them, don't re-add string literals.
-`logout()` calls `/api/auth/logout` and routes to `/login`.
+**State keys** are centralised in `src/lib/storage.ts` — reuse them, don't re-add string literals. Only
+**two** remain (`aperia-theme`, `aperia-sb-col`); `SESSION_SCOPED_KEYS` is now a purge list of keys that no
+longer exist, cleared on login/logout to tidy up older sessions. `logout()` calls `/api/auth/logout` and
+routes to `/login`.
+
+**Data screens still read mock data**, so they carry `<DemoDataBadge />` next to the `<h1>` whenever the
+connection is real (`showDemoBadge`). In demo mode the whole app is a prototype and the badge stays hidden.
+Delete the badge when a screen starts reading `/repositories/{id}/{findings,scans,reports}`.
 
 **All data is deterministic mock data** in `src/lib/dash/mock-data.ts`. `buildFindings()` generates 80
 synthetic findings from `VULN_TEMPLATES` with a seeded `mulberry32(20240629)` PRNG, plus 10 hand-written
 "hero" findings. **The order of `rnd()` calls is part of the contract** — including the calls that only
 happen via `&&` short-circuit (`scanner`, `secret_verified`). The generated dataset was verified
 byte-identical to the prototype's.
+
+### Conexão GitHub (`/github/*` + `/repositories`)
+
+Real, not simulated. Three modules:
+
+| Module | Runs where | Holds |
+|---|---|---|
+| `src/lib/dash/github.ts` | shared (client-safe) | DTO types, pure helpers, the **demo** connection |
+| `src/lib/api/github.ts` | `server-only` | `resolveGitHubConnection()`, `listAvailableRepos()` |
+| `src/lib/api/github-actions.ts` | `'use server'` | connect / save selection / disconnect / manual scan |
+
+**Reads in Server Components, mutations in Server Actions — deliberately no `/api/github/*`.** The
+`/api/auth/*` BFF exists for two reasons that do not apply here: the API has no CORS (but these calls are
+already server-side) and login returns tokens in the body (here there is no new cookie to write). A route
+handler would only add an HTTP hop.
+
+**The middleware also covers the Server Actions.** A Server Action POSTs to the URL of the page it was
+called from, so the `/dash/:path*` matcher catches it and the silent refresh renews an expired access token
+*before* the action runs. That is why the actions can just read the cookie and trust it.
+
+**Connection state is derived, never stored.** `resolveGitHubConnection()` fetches `/github/accounts` and
+`/repositories` in parallel; the layout passes the result to `DashStateProvider`. The onboarding is a
+function of that state, not a stored step:
+
+| State | Screen |
+|---|---|
+| no accounts | `<OnboardingFlow>` — welcome + install the App |
+| accounts, no `active` repo | `/dash` "Nenhum repositório monitorado" → repo selector |
+| accounts + ≥1 `active` repo | dashboard |
+
+`resolved: false` means "the API is configured but did not answer / there is no session" — distinct from
+"answered that there are no accounts". Keep the distinction: without it the UI tells the user to connect
+GitHub when the real problem is a timeout.
+
+Load-bearing details:
+
+- **`github_repo_id` is the join key.** It is the only field present in *both* `/github/repos` (what the
+  installation can see) and `/repositories` (what is activated). The selector's draft is a `Set` of those.
+- **Never trust the `id` returned by `POST /repositories`.** It is an upsert on `(user_id, github_repo_id)`;
+  on re-activation the API can answer with a freshly generated uuid that is not the persisted row. Ids used
+  in `PATCH`/`DELETE` always come from `GET /repositories`. `saveMonitoredRepos()` therefore rebuilds the
+  diff server-side and re-reads instead of believing the response.
+- **`POST` covers activate *and* re-activate** (the upsert sets `active=true`), so only deactivation needs a
+  row id. That is why the action never has to look one up to turn something on.
+- **The install URL's `state` lives 10 minutes**, so it is fetched on click (`ConnectGitHubButton`), never at
+  render. `startGitHubConnect()` only redirects to `https://github.com/…` — anything else is refused, or a
+  misconfigured API would become an open redirect.
+- **`?preview=1` is handled in the *page*, not the layout**, because layouts do not receive `searchParams`.
+  `/dash/repositorios` short-circuits to the demo connection before touching the API.
+- **Demo mode** (no `APERIA_API_URL`) returns `DEMO_CONNECTION` / `DEMO_AVAILABLE_REPOS`. The demo repos
+  carry synthetic `github_repo_id`s (index + 1) — repeating a value would collapse the whole selection into
+  one row.
+
+**The post-install redirect is configured on the API side**, not here: `GITHUB_CONNECT_REDIRECT_URL` in
+`../python-api/.env` must point at `http://localhost:3000/dash/repositorios?github=conectado`. That screen
+reads `?github=` (`conectado` / `erro`, with `motivo=state` for an expired link) and shows the banner.
+
+**`?github=conectado` proves nothing and must never be believed on its own.** The callback's *success*
+redirect uses `GITHUB_CONNECT_REDIRECT_URL` verbatim (only the error path merges query params), so that
+value is a fixed string from the API's `.env` — it survives refresh, bookmarks and hand-typed URLs. The
+banner therefore only claims success when the accounts resolved in that same render corroborate it, and
+names the account and how many repos it exposes; otherwise it degrades to a yellow "you came back but
+nothing is linked yet". Dismissing it strips the param from the URL. Apply the same rule to any future
+flag that arrives by redirect: the query string says what *happened*, the API says what *is*.
+
+The
+API needs a public tunnel for the App's **Webhook URL** and **Setup URL** (GitHub has to reach it); the
+front-end does **not** — that redirect happens in the user's browser.
+
+**Manual scan.** `POST /repositories/{id}/scan` resolves the HEAD of the default branch and queues the same
+pipeline a pull request would. `ScansScreen` wires it for real, but the list below it is still mock, so the
+new execution does not show up there — the modal says so explicitly. In demo mode the old fabricated-job
+behaviour is kept.
 
 ### URL as state
 

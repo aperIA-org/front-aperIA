@@ -7,6 +7,7 @@ import { SCREEN_ROUTES } from '@/lib/dash/dash-routes';
 import { shortSha, timeAgo } from '@/lib/dash/format';
 import { FINDINGS, REMEDIATIONS, SCAN_JOBS } from '@/lib/dash/mock-data';
 import type { RemediationStatus } from '@/lib/dash/types';
+import { DemoDataBadge } from './DemoDataBadge';
 import { EmptyState } from './EmptyState';
 import { RemediationCard } from './RemediationCard';
 
@@ -79,7 +80,10 @@ export function RemediationsScreen() {
   return (
     <div className="page-wrap">
       <div className="mb-6">
-        <h1 className="text-[24px] font-bold tracking-tight">Remediações</h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <h1 className="text-[24px] font-bold tracking-tight">Remediações</h1>
+          <DemoDataBadge className="flex-shrink-0" />
+        </div>
         <p className="mt-1 text-[13px] text-fg-dim">
           Patches sugeridos, aguardando aprovação humana antes de aplicar
         </p>

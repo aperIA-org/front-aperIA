@@ -13,56 +13,79 @@ import {
 import { AUTH_CONFIG } from '@/lib/auth-config';
 import {
   clearSessionState,
-  readJsonStorage,
   readStorage,
-  removeStorage,
   STORAGE_KEYS,
   writeStorage,
 } from '@/lib/storage';
-import { DEFAULT_GH_INSTALLED_AT, DEFAULT_MONITORED } from './mock-data';
+import {
+  DEMO_CONNECTION,
+  isConnected,
+  monitoredRepos,
+  type GitHubConnection,
+  type Repository,
+} from './github';
 
 export type Theme = 'dark' | 'light';
 
-/** Passos do onboarding simulado do GitHub App. */
-export type OnboardingStep = 1 | 'installing' | 2;
-
 type DashState = {
-  /** `false` até o primeiro efeito rodar — evita mismatch de hidratação. */
+  /**
+   * `false` até o primeiro efeito rodar. Vale APENAS para tema e sidebar, que
+   * seguem em localStorage — o estado da conexão vem do servidor e já está
+   * disponível no primeiro render.
+   */
   mounted: boolean;
-  /** `?preview=1`: força conectado e suprime TODA escrita em localStorage. */
+  /** `?preview=1`: força a conexão mock e suprime TODA escrita em localStorage. */
   isPreview: boolean;
+
+  /** Conexão GitHub resolvida no servidor (ou mock em preview/demonstração). */
+  connection: GitHubConnection;
+  /** ≥1 instalação do GitHub App vinculada. */
   connected: boolean;
-  monitored: string[];
-  ghInstalledAt: string;
+  /** Repositórios com `active=true` — os que o pipeline analisa. */
+  monitored: Repository[];
+  /**
+   * As telas de Findings/Scans/Relatórios/Remediações/Emulação ainda mostram o
+   * dataset do protótipo. Quando a conexão é real, isso precisa estar explícito
+   * na tela — em modo demonstração o app inteiro já é protótipo e o aviso seria
+   * ruído.
+   */
+  showDemoBadge: boolean;
+
   sidebarCollapsed: boolean;
   theme: Theme;
-  onboardingStep: OnboardingStep;
 
-  setMonitored: (repos: string[]) => void;
   toggleSidebar: () => void;
   toggleTheme: () => void;
-  connectGitHub: () => void;
-  finishOnboarding: (repos: string[]) => void;
-  disconnect: () => void;
   logout: () => void;
 };
 
 const DashStateContext = createContext<DashState | null>(null);
 
-export function DashStateProvider({ children }: { children: React.ReactNode }) {
+export function DashStateProvider({
+  children,
+  initialConnection,
+}: {
+  children: React.ReactNode;
+  /** Resolvida em `src/app/dash/layout.tsx` (server component). */
+  initialConnection: GitHubConnection;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
 
   const [mounted, setMounted] = useState(false);
-  const [connected, setConnected] = useState(false);
-  const [monitored, setMonitoredState] = useState<string[]>(DEFAULT_MONITORED);
-  const [ghInstalledAt, setGhInstalledAt] = useState(DEFAULT_GH_INSTALLED_AT);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<Theme>('dark');
-  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(1);
 
-  /** Em preview nada é persistido — o carrossel do cadastro não pode sujar o estado real. */
+  /**
+   * O carrossel do cadastro roda em iframe e não pode chamar a API, então o
+   * preview usa a conexão mock. Calculado no render (não em efeito) porque esta
+   * rota já é dinâmica — `useSearchParams` devolve o mesmo valor no SSR e na
+   * hidratação, sem flash de onboarding nem mismatch.
+   */
+  const connection = isPreview ? DEMO_CONNECTION : initialConnection;
+
+  /** Em preview nada é persistido — o preview não pode sujar o estado real. */
   const persist = useCallback(
     (key: string, value: string) => {
       if (!isPreview) writeStorage(key, value);
@@ -70,7 +93,7 @@ export function DashStateProvider({ children }: { children: React.ReactNode }) {
     [isPreview],
   );
 
-  // Hidratação: lê o estado salvo uma única vez, já no cliente.
+  // Hidratação de tema e sidebar: o resto do estado vem do servidor.
   useEffect(() => {
     const themeParam = searchParams.get('theme');
     const storedTheme = readStorage(STORAGE_KEYS.theme);
@@ -86,16 +109,9 @@ export function DashStateProvider({ children }: { children: React.ReactNode }) {
               : 'dark';
 
     setTheme(nextTheme);
-    setConnected(isPreview || readStorage(STORAGE_KEYS.connected) === 'true');
-    setMonitoredState(
-      readJsonStorage<string[]>(STORAGE_KEYS.monitored, DEFAULT_MONITORED),
-    );
-    setGhInstalledAt(
-      readStorage(STORAGE_KEYS.ghInstalled) ?? DEFAULT_GH_INSTALLED_AT,
-    );
     setSidebarCollapsed(readStorage(STORAGE_KEYS.sidebarCollapsed) === 'true');
     setMounted(true);
-  }, [isPreview, searchParams]);
+  }, [searchParams]);
 
   // O atributo no <html> é o que dirige todos os tokens de tema.
   useEffect(() => {
@@ -109,17 +125,12 @@ export function DashStateProvider({ children }: { children: React.ReactNode }) {
     () => ({
       mounted,
       isPreview,
-      connected,
-      monitored,
-      ghInstalledAt,
+      connection,
+      connected: isConnected(connection),
+      monitored: monitoredRepos(connection),
+      showDemoBadge: !connection.demo,
       sidebarCollapsed,
       theme,
-      onboardingStep,
-
-      setMonitored: (repos) => {
-        setMonitoredState(repos);
-        persist(STORAGE_KEYS.monitored, JSON.stringify(repos));
-      },
 
       toggleSidebar: () => {
         setSidebarCollapsed((prev) => {
@@ -136,30 +147,6 @@ export function DashStateProvider({ children }: { children: React.ReactNode }) {
         });
       },
 
-      connectGitHub: () => {
-        setOnboardingStep('installing');
-        // 900ms só para a instalação do GitHub App parecer real.
-        window.setTimeout(() => {
-          persist(STORAGE_KEYS.ghInstalled, DEFAULT_GH_INSTALLED_AT);
-          setGhInstalledAt(DEFAULT_GH_INSTALLED_AT);
-          setOnboardingStep(2);
-        }, 900);
-      },
-
-      finishOnboarding: (repos) => {
-        setMonitoredState(repos);
-        persist(STORAGE_KEYS.monitored, JSON.stringify(repos));
-        setConnected(true);
-        persist(STORAGE_KEYS.connected, 'true');
-        setOnboardingStep(1);
-      },
-
-      disconnect: () => {
-        if (!isPreview) removeStorage(STORAGE_KEYS.connected);
-        setConnected(false);
-        setOnboardingStep(1);
-      },
-
       logout: () => {
         if (isPreview) return;
         clearSessionState();
@@ -172,18 +159,7 @@ export function DashStateProvider({ children }: { children: React.ReactNode }) {
           .finally(() => router.push('/login'));
       },
     }),
-    [
-      mounted,
-      isPreview,
-      connected,
-      monitored,
-      ghInstalledAt,
-      sidebarCollapsed,
-      theme,
-      onboardingStep,
-      persist,
-      router,
-    ],
+    [mounted, isPreview, connection, sidebarCollapsed, theme, persist, router],
   );
 
   return (

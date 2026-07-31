@@ -41,9 +41,10 @@ export function AuthForm({
   const [busy, setBusy] = useState(false);
 
   /**
-   * Login sempre entra no dash zerado: a página inicial passa a ser o
-   * onboarding "Conecte-se com GitHub". (Mesmo comportamento do
-   * `_goDashboard()` original.)
+   * Onde o dash abre agora é decidido pela conexão GitHub real do usuário
+   * (resolvida no servidor), não mais por localStorage. `clearSessionState()`
+   * segue aqui só para descartar as chaves da era simulada em quem já tinha uma
+   * sessão antiga no browser.
    */
   function goToDashboard() {
     clearSessionState();

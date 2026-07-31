@@ -1,16 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
+import { requestManualScan } from '@/lib/api/github-actions';
 import { SCREEN_ROUTES } from '@/lib/dash/dash-routes';
 import { useDashState } from '@/lib/dash/dash-state';
 import { fmtAbs, riskColor, shortSha, timeAgo } from '@/lib/dash/format';
-import { GH_ORG, REF_NOW, REMEDIATIONS, SCAN_JOBS } from '@/lib/dash/mock-data';
+import {
+  GH_ORG,
+  INSTALLATION_REPOS,
+  REF_NOW,
+  REMEDIATIONS,
+  SCAN_JOBS,
+} from '@/lib/dash/mock-data';
 import type { ScanJob } from '@/lib/dash/types';
+import { DemoDataBadge } from './DemoDataBadge';
 import { EmptyState } from './EmptyState';
 import { TierStepper } from './TierStepper';
 import { MiniGauge } from './RiskGauge';
-import { IconPlay, ScanModal, Spinner } from './ScanModal';
+import { IconPlay, ScanModal, Spinner, type ScanTarget } from './ScanModal';
 
 /* ═══════════════════════ status derivado do scan ═══════════════════════ */
 
@@ -112,7 +120,8 @@ const STATUS_OPTIONS: [PipeStatus, string][] = [
 /* ═══════════════════════ tela ═══════════════════════ */
 
 export function ScansScreen() {
-  const { monitored, setMonitored } = useDashState();
+  const { monitored, connection } = useDashState();
+  const demo = connection.demo;
 
   /**
    * Cópia local do dataset: o protótipo dava `unshift` no `SCAN_JOBS` e mutava
@@ -122,6 +131,10 @@ export function ScansScreen() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [modalOpen, setModalOpen] = useState(false);
   const [startedCount, setStartedCount] = useState(0);
+  const [scanFeedback, setScanFeedback] = useState<{ ok: boolean; message: string } | null>(
+    null,
+  );
+  const [scanPending, startScanTransition] = useTransition();
 
   /**
    * Polling da tela: o protótipo re-renderizava a cada 3s e, no 4º tick,
@@ -161,21 +174,62 @@ export function ScansScreen() {
     [jobs],
   );
 
-  /** Inicia um scan em UM repositório, na hora — nada roda automaticamente. */
+  /**
+   * Alvos do modal.
+   *
+   * Com conexão real são os repositórios monitorados, e a chave é o
+   * `repository_id` que a API espera. Em modo demonstração continuam sendo os
+   * repositórios do protótipo, identificados pelo nome.
+   */
+  const scanTargets = useMemo<ScanTarget[]>(() => {
+    if (demo) {
+      return INSTALLATION_REPOS.map((repo) => ({
+        key: repo.name,
+        label: `${GH_ORG}/${repo.name}`,
+        meta: `${repo.lang} · ${repo.private ? 'privado' : 'público'}`,
+        disabled: repoScanRunning(repo.name),
+      }));
+    }
+    return monitored.map((repo) => ({
+      key: repo.id,
+      label: repo.full_name,
+      meta: `branch ${repo.default_branch}`,
+    }));
+  }, [demo, monitored, repoScanRunning]);
+
+  /**
+   * Inicia um scan em UM repositório, na hora.
+   *
+   * Fora do modo demonstração isto chama `POST /repositories/{id}/scan`, que
+   * resolve o HEAD do branch default e enfileira o mesmo pipeline que um pull
+   * request dispararia. O resultado NÃO aparece na lista abaixo: ela ainda lê o
+   * dataset do protótipo — daí o badge no cabeçalho e o aviso no modal.
+   */
   const startScan = useCallback(
-    (name: string) => {
-      if (repoScanRunning(name)) return;
+    (key: string) => {
+      if (demo) {
+        if (repoScanRunning(key)) return;
+        const seq = startedCount + 1;
+        setStartedCount(seq);
+        setJobs((prev) => [buildScanJob(key, seq), ...prev]);
+        setModalOpen(false);
+        return;
+      }
 
-      const seq = startedCount + 1;
-      setStartedCount(seq);
-      setJobs((prev) => [buildScanJob(name, seq), ...prev]);
-
-      // Rodar um scan implica monitorar o repositório.
-      if (!monitored.includes(name)) setMonitored([...monitored, name]);
-
-      setModalOpen(false);
+      setScanFeedback(null);
+      startScanTransition(async () => {
+        const result = await requestManualScan(key);
+        setScanFeedback({
+          ok: result.ok,
+          message: result.ok
+            ? result.commitSha
+              ? `Scan enfileirado no commit ${shortSha(result.commitSha)}.`
+              : 'Scan enfileirado.'
+            : result.message,
+        });
+      });
     },
-    [monitored, repoScanRunning, setMonitored, startedCount],
+    [demo, repoScanRunning, startedCount],
   );
 
   const filtered = useMemo(
@@ -222,12 +276,15 @@ export function ScansScreen() {
     <div className="page-wrap pipe-wrap">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-[24px] font-bold tracking-tight">
-            Scans{' '}
-            <span className="text-[14px] font-normal text-fg-mute">
-              {jobs.length} no total
-            </span>
-          </h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <h1 className="text-[24px] font-bold tracking-tight">
+              Scans{' '}
+              <span className="text-[14px] font-normal text-fg-mute">
+                {jobs.length} no total
+              </span>
+            </h1>
+            <DemoDataBadge className="flex-shrink-0" />
+          </div>
           <p className="mt-1 text-[13px] text-fg-dim">
             Histórico de varreduras por repositório
             {runningCount > 0 ? ` · ${runningCount} em execução` : ''}
@@ -366,8 +423,18 @@ export function ScansScreen() {
 
       <ScanModal
         open={modalOpen}
-        isRunning={repoScanRunning}
-        onClose={() => setModalOpen(false)}
+        targets={scanTargets}
+        subtitle={
+          demo
+            ? 'Escolha o repositório para escanear agora.'
+            : 'O scan roda no HEAD do branch default. O histórico abaixo ainda mostra dados de demonstração, então a execução nova não aparece nele.'
+        }
+        pending={scanPending}
+        feedback={scanFeedback}
+        onClose={() => {
+          setModalOpen(false);
+          setScanFeedback(null);
+        }}
         onStart={startScan}
       />
     </div>

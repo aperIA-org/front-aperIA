@@ -8,24 +8,25 @@
 export const STORAGE_KEYS = {
   /** 'light' | 'dark' — tema escolhido pelo usuário. */
   theme: 'aperia-theme',
-  /** 'true' quando o onboarding do GitHub foi concluído. */
-  connected: 'aperia-connected',
-  /** Último screen visitado (o port usa rotas reais; mantido p/ compatibilidade). */
-  screen: 'aperia-screen',
-  /** JSON: array com os nomes dos repositórios monitorados. */
-  monitored: 'aperia-monitored',
-  /** ISO date da instalação simulada do GitHub App. */
-  ghInstalled: 'aperia-gh-installed',
   /** 'true' quando a sidebar está colapsada. */
   sidebarCollapsed: 'aperia-sb-col',
 } as const;
 
-/** Chaves limpas no logout / em um novo login (dash sempre abre zerado). */
+/**
+ * Chaves que já não existem mais, apagadas no logout e em um novo login.
+ *
+ * A conexão GitHub deixou de ser simulada: `connected`, `monitored` e a data de
+ * instalação agora vêm da API (`/github/accounts` + `/repositories`), resolvidos
+ * no servidor. `aperia-screen` era do dashboard estático, que guardava a tela
+ * atual — aqui as telas são rotas. Continuam nesta lista para limpar o
+ * localStorage de quem usou uma versão anterior; podem sair quando não houver
+ * mais sessões antigas em circulação.
+ */
 export const SESSION_SCOPED_KEYS = [
-  STORAGE_KEYS.connected,
-  STORAGE_KEYS.screen,
-  STORAGE_KEYS.monitored,
-  STORAGE_KEYS.ghInstalled,
+  'aperia-connected',
+  'aperia-screen',
+  'aperia-monitored',
+  'aperia-gh-installed',
 ] as const;
 
 /** localStorage nunca deve derrubar a renderização (Safari privado, SSR, iframe). */
@@ -53,17 +54,7 @@ export function removeStorage(key: string): void {
   }
 }
 
-export function readJsonStorage<T>(key: string, fallback: T): T {
-  const raw = readStorage(key);
-  if (raw === null) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-/** Zera o estado de sessão — usado no logout e ao entrar após autenticar. */
+/** Descarta resíduos de versões anteriores — no logout e ao entrar após autenticar. */
 export function clearSessionState(): void {
   for (const key of SESSION_SCOPED_KEYS) removeStorage(key);
 }

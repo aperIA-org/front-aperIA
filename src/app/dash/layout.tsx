@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { DashShell } from '@/components/dash/DashShell';
 import { PreviewNavigationBridge } from '@/components/dash/PreviewNavigationBridge';
+import { resolveGitHubConnection } from '@/lib/api/github';
 import { getCurrentUser } from '@/lib/api/user';
 import { DashStateProvider } from '@/lib/dash/dash-state';
 import './dash.css';
@@ -29,9 +30,17 @@ const THEME_SCRIPT = `
 `;
 
 export default async function DashLayout({ children }: { children: React.ReactNode }) {
-  // Resolvido no servidor: o access token é um cookie httpOnly, então o
-  // browser não conseguiria fazer esta busca nem se quisesse.
-  const user = await getCurrentUser();
+  // Resolvidos no servidor: o access token é um cookie httpOnly, então o
+  // browser não conseguiria fazer estas buscas nem se quisesse. Em paralelo —
+  // são independentes, e sequenciá-las só somaria latência.
+  //
+  // Resolver a conexão AQUI é o que devolve conteúdo no SSR às telas de dados:
+  // enquanto `connected` vivia em localStorage, elas renderizavam `null` até o
+  // primeiro efeito.
+  const [user, connection] = await Promise.all([
+    getCurrentUser(),
+    resolveGitHubConnection(),
+  ]);
 
   return (
     <>
@@ -39,7 +48,7 @@ export default async function DashLayout({ children }: { children: React.ReactNo
 
       {/* useSearchParams (preview/theme) exige Suspense no App Router. */}
       <Suspense fallback={null}>
-        <DashStateProvider>
+        <DashStateProvider initialConnection={connection}>
           <PreviewNavigationBridge />
           <DashShell user={user}>{children}</DashShell>
         </DashStateProvider>

@@ -1,7 +1,21 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { GH_ORG, INSTALLATION_REPOS } from '@/lib/dash/mock-data';
+
+/**
+ * Uma linha do modal. `key` é o que volta em `onStart`: o `repository_id` da API
+ * quando a conexão é real, ou o nome do repositório mock em modo demonstração —
+ * o modal não precisa saber a diferença.
+ */
+export type ScanTarget = {
+  key: string;
+  label: string;
+  /** Linha secundária: linguagem, visibilidade, branch… */
+  meta?: string;
+  disabled?: boolean;
+  /** Badge no lugar do botão "Iniciar" quando desabilitado. */
+  disabledLabel?: string;
+};
 
 /** Spinner de 1 traço — o mesmo usado nos badges `st-running`. */
 export function Spinner({ size = 9 }: { size?: number }) {
@@ -49,15 +63,20 @@ export function IconPlay({ size = 13 }: { size?: number }) {
  */
 export function ScanModal({
   open,
-  isRunning,
+  targets,
+  subtitle = 'Escolha o repositório para escanear agora.',
+  pending = false,
+  feedback = null,
   onClose,
   onStart,
 }: {
   open: boolean;
-  /** Um scan já em execução no repositório desabilita a linha. */
-  isRunning: (repoName: string) => boolean;
+  targets: readonly ScanTarget[];
+  subtitle?: string;
+  pending?: boolean;
+  feedback?: { ok: boolean; message: string } | null;
   onClose: () => void;
-  onStart: (repoName: string) => void;
+  onStart: (key: string) => void;
 }) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
 
@@ -105,8 +124,8 @@ export function ScanModal({
         >
           <div>
             <h3 className="text-[16px] font-bold text-fg">Iniciar scan</h3>
-            <p className="mt-[3px] text-[12.5px] text-fg-mute">
-              Escolha o repositório para escanear agora.
+            <p className="mt-[3px] max-w-[46ch] text-[12.5px] leading-[1.5] text-fg-mute">
+              {subtitle}
             </p>
           </div>
           <button
@@ -122,44 +141,67 @@ export function ScanModal({
         </div>
 
         <div style={{ maxHeight: 380, overflowY: 'auto' }}>
-          {INSTALLATION_REPOS.map((repo) => {
-            const running = isRunning(repo.name);
-            return (
-              <button
-                key={repo.name}
-                type="button"
-                disabled={running}
-                onClick={() => onStart(repo.name)}
-                className="flex w-full items-center justify-between gap-3 border-none bg-transparent text-left enabled:cursor-pointer enabled:hover:bg-surface-hover disabled:cursor-default disabled:opacity-[.55]"
-                style={{
-                  padding: '12px 14px',
-                  borderBottom: '1px solid var(--border-default)',
-                }}
-              >
-                <span className="min-w-0">
-                  <span className="block text-[13.5px] font-semibold text-fg">
-                    {GH_ORG}/{repo.name}
+          {targets.length === 0 ? (
+            <p className="p-8 text-center text-[13px] leading-[1.6] text-fg-dim">
+              Nenhum repositório monitorado. Ative um repositório em Repositórios para poder
+              escanear.
+            </p>
+          ) : (
+            targets.map((target) => {
+              const off = target.disabled || pending;
+              return (
+                <button
+                  key={target.key}
+                  type="button"
+                  disabled={off}
+                  onClick={() => onStart(target.key)}
+                  className="flex w-full items-center justify-between gap-3 border-none bg-transparent text-left enabled:cursor-pointer enabled:hover:bg-surface-hover disabled:cursor-default disabled:opacity-[.55]"
+                  style={{
+                    padding: '12px 14px',
+                    borderBottom: '1px solid var(--border-default)',
+                  }}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-[13.5px] font-semibold text-fg">
+                      {target.label}
+                    </span>
+                    {target.meta && (
+                      <span className="text-[11px] text-fg-dim">{target.meta}</span>
+                    )}
                   </span>
-                  <span className="text-[11px] text-fg-dim">
-                    {repo.lang} · {repo.private ? 'privado' : 'público'}
-                  </span>
-                </span>
 
-                {running ? (
-                  <span className="sev st-running flex-shrink-0">em execução</span>
-                ) : (
-                  <span
-                    className="inline-flex flex-shrink-0 items-center gap-1.5 text-[12px] font-semibold"
-                    style={{ color: '#d81f2a' }}
-                  >
-                    <IconPlay size={11} />
-                    Iniciar
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                  {target.disabled ? (
+                    <span className="sev st-running flex-shrink-0">
+                      {target.disabledLabel ?? 'em execução'}
+                    </span>
+                  ) : (
+                    <span
+                      className="inline-flex flex-shrink-0 items-center gap-1.5 text-[12px] font-semibold"
+                      style={{ color: '#d81f2a' }}
+                    >
+                      <IconPlay size={11} />
+                      Iniciar
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
         </div>
+
+        {feedback && (
+          <div
+            role={feedback.ok ? 'status' : 'alert'}
+            className="text-[12.5px] leading-[1.5]"
+            style={{
+              padding: '12px 16px',
+              borderTop: '1px solid var(--border-default)',
+              color: feedback.ok ? '#22c55e' : '#ef4444',
+            }}
+          >
+            {feedback.message}
+          </div>
+        )}
       </div>
     </div>
   );

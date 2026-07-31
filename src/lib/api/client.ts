@@ -51,13 +51,48 @@ export async function callApi(
   return { status: response.status, data: response.data };
 }
 
+/** `Authorization: Bearer` só quando há token — a API aceita rotas públicas sem ele. */
+function authHeaders(accessToken?: string) {
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
+}
+
 /** GET autenticado. `accessToken` vai como Bearer, como a API espera. */
 export async function getApi(
   path: string,
   accessToken?: string,
 ): Promise<{ status: number; data: unknown }> {
-  const response = await apiClient.get(path, {
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-  });
+  const response = await apiClient.get(path, { headers: authHeaders(accessToken) });
+  return { status: response.status, data: response.data };
+}
+
+/**
+ * POST/PATCH/DELETE autenticados — usados pelas Server Actions do GitHub.
+ *
+ * Valem as mesmas regras de `callApi`: nunca lançam por status HTTP, então 401,
+ * 404, 409 e 422 voltam para quem chamou como resposta normal.
+ */
+export async function postApi(
+  path: string,
+  body: unknown,
+  accessToken?: string,
+): Promise<{ status: number; data: unknown }> {
+  const response = await apiClient.post(path, body, { headers: authHeaders(accessToken) });
+  return { status: response.status, data: response.data };
+}
+
+export async function patchApi(
+  path: string,
+  body: unknown,
+  accessToken?: string,
+): Promise<{ status: number; data: unknown }> {
+  const response = await apiClient.patch(path, body, { headers: authHeaders(accessToken) });
+  return { status: response.status, data: response.data };
+}
+
+export async function deleteApi(
+  path: string,
+  accessToken?: string,
+): Promise<{ status: number; data: unknown }> {
+  const response = await apiClient.delete(path, { headers: authHeaders(accessToken) });
   return { status: response.status, data: response.data };
 }

@@ -22,6 +22,7 @@ import {
 } from '@/lib/dash/findings-filters';
 import { fmtAbs, hexA, sevColor, timeAgo } from '@/lib/dash/format';
 import { DAY, FINDINGS, openFindings, REF_NOW } from '@/lib/dash/mock-data';
+import { DemoDataBadge } from './DemoDataBadge';
 import { EmptyState } from './EmptyState';
 import { SevBadge } from './SevBadge';
 
@@ -226,13 +227,16 @@ export function FindingsScreen() {
     <div className="page-wrap">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-[24px] font-bold tracking-tight">
-            Findings{' '}
-            <span className="text-[14px] font-normal text-fg-mute">
-              {listBeforeSort.length} {listBeforeSort.length === 1 ? 'aberto' : 'abertos'}
-              {remediados > 0 ? ` · ${remediados} remediados no período` : ''}
-            </span>
-          </h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <h1 className="text-[24px] font-bold tracking-tight">
+              Findings{' '}
+              <span className="text-[14px] font-normal text-fg-mute">
+                {listBeforeSort.length} {listBeforeSort.length === 1 ? 'aberto' : 'abertos'}
+                {remediados > 0 ? ` · ${remediados} remediados no período` : ''}
+              </span>
+            </h1>
+            <DemoDataBadge className="flex-shrink-0" />
+          </div>
           <p className="mt-1 text-[13px] text-fg-dim">
             Vulnerabilidades encontradas nos scans, das mais críticas para as menos.
           </p>

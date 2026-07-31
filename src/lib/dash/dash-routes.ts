@@ -18,7 +18,6 @@ export const DASH_SCREENS = [
   'remediations',
   'attack',
   'integrations',
-  'repos',
   'team',
 ] as const;
 
@@ -43,7 +42,6 @@ export const SCREEN_LABELS: Record<DashScreen, string> = {
   remediations: 'Remediações',
   attack: 'AI Emulation',
   integrations: 'Repositórios',
-  repos: 'Repositórios',
   team: 'Time',
 };
 
@@ -56,9 +54,13 @@ export const SCREEN_ROUTES: Record<DashScreen, string> = {
   remediations: '/dash/remediacoes',
   attack: '/dash/ai-emulation',
   integrations: '/dash/repositorios',
-  repos: '/dash/repositorios/gerenciar',
   team: '/dash/time',
 };
+
+/** Âncora da seção de seleção de repositórios dentro de `/dash/repositorios`. */
+export const MONITORED_REPOS_ANCHOR = 'repositorios-monitorados';
+
+export const monitoredReposRoute = `${SCREEN_ROUTES.integrations}#${MONITORED_REPOS_ANCHOR}`;
 
 export function reportDetailRoute(execId: string): string {
   return `/dash/relatorios/${execId}`;
@@ -79,11 +81,9 @@ export function findingRoute(findingId: string): string {
 /** Resolve a tela a partir do pathname — usado pela sidebar e pelo breadcrumb. */
 export function screenFromPathname(pathname: string): DashScreen {
   if (pathname.startsWith('/dash/relatorios/')) return 'reportDetail';
-  if (pathname.startsWith('/dash/repositorios/gerenciar')) return 'repos';
 
   const match = (Object.entries(SCREEN_ROUTES) as [DashScreen, string][]).find(
-    ([screen, route]) =>
-      route === pathname && screen !== 'reportDetail' && screen !== 'repos',
+    ([screen, route]) => route === pathname && screen !== 'reportDetail',
   );
   return match?.[0] ?? 'home';
 }

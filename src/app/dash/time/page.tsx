@@ -1,5 +1,6 @@
 'use client';
 
+import { DemoDataBadge } from '@/components/dash/DemoDataBadge';
 import { useDashState } from '@/lib/dash/dash-state';
 import { fmtAbs, timeAgo } from '@/lib/dash/format';
 import { ROLE_LABELS, TEAM } from '@/lib/dash/mock-data';
@@ -11,13 +12,16 @@ import { ROLE_LABELS, TEAM } from '@/lib/dash/mock-data';
  * antes disso não houve atividade nenhuma para registrar.
  */
 export default function TeamPage() {
-  const { connected, mounted } = useDashState();
+  const { connected } = useDashState();
 
   return (
     <div className="page-wrap">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-[24px] font-bold tracking-tight">Time</h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <h1 className="text-[24px] font-bold tracking-tight">Time</h1>
+            <DemoDataBadge className="flex-shrink-0" />
+          </div>
           <p className="mt-1 text-[13px] text-fg-dim">
             {TEAM.length} membros · workspace Acme · Pessoal
           </p>
@@ -72,7 +76,7 @@ export default function TeamPage() {
                   </span>
                 </td>
                 <td>
-                  {mounted && connected ? (
+                  {connected ? (
                     <span
                       className="cursor-help text-[12px] text-fg-dim"
                       title={fmtAbs(member.last_seen)}

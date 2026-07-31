@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { DataScreenGate } from '@/components/dash/DataScreenGate';
+import { DemoDataBadge } from '@/components/dash/DemoDataBadge';
 import { MiniGauge } from '@/components/dash/RiskGauge';
 import { TierStepperCompact } from '@/components/dash/TierStepperCompact';
 import { reportDetailRoute, SCREEN_ROUTES } from '@/lib/dash/dash-routes';
@@ -15,7 +16,10 @@ function ReportsList() {
   return (
     <div className="page-wrap">
       <div className="mb-6">
-        <h1 className="text-[24px] font-bold">Relatórios de Scans</h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <h1 className="text-[24px] font-bold">Relatórios de Scans</h1>
+          <DemoDataBadge className="flex-shrink-0" />
+        </div>
         <p className="mt-1 text-[13px] text-fg-dim">
           Histórico de execuções · {jobs.length}{' '}
           {jobs.length === 1 ? 'relatório' : 'relatórios'}
