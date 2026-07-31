@@ -13,7 +13,7 @@ import {
 } from '@/lib/dash/dash-routes';
 import {
   IconAttack,
-  IconChevronRight,
+  IconChevron,
   IconFindings,
   IconHome,
   IconRemediations,
@@ -62,7 +62,7 @@ export function DashSidebar() {
       id="sb"
       className={sidebarCollapsed ? 'sb-c' : undefined}
       style={{
-        width: 256,
+        width: sidebarCollapsed ? 64 : 256,
         background: 'var(--bg-page)',
         borderRight: '1px solid var(--veil-06)',
         display: 'flex',
@@ -106,14 +106,16 @@ export function DashSidebar() {
           type="button"
           className="sb-tgl-btn ml-auto flex h-6 w-6 flex-shrink-0 cursor-pointer items-center justify-center rounded-[5px]"
           onClick={toggleSidebar}
-          title="Recolher sidebar"
+          title={sidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+          aria-label={sidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+          aria-expanded={!sidebarCollapsed}
           style={{
             background: 'var(--veil-06)',
             border: '1px solid var(--veil-09)',
             color: 'var(--veil-t42)',
           }}
         >
-          <IconChevronRight />
+          <IconChevron direction={sidebarCollapsed ? 'right' : 'left'} />
         </button>
       </div>
 
@@ -126,7 +128,8 @@ export function DashSidebar() {
           <button
             type="button"
             onClick={toggleSidebar}
-            title="Expandir"
+            title="Expandir sidebar"
+            aria-label="Expandir sidebar"
             className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px]"
             style={{
               background: 'var(--veil-06)',
@@ -134,7 +137,7 @@ export function DashSidebar() {
               color: 'var(--veil-t42)',
             }}
           >
-            <IconChevronRight size={11} />
+            <IconChevron size={11} direction="right" />
           </button>
         </div>
 

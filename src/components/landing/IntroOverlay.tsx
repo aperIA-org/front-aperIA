@@ -76,8 +76,11 @@ export function IntroOverlay() {
           mixBlendMode: 'overlay',
         }}
       />
+      {/* font-hero = Electro Garden → Manrope, igual ao `.glow` do original.
+          A camada de override cancelava cor, background, filter, text-transform
+          e white-space daquela regra — mas NÃO o font-family. */}
       <p
-        className="px-6 text-center text-[clamp(26px,6.2vw,74px)] leading-[1.12] text-ink"
+        className="px-6 text-center font-hero text-[clamp(26px,6.2vw,74px)] font-normal leading-[1.12] text-ink"
         style={{ animation: 'introTwo 1.6s cubic-bezier(.22,1,.36,1) .3s both' }}
       >
         <span className="mx-auto block max-w-[90vw]">

@@ -91,7 +91,17 @@ export function IconTeam() {
   );
 }
 
-export function IconChevronRight({ size = 12 }: { size?: number }) {
+/**
+ * Chevron do toggle da sidebar. `direction` inverte o traço — recolhida aponta
+ * para a direita ("expandir"), expandida aponta para a esquerda ("recolher").
+ */
+export function IconChevron({
+  size = 12,
+  direction = 'right',
+}: {
+  size?: number;
+  direction?: 'left' | 'right';
+}) {
   return (
     <svg
       width={size}
@@ -102,8 +112,9 @@ export function IconChevronRight({ size = 12 }: { size?: number }) {
       strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
-      <path d="M9 6l6 6-6 6" />
+      <path d={direction === 'right' ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} />
     </svg>
   );
 }

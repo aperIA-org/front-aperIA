@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { DashSidebar } from '@/components/dash/DashSidebar';
-import { DashTopBar } from '@/components/dash/DashTopBar';
+import { DashShell } from '@/components/dash/DashShell';
 import { PreviewNavigationBridge } from '@/components/dash/PreviewNavigationBridge';
 import { getCurrentUser } from '@/lib/api/user';
 import { DashStateProvider } from '@/lib/dash/dash-state';
@@ -42,34 +41,7 @@ export default async function DashLayout({ children }: { children: React.ReactNo
       <Suspense fallback={null}>
         <DashStateProvider>
           <PreviewNavigationBridge />
-
-          <div
-            data-app-shell
-            id="app-shell"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '256px 1fr',
-              minHeight: '100vh',
-              transition: 'grid-template-columns .25s cubic-bezier(.22,.61,.36,1)',
-            }}
-          >
-            <DashSidebar />
-
-            <div
-              className="flex flex-col"
-              style={{
-                height: '100vh',
-                overflowY: 'scroll',
-                scrollbarGutter: 'stable',
-                background: 'var(--bg-page)',
-              }}
-            >
-              <DashTopBar user={user} />
-              <main id="app-main" className="flex-1" style={{ background: 'var(--bg-page)' }}>
-                {children}
-              </main>
-            </div>
-          </div>
+          <DashShell user={user}>{children}</DashShell>
         </DashStateProvider>
       </Suspense>
     </>

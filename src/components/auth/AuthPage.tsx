@@ -18,7 +18,10 @@ export function AuthPage({
   initialEmail?: string;
 }) {
   return (
-    <div className="grid min-h-screen grid-cols-[minmax(0,0.94fr)_minmax(0,1fr)] bg-paper max-[880px]:grid-cols-1">
+    // `text-ink` explícito: sem cor base, o texto herdaria o preto padrão do
+    // navegador — funciona por acidente sobre o bege, mas quebra se o browser
+    // forçar tema escuro.
+    <div className="grid min-h-screen grid-cols-[minmax(0,0.94fr)_minmax(0,1fr)] bg-paper text-ink max-[880px]:grid-cols-1">
       <DashPreviewCarousel />
 
       <main className="relative flex max-h-screen justify-center overflow-y-auto px-10 pb-14 pt-10 max-[880px]:max-h-none">
