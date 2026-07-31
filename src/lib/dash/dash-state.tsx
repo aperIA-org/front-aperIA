@@ -1,5 +1,6 @@
 'use client';
 
+import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   createContext,
@@ -9,6 +10,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { AUTH_CONFIG } from '@/lib/auth-config';
 import {
   clearSessionState,
   readJsonStorage,
@@ -159,8 +161,15 @@ export function DashStateProvider({ children }: { children: React.ReactNode }) {
       },
 
       logout: () => {
-        if (!isPreview) clearSessionState();
-        router.push('/login');
+        if (isPreview) return;
+        clearSessionState();
+        // Revoga o refresh_token e limpa os cookies httpOnly no servidor.
+        // Navega de qualquer forma: uma falha de rede não pode prender o
+        // usuário numa sessão que ele já pediu para encerrar.
+        void axios
+          .post(AUTH_CONFIG.LOGOUT_ENDPOINT, null, { validateStatus: () => true })
+          .catch(() => undefined)
+          .finally(() => router.push('/login'));
       },
     }),
     [

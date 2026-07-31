@@ -1,26 +1,33 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- * CONFIG · conectar ao back-end depois é só preencher aqui.
+ * CONFIG das telas de autenticação.
  *
- * - SIGNUP_ENDPOINT / LOGIN_ENDPOINT: rotas POST do backend.
- *   Recebem JSON e devem responder 2xx em caso de sucesso.
- *   Enquanto vazios, o fluxo segue em MODO DEMONSTRAÇÃO
- *   (vai direto para DASHBOARD_URL, sem gravar nada).
- * - GOOGLE_CLIENT_ID: OAuth Web (console.cloud.google.com).
- * - DASHBOARD_URL: para onde redirecionar após autenticar.
+ * As telas NÃO falam direto com a API Python. Elas chamam as rotas
+ * `/api/auth/*` do próprio Next (BFF), que repassam para a API e
+ * guardam os tokens em cookies httpOnly. Dois motivos:
  *
- * Migrado de `legacy/cadastro.html`. As variáveis NEXT_PUBLIC_*
- * permitem configurar por ambiente sem editar código; se não
- * estiverem definidas, o modo demonstração continua valendo.
+ *   1. A API (`../python-api`) não registra CORSMiddleware — uma
+ *      chamada do browser para :8000 seria bloqueada.
+ *   2. O login devolve os tokens no corpo; em cookie httpOnly eles
+ *      ficam fora do alcance de qualquer XSS.
+ *
+ * A URL da API fica em `APERIA_API_URL` (server-only, sem
+ * NEXT_PUBLIC_). Sem ela, o fluxo segue em MODO DEMONSTRAÇÃO e vai
+ * direto ao dashboard, como no protótipo.
  * ═══════════════════════════════════════════════════════════════
  */
 export const AUTH_CONFIG = {
-  SIGNUP_ENDPOINT: process.env.NEXT_PUBLIC_SIGNUP_ENDPOINT ?? '',
-  LOGIN_ENDPOINT: process.env.NEXT_PUBLIC_LOGIN_ENDPOINT ?? '',
+  SIGNUP_ENDPOINT: '/api/auth/signup',
+  LOGIN_ENDPOINT: '/api/auth/login',
+  LOGOUT_ENDPOINT: '/api/auth/logout',
   GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '',
   GOOGLE_REDIRECT_PATH: '/auth/google/callback',
   DASHBOARD_URL: '/dash',
 } as const;
+
+/** Limites do `UserCreate` (Pydantic) na API. */
+export const PASSWORD_MIN = 8;
+export const PASSWORD_MAX = 128;
 
 export type AuthMode = 'signup' | 'login';
 

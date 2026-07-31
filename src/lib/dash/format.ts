@@ -141,8 +141,16 @@ export const TIER_STATUS_LABEL: Record<string, string> = {
 /** Circunferência do arco do gauge (r = 33 → 2πr ≈ 207.3). */
 export const GAUGE_C = 207.3;
 
-export function gaugeBand(score: number): { color: string; label: string } {
-  if (score > 700) return { color: SEV_COLORS.critical, label: 'crítico' };
-  if (score >= 400) return { color: SEV_COLORS.medium, label: 'atenção' };
-  return { color: SEV_COLORS.safe, label: 'controlado' };
+/**
+ * Faixa do gauge de risk score. `gradientFrom` é a cor inicial do gradiente do
+ * arco. Valores exatamente como no protótipo.
+ */
+export function gaugeBand(score: number): {
+  color: string;
+  label: string;
+  gradientFrom: string;
+} {
+  if (score > 700) return { color: '#ff2d3d', label: 'Crítico', gradientFrom: '#f5a524' };
+  if (score >= 400) return { color: '#f5a524', label: 'Moderado', gradientFrom: '#f5d524' };
+  return { color: '#2ecc8b', label: 'Baixo', gradientFrom: '#2ecc8b' };
 }

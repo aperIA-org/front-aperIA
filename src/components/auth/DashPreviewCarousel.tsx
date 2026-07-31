@@ -5,7 +5,7 @@ import {
   PREVIEW_NAVIGATE_MESSAGE,
   type DashScreen,
   type PreviewNavigateMessage,
-} from '@/lib/dash-routes';
+} from '@/lib/dash/dash-routes';
 
 /** Largura de design do dashboard — o iframe é escalado a partir dela. */
 const APP_DESIGN_WIDTH = 1500;

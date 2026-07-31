@@ -486,7 +486,12 @@
   --ap: 0;
 }
 
-.ap-node {
+/* ATENÇÃO: `.ap-node` também existe em `src/app/dash/dash.css`, com outro
+   significado (um nó do attack path do dashboard). As regras abaixo são
+   escopadas em [data-attack-path] justamente para não vazar — os dois
+   arquivos carregam juntos em /dash. */
+
+[data-attack-path] .ap-node {
   --L: clamp(0, calc((3 + var(--ap) * 87 - var(--top)) / 4 + 1), 1);
   --act: calc(
     clamp(0, calc((var(--L) - 0.05) * 1000), 1) *
@@ -497,40 +502,40 @@
 }
 
 /* Opacidade do nó/card: nunca abaixo de 0.45. */
-.ap-lit {
+[data-attack-path] .ap-lit {
   opacity: calc(0.45 + 0.55 * var(--L));
 }
 
-.ap-pop {
+[data-attack-path] .ap-pop {
   transform: scale(calc(0.96 + 0.04 * var(--pop)));
   transition: transform 0.5s cubic-bezier(0.34, 1.6, 0.5, 1);
 }
 
-.ap-pop-goal {
+[data-attack-path] .ap-pop-goal {
   transform: scale(calc(0.96 + 0.04 * var(--pop)));
   transition: transform 0.6s cubic-bezier(0.34, 1.8, 0.5, 1);
 }
 
-.ap-glow {
+[data-attack-path] .ap-glow {
   opacity: var(--L);
   transition: opacity 0.4s;
 }
 
-.ap-act {
+[data-attack-path] .ap-act {
   opacity: var(--act);
 }
 
-.ap-check {
+[data-attack-path] .ap-check {
   opacity: var(--check);
   transition: opacity 0.35s;
 }
 
-.ap-rail-fill {
+[data-attack-path] .ap-rail-fill {
   height: calc(var(--ap) * 87%);
   transition: height 0.15s linear;
 }
 
-.ap-marker {
+[data-attack-path] .ap-marker {
   top: calc(3% + var(--ap) * 87%);
   /* O transform fica aqui, junto do `top`, para não competir com utilitários
      de translate do Tailwind no mesmo elemento. */
@@ -538,7 +543,7 @@
   transition: top 0.15s linear;
 }
 
-.ap-progress-fill {
+[data-attack-path] .ap-progress-fill {
   width: calc(var(--ap) * 94%);
   transition: width 0.15s linear;
 }

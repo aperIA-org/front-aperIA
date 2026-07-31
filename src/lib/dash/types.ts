@@ -128,3 +128,20 @@ export type VulnTemplate = {
   files: string[];
   cve?: boolean;
 };
+
+export type IntegrationStatus = 'operational' | 'degraded' | 'offline';
+
+export type Integration = {
+  id: string;
+  name: string;
+  desc: string;
+  /** Em qual tier do pipeline o scanner roda (T1, T1+T2, T2, T3…). */
+  tier: string;
+  status: IntegrationStatus;
+  last_run: string;
+  /** `null` na engine de I.A., que não produz findings próprios. */
+  findings_total: number | null;
+  version: string;
+  /** Texto de impacto, exibido quando o status não é operational. */
+  impact?: string;
+};

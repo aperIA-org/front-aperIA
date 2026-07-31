@@ -64,6 +64,18 @@ export function reportDetailRoute(execId: string): string {
   return `/dash/relatorios/${execId}`;
 }
 
+/**
+ * Deep link para um finding específico.
+ *
+ * No protótipo, clicar num finding abria um slide-over na mesma tela. Aqui a
+ * navegação é por URL: a lista de Findings lê `?finding=` e rola/destaca a
+ * linha. Detalhe de execução e Remediações linkam para cá — manter num helper
+ * evita que cada tela invente o nome do parâmetro.
+ */
+export function findingRoute(findingId: string): string {
+  return `${SCREEN_ROUTES.findings}?finding=${encodeURIComponent(findingId)}`;
+}
+
 /** Resolve a tela a partir do pathname — usado pela sidebar e pelo breadcrumb. */
 export function screenFromPathname(pathname: string): DashScreen {
   if (pathname.startsWith('/dash/relatorios/')) return 'reportDetail';

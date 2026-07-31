@@ -17,15 +17,36 @@ before touching anything.
 | Landing | `/` | ✅ **ported** — `src/app/page.tsx` + `src/components/landing/*` |
 | Cadastro | `/cadastro` | ✅ **ported** — `src/app/cadastro/page.tsx` |
 | Login | `/login` | ✅ **ported** — `src/app/login/page.tsx` |
-| Dashboard | `/dash/*` | ❌ **NOT ported** — still only `legacy/dash/index.html` |
+| Dashboard | `/dash/*` — all 11 screens | ✅ **ported** |
 
 `legacy/` holds the original static site as a visual/functional reference (see `legacy/README.md`). It is
 excluded from the build by `tsconfig.json` and `next.config.ts`. It can be deleted once the dashboard port
 is validated — git history preserves it.
 
-**Consequence:** the app currently has dead links. `src/lib/dash-routes.ts` and
-`src/components/auth/DashPreviewCarousel.tsx` already point at `/dash*` routes that do not exist yet.
-Creating them is the next task.
+`src/components/dash/NotPortedYet.tsx` is now unused — every screen has real content. Delete it whenever.
+
+**What is still NOT ported inside the dashboard:** the three interactive charts above the Findings table
+(`findingsChartsBand` → `chartRepoBody`, `chartCategoryBody`, `chartOpenVsRemedBody`, `metaBands`,
+`fChartCard`, legacy ~lines 1400–1543). They cross-filter by clicking a bar/slice (`onDimClick`), and the
+filter state they'd drive already exists in `src/lib/dash/findings-filters.ts` — so they plug in without
+reworking anything. Also unported: the finding **slide-over drawer** (`openFinding`, `rotationBlock`), which
+the port replaces for now with the `?finding=` deep link described below.
+
+**URL as filter state.** Findings keeps every filter in the query string (`src/lib/dash/findings-filters.ts`
+does the parse/serialize), using the **same parameter names as the prototype** (`repo`, `cat`, `sev`,
+`scanner`, `tier`, `aging`, `status`, `q`, `de`, `ate`) so old links still work. `de=all` means "todo o
+histórico"; a missing `de` means the default 90-day window. This replaces the prototype's hand-rolled
+`syncURL()`/`parseURLToFF()` and gets shareable filters and a working back button for free.
+
+**Cross-screen contracts** — these are the seams between screens; keep them in the helpers, not inline:
+- `findingRoute(id)` → `/dash/findings?finding=<id>`. Report detail and Remediações both link to a finding;
+  the Findings list scrolls to and flashes that row.
+- `?scan=<id>` on `/dash/remediacoes` scopes the list to one execution (Scans links to it).
+- `?scan=<id>` on `/dash/ai-emulation` selects which execution's attack path to show.
+
+**Known gap:** `/dash/relatorios/[id]` with an unknown id renders the not-found page but responds **200**,
+not 404 — the dash layout's `<Suspense>` has already begun streaming when `notFound()` throws, so the
+status is locked. Cosmetic for a prototype; fix by validating the id above the streaming boundary.
 
 ## Commands
 
@@ -129,10 +150,64 @@ the page component**, not `next.config.ts`, because a config redirect forwards t
 the destination would end up `/login?mode=login`. **When porting the dashboard, point `logout()` at
 `/login` directly** rather than relying on this alias.
 
-`AUTH_CONFIG` in `src/lib/auth-config.ts` is the back-end seam, and is **not wired to a back-end yet** —
-by design, that comes later. While `SIGNUP_ENDPOINT`/`LOGIN_ENDPOINT` are empty the page runs in **demo
-mode**: validation still applies, then it goes straight to the dashboard without persisting. Endpoints can
-also be supplied via `NEXT_PUBLIC_*` env vars.
+### Back-end integration (FastAPI, `../python-api`)
+
+**Wired via a BFF, not direct fetch.** The screens call `/api/auth/*` Route Handlers on Next, which call
+the Python API server-side. Two reasons, both load-bearing:
+
+1. **The API registers no `CORSMiddleware`** — a browser call from `:3000` to `:8000` would be blocked.
+2. `POST /auth/login` returns the tokens **in the response body**. The BFF converts them into
+   **`httpOnly` cookies** (`aperia_access` / `aperia_refresh`), so no XSS can read them — which
+   `localStorage` would not prevent.
+
+Set `APERIA_API_URL` (server-only, **no** `NEXT_PUBLIC_` prefix — see `.env.example`). Without it
+everything still runs in **demo mode**: validation applies, then straight to the dashboard.
+
+| Next route | Calls | Notes |
+|---|---|---|
+| `POST /api/auth/signup` | `POST /users` → `POST /auth/login` | Two calls: `/users` returns only `{id}`, no tokens |
+| `POST /api/auth/login` | `POST /auth/login` | 401 → "E-mail ou senha inválidos." |
+| `POST /api/auth/refresh` | `POST /auth/refresh` | Token rotation; clears cookies on any failure |
+| `POST /api/auth/logout` | `POST /auth/logout` | Clears cookies even if revocation fails |
+
+**Field names differ between the UI and the API** — the BFF translates, do not "fix" one side to match
+the other: the form is `nome`/`senha`, the API schema is `username`/`password`/`email`. `UserCreate` sets
+`extra="forbid"`, so any additional key returns 422.
+
+Constraints mirrored from the Pydantic schema: password 8–128, username 1–255, email 3–500. Cookie
+lifetimes mirror `ACCESS_TOKEN_EXPIRE_MINUTES=15` / `REFRESH_TOKEN_EXPIRE_DAYS=7`.
+
+### Silent session refresh — `src/middleware.ts`
+
+The access cookie lives 15 minutes; the refresh cookie 7 days. When the access cookie expires the browser
+just stops sending it, so `src/middleware.ts` (matcher `/dash/:path*`) exchanges the refresh token for a
+new pair before the page renders.
+
+**Why middleware and not the layout:** server components **cannot set cookies** in Next.js — only Route
+Handlers, Server Actions, and middleware can. And middleware is the only one that runs *before* the page,
+so the renewal is invisible.
+
+Two things that are easy to get wrong and are load-bearing here:
+
+1. The new token is written to **both** `request.cookies` (so the server component in *this same request*
+   already reads the fresh token — otherwise the first load after expiry still fails) and
+   `response.cookies` (so the browser keeps it). The `request` one requires `NextResponse.next({ request })`.
+2. **`src/middleware.ts` is the only `fetch` in the codebase, deliberately.** Everything else uses axios,
+   but axios calls `setImmediate`/`process.nextTick`, which the Edge runtime does not have — the build
+   warns "A Node.js API is used … not supported in the Edge Runtime". `adapter: 'fetch'` does not help
+   because the warning comes from `utils.js`, imported with the package. Do not "fix" this back to axios.
+
+On a rejected refresh (expired, revoked, or reuse detected — the API invalidates the whole token family)
+the middleware clears both cookies, so it does not retry on every request with a token that will never work.
+
+The current user comes from `src/lib/api/user.ts`: the API has no `/users/me`, so it reads the `sub` claim
+from the access token (decode only — the API is the authority on verification) and calls `GET /users/{id}`.
+The dash layout resolves it server-side and passes it to `DashTopBar`. Without a session the header shows a
+neutral state rather than inventing a name; in demo mode it shows `DEMO_USER` (Marina Alves, matching the
+`approved_by` in the mock remediations).
+
+Still to do: the data screens will need `Authorization: Bearer` for their own API reads. The org line in the
+user menu ("Acme · Pessoal") is still static — the API exposes no organization endpoint.
 
 The left panel drives the *real* dashboard in an iframe. The original reached into the iframe's DOM to
 click `.sb-item[data-screen="…"]` and wrote to its `localStorage`; the port uses **`postMessage`** plus a

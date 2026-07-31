@@ -1,5 +1,6 @@
 'use client';
 
+import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -8,6 +9,8 @@ import {
   authCopy,
   isValidEmail,
   NOTICE_COLORS,
+  PASSWORD_MAX,
+  PASSWORD_MIN,
   type AuthMode,
   type NoticeKind,
 } from '@/lib/auth-config';
@@ -62,8 +65,11 @@ export function AuthForm({
       setNotice({ text: 'Informe um e-mail válido.', kind: 'err' });
       return;
     }
-    if (senha.length < 8) {
-      setNotice({ text: 'A senha precisa de pelo menos 8 caracteres.', kind: 'err' });
+    if (senha.length < PASSWORD_MIN || senha.length > PASSWORD_MAX) {
+      setNotice({
+        text: `A senha precisa ter entre ${PASSWORD_MIN} e ${PASSWORD_MAX} caracteres.`,
+        kind: 'err',
+      });
       return;
     }
     if (!copy.login && nome.length < 2) {
@@ -75,36 +81,33 @@ export function AuthForm({
       return;
     }
 
-    const endpoint = copy.login
-      ? AUTH_CONFIG.LOGIN_ENDPOINT
-      : AUTH_CONFIG.SIGNUP_ENDPOINT;
-
-    // Sem backend configurado → demonstração: segue direto ao dashboard.
-    if (!endpoint) {
-      goToDashboard();
-      return;
-    }
-
     setBusy(true);
     setNotice(null);
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(
-          copy.login ? { email, senha } : { nome, email, senha },
-        ),
-      });
-      if (response.ok) {
+      // O BFF traduz os nomes de campo para o schema da API
+      // (nome → username, senha → password) e cuida dos cookies.
+      // `validateStatus` desligado: 400/401/409 trazem uma mensagem pronta no
+      // corpo, então são tratados aqui e não no catch.
+      const { status, data } = await axios.post<{ ok?: boolean; message?: string }>(
+        copy.login ? AUTH_CONFIG.LOGIN_ENDPOINT : AUTH_CONFIG.SIGNUP_ENDPOINT,
+        copy.login
+          ? { email, password: senha }
+          : { username: nome, email, password: senha },
+        { validateStatus: () => true },
+      );
+
+      if (status >= 200 && status < 300 && data?.ok) {
         goToDashboard();
         return;
       }
+
       setBusy(false);
       setNotice({
-        text: copy.login
-          ? 'E-mail ou senha inválidos.'
-          : 'Não foi possível criar a conta.',
+        text:
+          data?.message ??
+          (copy.login
+            ? 'E-mail ou senha inválidos.'
+            : 'Não foi possível criar a conta.'),
         kind: 'err',
       });
     } catch {

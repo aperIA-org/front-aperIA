@@ -15,6 +15,7 @@
  */
 import type {
   Asset,
+  Integration,
   Finding,
   Insight,
   InstallationRepo,
@@ -147,7 +148,7 @@ function buildFindings(): Finding[] {
   const repos = ['payments-api', 'auth-service', 'user-service', 'infra-aws'];
   const repoW = [0.42, 0.28, 0.18, 0.12];
   const wpick = (a: readonly string[], w: readonly number[]): string => {
-    let r = rnd();
+    const r = rnd();
     let acc = 0;
     for (let i = 0; i < a.length; i++) {
       acc += w[i];
@@ -236,3 +237,37 @@ export const FINDINGS: Finding[] = buildFindings();
 export function openFindings(): Finding[] {
   return FINDINGS.filter((f) => f.status !== 'resolved');
 }
+
+/** Membros do workspace. */
+export type TeamMember = {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'engineer' | 'viewer';
+  avatar: string;
+  last_seen: string;
+};
+
+export const TEAM: TeamMember[] = [
+  {id:'u1',name:'Marina Alves',email:'marina.alves@acme.io',role:'admin',avatar:'MA',last_seen:'2024-06-29T14:00:00Z'},
+  {id:'u2',name:'Carlos Melo',email:'carlos.melo@acme.io',role:'engineer',avatar:'CM',last_seen:'2024-06-28T10:00:00Z'},
+  {id:'u3',name:'Julia Pires',email:'julia.pires@acme.io',role:'viewer',avatar:'JP',last_seen:'2024-06-27T09:00:00Z'},
+];
+
+export const ROLE_LABELS: Record<TeamMember['role'], string> = {
+  admin: 'Admin',
+  engineer: 'Engenheiro',
+  viewer: 'Visualizador',
+};
+
+/** Scanners e engines do pipeline, com status por tier. */
+export const INTEGRATIONS: Integration[] = [
+  {id:'trufflehog',name:'TruffleHog',desc:'Secret scanning em commits e diff',tier:'T1',status:'operational',last_run:'2024-06-29T14:24:00Z',findings_total:2,version:'3.67.2'},
+  {id:'semgrep',name:'Semgrep',desc:'SAST, análise estática de código',tier:'T1+T2',status:'operational',last_run:'2024-06-29T14:28:00Z',findings_total:5,version:'1.74.0'},
+  {id:'trivy',name:'Trivy',desc:'SCA, CVEs em dependências e containers',tier:'T2',status:'operational',last_run:'2024-06-29T14:26:00Z',findings_total:2,version:'0.52.0'},
+  {id:'prowler',name:'Prowler',desc:'Cloud security posture (AWS/GCP/Azure)',tier:'T2',status:'operational',last_run:'2024-06-29T14:27:00Z',findings_total:1,version:'4.2.1'},
+  {id:'zap',name:'OWASP ZAP',desc:'DAST, testes de segurança dinâmicos',tier:'T3',status:'operational',last_run:'2024-06-28T10:12:00Z',findings_total:1,version:'2.14.0'},
+  {id:'opencti',name:'OpenCTI',desc:'Threat intelligence contextual',tier:'T3',status:'degraded',last_run:'2024-06-27T08:00:00Z',findings_total:0,version:'5.12.4',impact:'Enriquecimento de threat intel indisponível, attack paths sem contexto CTI'},
+  {id:'caldera',name:'Caldera',desc:'Adversary simulation (MITRE ATT&CK)',tier:'T3',status:'operational',last_run:'2024-06-28T10:15:00Z',findings_total:0,version:'5.0.0'},
+  {id:'claude',name:'I.A',desc:'Raciocínio de IA, cadeia de eventos e attack path',tier:'T2+T3',status:'operational',last_run:'2024-06-29T14:35:00Z',findings_total:null,version:'claude-sonnet-4-5'},
+];
