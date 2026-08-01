@@ -1,7 +1,7 @@
 'use client';
 
 import { useId } from 'react';
-import { GAUGE_C, gaugeBand } from '@/lib/dash/format';
+import { GAUGE_C, gaugeBand, RISK_MAX_DEMO } from '@/lib/dash/format';
 import { CountUp } from './CountUp';
 
 /** Marcas em 25/50/75% do arco (135° → 405°). */
@@ -27,16 +27,26 @@ function ticks() {
 }
 
 /**
- * Gauge grande de risk score (0–1000).
+ * Gauge grande de risk score.
+ *
+ * `max` existe porque as duas fontes usam escalas diferentes: o dataset do
+ * protótipo vai a 1000, a API vai a 100. Estava fixo em 1000, então um risco
+ * 74/100 aparecia como "74 de 1000" — quase vazio no arco e verde na cor.
  *
  * O id do gradiente vem de `useId()`, não de `Math.random()` como no
  * protótipo: um id aleatório difere entre servidor e cliente e quebraria a
  * hidratação.
  */
-export function RiskGauge({ score }: { score: number }) {
+export function RiskGauge({
+  score,
+  max = RISK_MAX_DEMO,
+}: {
+  score: number;
+  max?: number;
+}) {
   const gradientId = useId();
-  const band = gaugeBand(score);
-  const offset = GAUGE_C * (1 - Math.min(score, 1000) / 1000);
+  const band = gaugeBand(score, max);
+  const offset = GAUGE_C * (1 - Math.min(score, max) / max);
 
   return (
     <div className="flex-shrink-0 text-center" style={{ width: 126 }}>
@@ -85,7 +95,7 @@ export function RiskGauge({ score }: { score: number }) {
         </div>
 
         <div className="absolute left-0 right-0 top-1/2 mt-3 text-center">
-          <div className="mono text-[9.5px] leading-[1.2] text-fg-dim">de 1000</div>
+          <div className="mono text-[9.5px] leading-[1.2] text-fg-dim">de {max}</div>
           <div className="text-[11px] font-semibold leading-[1.2]" style={{ color: band.color }}>
             {band.label}
           </div>
@@ -99,10 +109,16 @@ export function RiskGauge({ score }: { score: number }) {
 }
 
 /** Versão 16×16 usada em linhas de tabela. */
-export function MiniGauge({ score }: { score: number }) {
-  const band = gaugeBand(score);
+export function MiniGauge({
+  score,
+  max = RISK_MAX_DEMO,
+}: {
+  score: number;
+  max?: number;
+}) {
+  const band = gaugeBand(score, max);
   const C = 28.3;
-  const offset = C * (1 - Math.min(score, 1000) / 1000);
+  const offset = C * (1 - Math.min(score, max) / max);
 
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" className="flex-shrink-0">

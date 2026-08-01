@@ -8,7 +8,7 @@ import {
   SCREEN_ROUTES,
 } from '@/lib/dash/dash-routes';
 import { useDashState } from '@/lib/dash/dash-state';
-import { shortSha, timeAgo, TIER_STATUS_LABEL } from '@/lib/dash/format';
+import { shortSha, timeAgo, TIER_STATUS_LABEL, riskMax } from '@/lib/dash/format';
 import { REMEDIATIONS } from '@/lib/dash/mock-data';
 import type { Finding, ScanJob } from '@/lib/dash/types';
 import { CountUp } from './CountUp';
@@ -236,7 +236,7 @@ export function DashHomeScreen({
                 </div>
               </div>
               {lastJob.final_risk_score !== null && (
-                <RiskGauge score={lastJob.final_risk_score} />
+                <RiskGauge score={lastJob.final_risk_score} max={riskMax(demo)} />
               )}
             </div>
           ) : (

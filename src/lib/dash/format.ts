@@ -59,11 +59,34 @@ export function hexA(hex: string, a: number): string {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 
-/** Faixas do risk score: >700 crítico, 400–700 âmbar, <400 verde. */
-export function riskColor(score: number): string {
-  return score > 700
+/**
+ * Escala do risk score, que difere entre as duas fontes de dado.
+ *
+ * O protótipo usava 0–1000; a API usa **0–100** (`risk_score.score` no schema
+ * do Tier 2, e é o que o relatório em markdown exibe: "74/100"). Os limiares
+ * daqui estavam fixos na escala antiga, então um risco 74/100 — `high` para a
+ * API — caía abaixo de 400 e era pintado de VERDE, dizendo "ok" sobre um scan
+ * de risco alto. O gauge, pelo mesmo motivo, rotulava "74 de 1000".
+ */
+export const RISK_MAX_DEMO = 1000;
+export const RISK_MAX_API = 100;
+
+/** Escala correta para a origem do dado — `demo` usa o protótipo. */
+export function riskMax(demo: boolean): number {
+  return demo ? RISK_MAX_DEMO : RISK_MAX_API;
+}
+
+/**
+ * Cor do risco, comparada em FRAÇÃO da escala e não em valor absoluto.
+ *
+ * Os cortes seguem os mesmos do protótipo (>70% crítico, >=40% médio), agora
+ * independentes de a escala ser 0–1000 ou 0–100.
+ */
+export function riskColor(score: number, max: number = RISK_MAX_DEMO): string {
+  const fracao = max > 0 ? score / max : 0;
+  return fracao > 0.7
     ? SEV_COLORS.critical
-    : score >= 400
+    : fracao >= 0.4
       ? SEV_COLORS.medium
       : SEV_COLORS.safe;
 }
@@ -153,12 +176,18 @@ export const GAUGE_C = 207.3;
  * Faixa do gauge de risk score. `gradientFrom` é a cor inicial do gradiente do
  * arco. Valores exatamente como no protótipo.
  */
-export function gaugeBand(score: number): {
+export function gaugeBand(
+  score: number,
+  max: number = RISK_MAX_DEMO,
+): {
   color: string;
   label: string;
   gradientFrom: string;
 } {
-  if (score > 700) return { color: '#ff2d3d', label: 'Crítico', gradientFrom: '#f5a524' };
-  if (score >= 400) return { color: '#f5a524', label: 'Moderado', gradientFrom: '#f5d524' };
+  // Mesmos cortes de `riskColor`, em fração: rótulo e cor do arco precisam
+  // concordar com a cor do número, senão o gauge diz "Baixo" em vermelho.
+  const fracao = max > 0 ? score / max : 0;
+  if (fracao > 0.7) return { color: '#ff2d3d', label: 'Crítico', gradientFrom: '#f5a524' };
+  if (fracao >= 0.4) return { color: '#f5a524', label: 'Moderado', gradientFrom: '#f5d524' };
   return { color: '#2ecc8b', label: 'Baixo', gradientFrom: '#2ecc8b' };
 }

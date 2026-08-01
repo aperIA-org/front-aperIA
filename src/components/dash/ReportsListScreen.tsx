@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { reportDetailRoute, SCREEN_ROUTES } from '@/lib/dash/dash-routes';
-import { fmtAbs, riskColor, shortSha, timeAgo } from '@/lib/dash/format';
+import { fmtAbs, riskColor, shortSha, timeAgo, riskMax } from '@/lib/dash/format';
 import type { ScanJob } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
 import { MiniGauge } from './RiskGauge';
@@ -17,9 +17,12 @@ import { TierStepperCompact } from './TierStepperCompact';
 export function ReportsListScreen({
   jobs,
   ok,
+  demo,
   now,
 }: {
   jobs: ScanJob[];
+  /** Decide a escala do risk score: protótipo vai a 1000, API vai a 100. */
+  demo: boolean;
   /** `false` = a API não respondeu. Diferente de "nenhuma execução". */
   ok: boolean;
   /** Âncora de tempo do server component: `REF_NOW` em demo, agora real na API. */
@@ -63,7 +66,7 @@ export function ReportsListScreen({
             jobs.map((job) => {
               // Faixa de cor à esquerda: verde/âmbar/vermelho pelo risk score.
               const band = job.final_risk_score
-                ? riskColor(job.final_risk_score)
+                ? riskColor(job.final_risk_score, riskMax(demo))
                 : 'var(--divider)';
               const running = [
                 job.tier1_status,
@@ -115,13 +118,13 @@ export function ReportsListScreen({
                   <div className="flex items-center justify-end gap-1.5">
                     {job.final_risk_score ? (
                       <>
-                        <MiniGauge score={job.final_risk_score} />
+                        <MiniGauge score={job.final_risk_score} max={riskMax(demo)} />
                         <span
                           className="mono font-bold"
                           style={{
                             fontSize: 15,
                             fontVariantNumeric: 'tabular-nums',
-                            color: riskColor(job.final_risk_score),
+                            color: riskColor(job.final_risk_score, riskMax(demo)),
                           }}
                         >
                           {job.final_risk_score}

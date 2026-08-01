@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { requestManualScan } from '@/lib/api/github-actions';
 import { reportDetailRoute, SCREEN_ROUTES } from '@/lib/dash/dash-routes';
 import { useDashState } from '@/lib/dash/dash-state';
-import { fmtAbs, riskColor, shortSha, timeAgo } from '@/lib/dash/format';
+import { fmtAbs, riskColor, shortSha, timeAgo, riskMax } from '@/lib/dash/format';
 import {
   GH_ORG,
   INSTALLATION_REPOS,
@@ -23,6 +23,9 @@ import { IconPlay, ScanModal, Spinner, type ScanTarget } from './ScanModal';
 
 type PipeStatus = 'blocked' | 'failed' | 'running' | 'done';
 
+/** Estados a partir dos quais um tier não muda mais. */
+const TIER_TERMINAL = ['done', 'failed', 'skipped'];
+
 function pipeStatus(job: ScanJob): PipeStatus {
   if (job.blocked_at_tier === 1 || job.final_risk_level === 'blocked') return 'blocked';
   if (job.tier2_status === 'failed' || job.tier3_status === 'failed') return 'failed';
@@ -33,7 +36,20 @@ function pipeStatus(job: ScanJob): PipeStatus {
   ) {
     return 'running';
   }
-  return 'done';
+
+  // Nenhum tier `running` NÃO significa concluído. Entre o fim do Tier 1 e o
+  // início do Tier 2 existe uma janela em que `tier2_status` ainda é `null` —
+  // o pipeline está andando, mas nada está marcado como `running`.
+  //
+  // Tratar isso como 'done' tinha dois efeitos ruins: o Tier 2 nunca aparecia
+  // "em execução", e o polling desta tela (que só roda enquanto há job em
+  // andamento) desligava exatamente nessa janela — e como só um refresh traria
+  // o estado novo, ele nunca voltava a ligar. A tela congelava com o Tier 1
+  // concluído e o resto vazio.
+  //
+  // O pipeline só terminou quando o Tier 3 alcançou um estado terminal.
+  if (job.tier3_status && TIER_TERMINAL.includes(job.tier3_status)) return 'done';
+  return 'running';
 }
 
 /** Tier mais profundo que o scan realmente alcançou (skipped não conta). */
@@ -52,14 +68,22 @@ function isJobRunning(job: ScanJob): boolean {
 
 /* ═══════════════════════ risk score compacto ═══════════════════════ */
 
-function RiskCompact({ score, level }: { score: number | null; level: string | null }) {
+function RiskCompact({
+  score,
+  level,
+  max,
+}: {
+  score: number | null;
+  level: string | null;
+  max: number;
+}) {
   if (score == null) {
     return <span className="mono text-[11px] text-fg-dim">{level || '—'}</span>;
   }
   return (
     <span className="flex items-center gap-1.5">
-      <MiniGauge score={score} />
-      <span className="mono text-[13px] font-semibold" style={{ color: riskColor(score) }}>
+      <MiniGauge score={score} max={max} />
+      <span className="mono text-[13px] font-semibold" style={{ color: riskColor(score, max) }}>
         {score}
       </span>
     </span>
@@ -552,7 +576,11 @@ function ScanCard({ job, demo, now }: { job: ScanJob; demo: boolean; now: number
           </div>
         </div>
 
-        <RiskCompact score={job.final_risk_score} level={job.final_risk_level} />
+        <RiskCompact
+          score={job.final_risk_score}
+          level={job.final_risk_level}
+          max={riskMax(demo)}
+        />
       </div>
 
       <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-default)' }}>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { ScanReport } from '@/lib/api/scans';
 import { reportDetailRoute, SCREEN_ROUTES, findingRoute } from '@/lib/dash/dash-routes';
-import { fmtAbs, riskColor, shortSha, timeAgo } from '@/lib/dash/format';
+import { fmtAbs, riskColor, shortSha, timeAgo, riskMax } from '@/lib/dash/format';
 import { ASSETS, FINDINGS, GH_ORG, REMEDIATIONS, SCAN_JOBS } from '@/lib/dash/mock-data';
 import type { Finding, RiskLevel, ScanJob } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
@@ -164,11 +164,11 @@ export function ReportDetail({
 
         {job.final_risk_score !== null ? (
           <div className="flex flex-shrink-0 items-center gap-2">
-            <MiniGauge score={job.final_risk_score} />
+            <MiniGauge score={job.final_risk_score} max={riskMax(demo)} />
             <div>
               <div
                 className="mono text-[20px] font-extrabold leading-none"
-                style={{ color: riskColor(job.final_risk_score) }}
+                style={{ color: riskColor(job.final_risk_score, riskMax(demo)) }}
               >
                 {job.final_risk_score}
               </div>
@@ -344,7 +344,7 @@ export function ReportDetail({
                   <>
                     {' '}
                     com risk score{' '}
-                    <b style={{ color: riskColor(job.final_risk_score) }}>
+                    <b style={{ color: riskColor(job.final_risk_score, riskMax(demo)) }}>
                       {job.final_risk_score}
                     </b>
                   </>
@@ -455,10 +455,10 @@ export function ReportDetail({
                   <div className="flex items-center justify-end gap-1.5">
                     {j.final_risk_score ? (
                       <>
-                        <MiniGauge score={j.final_risk_score} />
+                        <MiniGauge score={j.final_risk_score} max={riskMax(demo)} />
                         <span
                           className="mono font-bold"
-                          style={{ fontSize: 14, color: riskColor(j.final_risk_score) }}
+                          style={{ fontSize: 14, color: riskColor(j.final_risk_score, riskMax(demo)) }}
                         >
                           {j.final_risk_score}
                         </span>
@@ -561,18 +561,36 @@ export function ReportDetail({
                     </div>
                   </td>
                   <td>
-                    <span className="mono text-[11px] text-fg-dim">
+                    {/* `block` + `truncate`: a tabela é `table-layout: fixed`,
+                        e um <span> inline não recorta — caminhos longos como
+                        `frontend/src/assets/i18n/pt_BR.json` transbordavam para
+                        a célula vizinha. O `title` preserva o valor inteiro,
+                        que o truncamento esconde. */}
+                    <span
+                      className="mono block truncate text-[11px] text-fg-dim"
+                      title={
+                        f.file_path
+                          ? `${f.file_path}${f.line_number ? `:${f.line_number}` : ''}`
+                          : undefined
+                      }
+                    >
                       {f.file_path || '—'}
                       {f.line_number ? `:${f.line_number}` : ''}
                     </span>
                   </td>
                   <td>
-                    <span className="mono text-[11px] text-fg-dim">
+                    {/* Mesmo motivo da coluna Arquivo. Aqui o caso real é o
+                        fallback do normalizador de CWE no back-end, que devolve
+                        até 50 caracteres quando não acha o identificador. */}
+                    <span
+                      className="mono block truncate text-[11px] text-fg-dim"
+                      title={f.cve_id || f.cwe_id || undefined}
+                    >
                       {f.cve_id || f.cwe_id || '—'}
                     </span>
                   </td>
                   <td>
-                    <span className="mono text-[11px] text-fg-dim">
+                    <span className="mono block truncate text-[11px] text-fg-dim">
                       {(f.source || '').toUpperCase()}
                     </span>
                   </td>

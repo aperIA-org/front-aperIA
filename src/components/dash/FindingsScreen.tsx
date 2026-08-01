@@ -485,7 +485,7 @@ export function FindingsScreen({
                     <SevBadge severity={finding.severity} />
                   </td>
                   <td className="cl" style={{ overflow: 'hidden' }}>
-                    <div className="truncate font-medium text-fg">
+                    <div className="truncate font-medium text-fg" title={finding.title}>
                       {finding.title}
                       {finding.secret_verified && (
                         <span
@@ -501,7 +501,19 @@ export function FindingsScreen({
                         </span>
                       )}
                     </div>
-                    <div className="mono mt-0.5 truncate text-[10px] text-fg-dim">
+                    <div
+                      className="mono mt-0.5 truncate text-[10px] text-fg-dim"
+                      /* O truncamento esconde justamente o que se usa para
+                         achar o arquivo — o `title` devolve o valor inteiro. */
+                      title={[
+                        finding.asset,
+                        `${finding.file_path || '—'}${
+                          finding.line_number ? `:${finding.line_number}` : ''
+                        }`,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    >
                       {/* O repositório vem antes do caminho: com vários repos
                           monitorados, `lib/insecurity.ts` sozinho não diz de
                           qual projeto é — e caminhos comuns (`index.ts`,
@@ -517,10 +529,20 @@ export function FindingsScreen({
                     </div>
                   </td>
                   <td>
-                    <span className="mono text-[10px] text-fg-mute">{finding.source}</span>
+                    <span className="mono block truncate text-[10px] text-fg-mute">
+                      {finding.source}
+                    </span>
                   </td>
-                  <td style={{ overflow: 'hidden' }}>
-                    <span className="mono text-[10px] text-fg-dim">
+                  <td>
+                    {/* `block truncate` + `title`, igual ao detalhe de
+                        relatório: recorta com reticências em vez de cortar
+                        seco, e o valor inteiro fica no tooltip. O caso real de
+                        estouro é o fallback do normalizador de CWE no
+                        back-end, que devolve até 50 caracteres. */}
+                    <span
+                      className="mono block truncate text-[10px] text-fg-dim"
+                      title={finding.cve_id || finding.cwe_id || undefined}
+                    >
                       {finding.cve_id || finding.cwe_id || '—'}
                     </span>
                   </td>

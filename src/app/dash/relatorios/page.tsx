@@ -31,6 +31,7 @@ export default async function RelatoriosPage({
     <DataScreenGate>
       <ReportsListScreen
         jobs={data.jobs}
+        demo={demo}
         ok={data.ok}
         now={demo ? REF_NOW : Date.now()}
       />
