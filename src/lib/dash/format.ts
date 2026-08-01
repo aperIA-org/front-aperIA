@@ -69,12 +69,20 @@ export function riskColor(score: number): string {
 }
 
 /**
- * Tempo relativo a partir do relógio congelado (`REF_NOW`), e não de agora —
- * é o que mantém "há 3d" estável entre visitas.
+ * Tempo relativo a partir de uma referência.
+ *
+ * O padrão é o relógio congelado (`REF_NOW`), que é o que mantém "há 3d"
+ * estável entre visitas no dataset de demonstração. Telas com dados REAIS
+ * precisam passar `now` — sem isso, uma data de hoje fica no futuro em relação
+ * a `REF_NOW` (2024-06-29) e todo finding apareceria como "há 0m".
+ *
+ * O valor de `now` é calculado no server component e desce como prop: chamar
+ * `Date.now()` no cliente divergiria do HTML do servidor e quebraria a
+ * hidratação — ver CLAUDE.md.
  */
-export function timeAgo(iso: string): string {
+export function timeAgo(iso: string, now: number = REF_NOW): string {
   const d = new Date(iso).getTime();
-  const diff = REF_NOW - d;
+  const diff = now - d;
   const m = Math.floor(diff / 60000);
   const h = Math.floor(m / 60);
   const dy = Math.floor(h / 24);

@@ -212,6 +212,56 @@ export async function disconnectGitHubAccount(accountId: string): Promise<Action
 }
 
 /**
+ * Define (ou limpa) a URL da aplicação publicada — alvo do DAST no Tier 3.
+ *
+ * `null` limpa: é a ÚNICA forma de remover o alvo. O `POST /repositories` é
+ * upsert e preserva a URL quando ela é omitida, então limpar exige `PATCH` com
+ * `null` explícito — a API distingue "não informei" de "quero limpar" pela
+ * presença da chave, não pelo valor.
+ *
+ * A API recusa alvos internos (localhost, IPs privados, metadata de cloud) com
+ * 422: um scan DAST dispara requisições ativas, e apontar para dentro da
+ * infraestrutura seria SSRF. A mensagem vem pronta em português.
+ */
+export async function setRepositoryTargetUrl(
+  repositoryId: string,
+  targetUrl: string | null,
+): Promise<ActionResult> {
+  if (!IS_API_CONFIGURED) return { ok: false, message: MSG_SEM_API };
+
+  const token = await accessToken();
+  if (!token) return { ok: false, message: MSG_SEM_SESSAO };
+
+  try {
+    const { status, data } = await patchApi(
+      API_ROUTES.repository(repositoryId),
+      { target_url: targetUrl },
+      token,
+    );
+
+    if (status === 401) return { ok: false, message: MSG_SEM_SESSAO };
+    if (status === 404) return { ok: false, message: 'Repositório não encontrado.' };
+    if (status === 422) {
+      return {
+        ok: false,
+        message: apiDetail(data) ?? 'URL inválida.',
+      };
+    }
+    if (status !== 200) {
+      return { ok: false, message: apiDetail(data) ?? 'Não foi possível salvar a URL.' };
+    }
+
+    revalidateDash();
+    return {
+      ok: true,
+      message: targetUrl ? 'Alvo de DAST salvo.' : 'Alvo de DAST removido.',
+    };
+  } catch {
+    return { ok: false, message: MSG_REDE };
+  }
+}
+
+/**
  * Dispara um scan manual no HEAD do branch default do repositório.
  *
  * Fora daqui, um scan só nasce de um pull request (webhook). É por isso que a
@@ -237,9 +287,16 @@ export async function requestManualScan(
       };
     }
     if (status === 503) {
+      // 503 cobre dois casos distintos, e a API distingue no `detail`: GitHub App
+      // não configurado, ou fila de processamento fora do ar. Preferir a
+      // mensagem da API evita dizer "configure o GitHub" quando o problema é o
+      // Redis — foi assim que um erro de infraestrutura virou uma caça ao
+      // fantasma de configuração.
       return {
         ok: false,
-        message: 'A integração com o GitHub não está configurada neste ambiente.',
+        message:
+          apiDetail(data) ??
+          'A integração com o GitHub não está configurada neste ambiente.',
       };
     }
     if (status === 502) {
@@ -252,7 +309,15 @@ export async function requestManualScan(
       };
     }
     if (status < 200 || status >= 300) {
-      return { ok: false, message: apiDetail(data) ?? 'Não foi possível iniciar o scan.' };
+      // Um 500 não traz `detail`, e a mensagem genérica não dizia se o scan
+      // chegou a começar — o usuário via o erro e o scan aparecendo na lista ao
+      // mesmo tempo. Agora a afirmação é explícita: nada foi enfileirado.
+      return {
+        ok: false,
+        message:
+          apiDetail(data) ??
+          `Não foi possível iniciar o scan (erro ${status}). Nenhum scan foi enfileirado — se algum aparecer na lista, ele é de uma execução anterior.`,
+      };
     }
 
     const commitSha =

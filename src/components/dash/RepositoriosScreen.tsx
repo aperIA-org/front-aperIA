@@ -16,6 +16,7 @@ import type { Integration } from '@/lib/dash/types';
 import { DemoDataBadge } from './DemoDataBadge';
 import { GitHubAccountsCard } from './GitHubAccountsCard';
 import { RepoSelector } from './RepoSelector';
+import { TargetUrlList } from './TargetUrlList';
 
 /** Sem conexão nada roda — o status de execução é neutralizado para "idle". */
 const STATUS_CLASS: Record<string, string> = {
@@ -371,6 +372,18 @@ export function RepositoriosScreen({
             <p className="mt-3 text-[12.5px] leading-[1.55] text-fg-dim">
               Nenhum repositório monitorado: enquanto isso, nenhum pull request é analisado.
             </p>
+          )}
+
+          {monitoredCount > 0 && (
+            <>
+              <div className="mb-3 mt-6 text-[11px] font-semibold uppercase tracking-[0.04em] text-fg-mute">
+                Alvo de DAST (opcional)
+              </div>
+              <TargetUrlList
+                repositories={connection.repositories}
+                demo={connection.demo}
+              />
+            </>
           )}
         </>
       ) : (

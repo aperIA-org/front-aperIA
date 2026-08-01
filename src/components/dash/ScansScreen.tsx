@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { requestManualScan } from '@/lib/api/github-actions';
-import { SCREEN_ROUTES } from '@/lib/dash/dash-routes';
+import { reportDetailRoute, SCREEN_ROUTES } from '@/lib/dash/dash-routes';
 import { useDashState } from '@/lib/dash/dash-state';
 import { fmtAbs, riskColor, shortSha, timeAgo } from '@/lib/dash/format';
 import {
@@ -11,10 +12,8 @@ import {
   INSTALLATION_REPOS,
   REF_NOW,
   REMEDIATIONS,
-  SCAN_JOBS,
 } from '@/lib/dash/mock-data';
 import type { ScanJob } from '@/lib/dash/types';
-import { DemoDataBadge } from './DemoDataBadge';
 import { EmptyState } from './EmptyState';
 import { TierStepper } from './TierStepper';
 import { MiniGauge } from './RiskGauge';
@@ -119,15 +118,31 @@ const STATUS_OPTIONS: [PipeStatus, string][] = [
 
 /* ═══════════════════════ tela ═══════════════════════ */
 
-export function ScansScreen() {
-  const { monitored, connection } = useDashState();
-  const demo = connection.demo;
+export function ScansScreen({
+  jobs: serverJobs,
+  ok,
+  demo,
+  now,
+}: {
+  /** `GET /scans` no server component, ou o dataset do protótipo. */
+  jobs: ScanJob[];
+  /** `false` = a API não respondeu. Diferente de "nenhuma execução". */
+  ok: boolean;
+  demo: boolean;
+  /** Âncora de tempo: `REF_NOW` em demonstração, o agora real com a API. */
+  now: number;
+}) {
+  const router = useRouter();
+  const { monitored } = useDashState();
 
   /**
-   * Cópia local do dataset: o protótipo dava `unshift` no `SCAN_JOBS` e mutava
-   * os jobs no polling. Aqui o módulo compartilhado nunca é tocado.
+   * Estado local SÓ do modo demonstração: é lá que a tela fabrica execuções e
+   * o polling conclui o Tier 3 do `s2`. Com dados reais a lista é sempre a do
+   * servidor — depois de um scan manual a Server Action revalida `/dash` e a
+   * execução nova chega por aqui, sem cópia local para sair de sincronia.
    */
-  const [jobs, setJobs] = useState<ScanJob[]>(() => SCAN_JOBS);
+  const [demoJobs, setDemoJobs] = useState<ScanJob[]>(() => serverJobs);
+  const jobs = demo ? demoJobs : serverJobs;
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [modalOpen, setModalOpen] = useState(false);
   const [startedCount, setStartedCount] = useState(0);
@@ -142,6 +157,9 @@ export function ScansScreen() {
    * no-op quando o usuário pede menos movimento.
    */
   useEffect(() => {
+    // Só encena sobre o dataset do protótipo: com dados reais isso reescreveria
+    // o status de uma execução de verdade a partir de um id mock (`s2`).
+    if (!demo) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     let tick = 0;
@@ -149,7 +167,7 @@ export function ScansScreen() {
       tick += 1;
       if (tick < 4) return;
 
-      setJobs((prev) =>
+      setDemoJobs((prev) =>
         prev.map((job) =>
           job.id === 's2'
             ? {
@@ -166,11 +184,41 @@ export function ScansScreen() {
     }, 3000);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [demo]);
 
+  /**
+   * Com dados reais a lista precisa envelhecer sozinha.
+   *
+   * A tela é renderizada no servidor uma vez; o pipeline avança em background e
+   * nada aqui saberia. O efeito colateral era pior que uma lista desatualizada:
+   * `fullNameScanRunning` desabilita o repositório no modal "Iniciar scan", e
+   * como o snapshot congelava com o job em `running`, o repositório ficava
+   * **permanentemente bloqueado** — sem nenhuma requisição chegar à API, o que
+   * torna o sintoma invisível nos logs do servidor.
+   *
+   * `router.refresh()` re-executa o server component e traz `jobs` novos. O
+   * intervalo só existe enquanto há execução em andamento: nada rodando,
+   * nada a atualizar.
+   */
+  useEffect(() => {
+    if (demo) return;
+    if (!serverJobs.some(isJobRunning)) return;
+
+    const interval = window.setInterval(() => router.refresh(), 5000);
+    return () => window.clearInterval(interval);
+  }, [demo, serverJobs, router]);
+
+  /** Em demonstração o repositório é identificado pelo nome curto sob `GH_ORG`. */
   const repoScanRunning = useCallback(
     (name: string) =>
       jobs.some((job) => job.repo_full_name === `${GH_ORG}/${name}` && isJobRunning(job)),
+    [jobs],
+  );
+
+  /** Com dados reais o casamento é pelo `full_name` do repositório monitorado. */
+  const fullNameScanRunning = useCallback(
+    (fullName: string) =>
+      jobs.some((job) => job.repo_full_name === fullName && isJobRunning(job)),
     [jobs],
   );
 
@@ -194,16 +242,17 @@ export function ScansScreen() {
       key: repo.id,
       label: repo.full_name,
       meta: `branch ${repo.default_branch}`,
+      disabled: fullNameScanRunning(repo.full_name),
     }));
-  }, [demo, monitored, repoScanRunning]);
+  }, [demo, monitored, repoScanRunning, fullNameScanRunning]);
 
   /**
    * Inicia um scan em UM repositório, na hora.
    *
    * Fora do modo demonstração isto chama `POST /repositories/{id}/scan`, que
    * resolve o HEAD do branch default e enfileira o mesmo pipeline que um pull
-   * request dispararia. O resultado NÃO aparece na lista abaixo: ela ainda lê o
-   * dataset do protótipo — daí o badge no cabeçalho e o aviso no modal.
+   * request dispararia. A Server Action revalida `/dash`, então a execução nova
+   * entra na lista abaixo — que agora lê a API, não mais o dataset do protótipo.
    */
   const startScan = useCallback(
     (key: string) => {
@@ -211,7 +260,7 @@ export function ScansScreen() {
         if (repoScanRunning(key)) return;
         const seq = startedCount + 1;
         setStartedCount(seq);
-        setJobs((prev) => [buildScanJob(key, seq), ...prev]);
+        setDemoJobs((prev) => [buildScanJob(key, seq), ...prev]);
         setModalOpen(false);
         return;
       }
@@ -283,7 +332,6 @@ export function ScansScreen() {
                 {jobs.length} no total
               </span>
             </h1>
-            <DemoDataBadge className="flex-shrink-0" />
           </div>
           <p className="mt-1 text-[13px] text-fg-dim">
             Histórico de varreduras por repositório
@@ -386,20 +434,27 @@ export function ScansScreen() {
               <span className="text-[15px] font-semibold">{group.repo}</span>
               <span className="text-[12px] text-fg-dim">
                 · {group.jobs.length} scan{group.jobs.length === 1 ? '' : 's'} · último{' '}
-                {timeAgo(group.jobs[0].created_at)}
+                {timeAgo(group.jobs[0].created_at, now)}
               </span>
             </div>
 
             {group.jobs.map((job) => (
-              <ScanCard key={job.id} job={job} />
+              <ScanCard key={job.id} job={job} demo={demo} now={now} />
             ))}
           </div>
         ))
+      ) : !ok ? (
+        <div className="stat-card">
+          <EmptyState
+            title="Não foi possível carregar os scans"
+            body="O aperIA não conseguiu falar com a API. Recarregue a página; se persistir, verifique se sua sessão ainda é válida."
+          />
+        </div>
       ) : jobs.length === 0 ? (
         <div className="stat-card">
           <EmptyState
             title="Nenhum scan ainda"
-            body="Conecte um repositório e abra um pull request para disparar o primeiro scan. Cada PR roda os três tiers automaticamente."
+            body="Cada pull request nos repositórios monitorados dispara o scan de 3 tiers. Você também pode iniciar um scan manual agora."
             action={
               <Link href={SCREEN_ROUTES.integrations} className="btn btn-md btn-primary">
                 Configurar scanners
@@ -427,7 +482,7 @@ export function ScansScreen() {
         subtitle={
           demo
             ? 'Escolha o repositório para escanear agora.'
-            : 'O scan roda no HEAD do branch default. O histórico abaixo ainda mostra dados de demonstração, então a execução nova não aparece nele.'
+            : 'O scan roda no HEAD do branch default e aparece no histórico assim que o pipeline enfileira.'
         }
         pending={scanPending}
         feedback={scanFeedback}
@@ -441,15 +496,28 @@ export function ScansScreen() {
   );
 }
 
-/** Card de um scan: o clique abre as remediações DESTE scan. */
-function ScanCard({ job }: { job: ScanJob }) {
+/**
+ * Card de um scan.
+ *
+ * O destino do clique depende da origem do dado: em demonstração abre as
+ * remediações DESTE scan, como no protótipo. Com dados reais vai para o
+ * relatório do commit — a API não expõe remediações, e mandar um id real para
+ * uma tela mock levaria a uma lista vazia.
+ */
+function ScanCard({ job, demo, now }: { job: ScanJob; demo: boolean; now: number }) {
   const running = isJobRunning(job);
   const gate1Blocked = job.final_risk_level === 'blocked';
-  const remCount = REMEDIATIONS.filter((rem) => rem.scan_job_id === job.id).length;
+  const remCount = demo
+    ? REMEDIATIONS.filter((rem) => rem.scan_job_id === job.id).length
+    : 0;
 
   return (
     <Link
-      href={`${SCREEN_ROUTES.remediations}?scan=${job.id}`}
+      href={
+        demo
+          ? `${SCREEN_ROUTES.remediations}?scan=${job.id}`
+          : reportDetailRoute(job.id)
+      }
       className="stat-card card-link mb-3 block"
     >
       <div className="mb-3 flex items-center justify-between">
@@ -471,7 +539,7 @@ function ScanCard({ job }: { job: ScanJob }) {
           </div>
           <div className="mt-0.5 text-[12px] text-fg-dim">
             <span title={fmtAbs(job.created_at)} className="cursor-help">
-              {timeAgo(job.created_at)}
+              {timeAgo(job.created_at, now)}
             </span>
             {remCount > 0 && (
               <>

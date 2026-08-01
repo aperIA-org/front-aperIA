@@ -21,8 +21,8 @@ import {
   type SortColumn,
 } from '@/lib/dash/findings-filters';
 import { fmtAbs, hexA, sevColor, timeAgo } from '@/lib/dash/format';
-import { DAY, FINDINGS, openFindings, REF_NOW } from '@/lib/dash/mock-data';
-import { DemoDataBadge } from './DemoDataBadge';
+import { DAY } from '@/lib/dash/mock-data';
+import type { Finding } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
 import { SevBadge } from './SevBadge';
 
@@ -45,22 +45,45 @@ function SortArrow({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   );
 }
 
-export function FindingsScreen() {
+type FindingsScreenProps = {
+  /** Resolvidos no server component: API real ou dataset do protótipo. */
+  findings: Finding[];
+  /** `true` = dataset do protótipo (sem API configurada, ou preview do cadastro). */
+  demo: boolean;
+  /** `false` = a API não respondeu; é diferente de "nenhum finding". */
+  apiOk: boolean;
+  /** `true` = o teto de busca foi atingido e a lista é um subconjunto. */
+  truncated: boolean;
+  /**
+   * Âncora de tempo. Vem do servidor porque `Date.now()` no cliente divergiria
+   * do HTML renderizado e quebraria a hidratação; em demonstração é `REF_NOW`,
+   * o relógio congelado do protótipo.
+   */
+  now: number;
+};
+
+export function FindingsScreen({
+  findings,
+  demo,
+  apiOk,
+  truncated,
+  now,
+}: FindingsScreenProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const filters = useMemo(
-    () => parseFilters(new URLSearchParams(searchParams.toString())),
-    [searchParams],
+    () => parseFilters(new URLSearchParams(searchParams.toString()), now),
+    [searchParams, now],
   );
 
   /** Toda mutação de filtro vira uma troca de URL — a URL é a fonte da verdade. */
   const push = useCallback(
     (next: FindingsFilters) => {
-      const qs = serializeFilters(next);
+      const qs = serializeFilters(next, now);
       router.replace(qs ? `?${qs}` : '?', { scroll: false });
     },
-    [router],
+    [router, now],
   );
 
   /**
@@ -93,20 +116,20 @@ export function FindingsScreen() {
       faixaAging: [],
       status: null,
       busca: '',
-      periodo: { de: defaultFrom(), ate: null },
+      periodo: { de: defaultFrom(now), ate: null },
       page: 1,
     });
-  }, [filters, push]);
+  }, [filters, push, now]);
 
   const setPeriod = useCallback(
     (preset: string) => {
       const periodo =
         preset === 'all'
           ? { de: null, ate: null }
-          : { de: REF_NOW - Number(preset) * DAY, ate: null };
+          : { de: now - Number(preset) * DAY, ate: null };
       push({ ...filters, periodo, status: null, page: 1 });
     },
-    [filters, push],
+    [filters, push, now],
   );
 
   const setSort = useCallback(
@@ -121,27 +144,45 @@ export function FindingsScreen() {
   );
 
   // ── derivações ──
-  const scoped = useMemo(() => applyScope(filters), [filters]);
+  const scoped = useMemo(
+    () => applyScope(filters, findings, now),
+    [filters, findings, now],
+  );
+
+  /**
+   * O corte aberto/resolvido só existe em demonstração: a API não modela
+   * resolução de finding (não há `status` nem `resolved_at`), então tudo que ela
+   * devolve está aberto e filtrar por isso seria inventar dado.
+   */
   const listBeforeSort = useMemo(
     () =>
-      scoped.filter((x) =>
-        filters.status === 'resolved' ? x.status === 'resolved' : x.status !== 'resolved',
-      ),
-    [scoped, filters.status],
+      demo
+        ? scoped.filter((x) =>
+            filters.status === 'resolved'
+              ? x.status === 'resolved'
+              : x.status !== 'resolved',
+          )
+        : scoped,
+    [scoped, filters.status, demo],
   );
   const list = useMemo(() => sortFindings(listBeforeSort, filters.sort), [
     listBeforeSort,
     filters.sort,
   ]);
-  const remediados = scoped.filter((x) => x.status === 'resolved').length;
+  const remediados = demo ? scoped.filter((x) => x.status === 'resolved').length : 0;
+
+  /** Total antes de qualquer filtro — governa o estado vazio "não há nada ainda". */
+  const totalDisponivel = demo
+    ? findings.filter((x) => x.status !== 'resolved').length
+    : findings.length;
 
   const totalPages = Math.max(1, Math.ceil(list.length / FF_PAGE_SIZE));
   const page = Math.min(Math.max(filters.page, 1), totalPages);
   const pageStart = (page - 1) * FF_PAGE_SIZE;
   const pageList = list.slice(pageStart, pageStart + FF_PAGE_SIZE);
 
-  const active = anyFilterActive(filters);
-  const preset = periodPreset(filters);
+  const active = anyFilterActive(filters, now);
+  const preset = periodPreset(filters, now);
 
   /**
    * Deep link para um finding: `/dash/findings?finding=<id>`.
@@ -228,18 +269,32 @@ export function FindingsScreen() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            {/* Sem DemoDataBadge: esta tela lê a API real, e em demonstração o
+                badge já se esconderia sozinho. */}
             <h1 className="text-[24px] font-bold tracking-tight">
               Findings{' '}
               <span className="text-[14px] font-normal text-fg-mute">
-                {listBeforeSort.length} {listBeforeSort.length === 1 ? 'aberto' : 'abertos'}
-                {remediados > 0 ? ` · ${remediados} remediados no período` : ''}
+                {demo ? (
+                  <>
+                    {listBeforeSort.length}{' '}
+                    {listBeforeSort.length === 1 ? 'aberto' : 'abertos'}
+                    {remediados > 0 ? ` · ${remediados} remediados no período` : ''}
+                  </>
+                ) : (
+                  `${listBeforeSort.length} ${listBeforeSort.length === 1 ? 'finding' : 'findings'}`
+                )}
               </span>
             </h1>
-            <DemoDataBadge className="flex-shrink-0" />
           </div>
           <p className="mt-1 text-[13px] text-fg-dim">
             Vulnerabilidades encontradas nos scans, das mais críticas para as menos.
           </p>
+          {truncated && (
+            <p className="mt-1 text-[12px] text-fg-mute">
+              Lista limitada aos findings mais recentes — os filtros valem sobre esse
+              subconjunto.
+            </p>
+          )}
         </div>
         <div className="perwrap">
           <div className="perseg">
@@ -254,7 +309,7 @@ export function FindingsScreen() {
       {active && (
         <div className="filtbar">
           <span className="filtbar-count">
-            <b>{listBeforeSort.length}</b> de {FINDINGS.length} findings
+            <b>{listBeforeSort.length}</b> de {findings.length} findings
           </span>
           <div className="filtbar-chips">
             {activeChips.map((chip) => (
@@ -364,7 +419,7 @@ export function FindingsScreen() {
                   <SortArrow active={filters.sort.col === 'sev'} dir={filters.sort.dir} />
                 </span>
               </th>
-              <th className="cl">Título / Arquivo</th>
+              <th className="cl">Título / Repositório · Arquivo</th>
               <th>Scanner</th>
               <th>CVE / CWE</th>
               <th className="sort-h" onClick={() => setSort('tier')}>
@@ -385,11 +440,23 @@ export function FindingsScreen() {
             {pageList.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ padding: 0 }}>
-                  {openFindings().length === 0 ? (
+                  {!apiOk ? (
                     <EmptyState
-                      title="Nenhum finding, seu código está limpo neste commit."
-                      body="O último scan não encontrou vulnerabilidades. Novos findings aparecem aqui a cada scan."
+                      title="Não foi possível carregar os findings"
+                      body="A API não respondeu ou a sessão expirou. Atualize a página em instantes — nada foi perdido, os findings continuam registrados."
                     />
+                  ) : totalDisponivel === 0 ? (
+                    demo ? (
+                      <EmptyState
+                        title="Nenhum finding, seu código está limpo neste commit."
+                        body="O último scan não encontrou vulnerabilidades. Novos findings aparecem aqui a cada scan."
+                      />
+                    ) : (
+                      <EmptyState
+                        title="Nenhum finding encontrado até agora."
+                        body="Os scans rodam a cada pull request nos repositórios monitorados. Assim que uma vulnerabilidade aparecer, ela é listada aqui."
+                      />
+                    )
                   ) : (
                     <EmptyState
                       title="Sem dados para os filtros aplicados"
@@ -435,7 +502,18 @@ export function FindingsScreen() {
                       )}
                     </div>
                     <div className="mono mt-0.5 truncate text-[10px] text-fg-dim">
-                      {finding.file_path || '—'}:{finding.line_number || '?'}
+                      {/* O repositório vem antes do caminho: com vários repos
+                          monitorados, `lib/insecurity.ts` sozinho não diz de
+                          qual projeto é — e caminhos comuns (`index.ts`,
+                          `config.py`) se repetem entre repositórios. */}
+                      {finding.asset && (
+                        <span className="text-fg-mute">{finding.asset} · </span>
+                      )}
+                      {/* Nem todo detector reporta linha (TruffleHog em modo
+                          filesystem, por exemplo). `arquivo:?` sugeria dado
+                          faltando; sem o sufixo, o caminho fica só correto. */}
+                      {finding.file_path || '—'}
+                      {finding.line_number ? `:${finding.line_number}` : ''}
                     </div>
                   </td>
                   <td>
@@ -462,7 +540,7 @@ export function FindingsScreen() {
                       className="cursor-help text-[12px] text-fg-dim"
                       title={fmtAbs(finding.created_at)}
                     >
-                      {timeAgo(finding.created_at)}
+                      {timeAgo(finding.created_at, now)}
                     </span>
                   </td>
                 </tr>

@@ -67,16 +67,23 @@ export const AGING_LABELS: Record<string, string> = {
 export const SEV_STACK = ['critical', 'high', 'medium', 'low', 'info'] as const;
 export const SCANNER_LIST = ['trufflehog', 'semgrep', 'trivy', 'prowler', 'zap'] as const;
 
-/** Janela padrão: últimos 90 dias a partir do relógio congelado. */
-export function defaultFrom(): number {
-  return REF_NOW - 90 * DAY;
+/**
+ * Janela padrão: últimos 90 dias.
+ *
+ * `now` é injetável porque a âncora depende da origem dos dados: o dataset de
+ * demonstração vive em `REF_NOW` (2024-06-29), mas com findings REAIS a janela
+ * precisa partir do agora de verdade — ancorada em `REF_NOW`, ela descartaria
+ * todo finding recente e a tela viria vazia. O default preserva o mock.
+ */
+export function defaultFrom(now: number = REF_NOW): number {
+  return now - 90 * DAY;
 }
 
-export function agingBucketOf(finding: Pick<Finding, 'created_at'>): string {
-  const age = Math.max(
-    0,
-    Math.floor((REF_NOW - new Date(finding.created_at).getTime()) / DAY),
-  );
+export function agingBucketOf(
+  finding: Pick<Finding, 'created_at'>,
+  now: number = REF_NOW,
+): string {
+  const age = Math.max(0, Math.floor((now - new Date(finding.created_at).getTime()) / DAY));
   if (age <= 7) return '0-7';
   if (age <= 30) return '8-30';
   if (age <= 90) return '31-90';
@@ -85,7 +92,10 @@ export function agingBucketOf(finding: Pick<Finding, 'created_at'>): string {
 
 // ── URL ⇄ estado ─────────────────────────────────────────────────────────────
 
-export function parseFilters(params: URLSearchParams): FindingsFilters {
+export function parseFilters(
+  params: URLSearchParams,
+  now: number = REF_NOW,
+): FindingsFilters {
   const list = (key: string): string[] => {
     const raw = params.get(key);
     return raw ? raw.split(',').filter(Boolean) : [];
@@ -118,7 +128,7 @@ export function parseFilters(params: URLSearchParams): FindingsFilters {
     // `de` ausente = janela padrão de 90 dias (mesma regra do protótipo);
     // `de=all` = todo o histórico, que internamente é `null`.
     periodo: {
-      de: params.get('de') === 'all' ? null : (num('de') ?? defaultFrom()),
+      de: params.get('de') === 'all' ? null : (num('de') ?? defaultFrom(now)),
       ate: num('ate'),
     },
     sort: { col, dir },
@@ -126,7 +136,10 @@ export function parseFilters(params: URLSearchParams): FindingsFilters {
   };
 }
 
-export function serializeFilters(filters: FindingsFilters): string {
+export function serializeFilters(
+  filters: FindingsFilters,
+  now: number = REF_NOW,
+): string {
   const params = new URLSearchParams();
 
   for (const dim of FF_DIMS) {
@@ -136,7 +149,7 @@ export function serializeFilters(filters: FindingsFilters): string {
   if (filters.status) params.set('status', filters.status);
   if (filters.busca) params.set('q', filters.busca);
   // Só serializa o período quando difere do padrão, para não poluir a URL.
-  if (filters.periodo.de !== null && filters.periodo.de !== defaultFrom()) {
+  if (filters.periodo.de !== null && filters.periodo.de !== defaultFrom(now)) {
     params.set('de', String(filters.periodo.de));
   }
   if (filters.periodo.de === null) params.set('de', 'all');
@@ -154,19 +167,22 @@ export function serializeFilters(filters: FindingsFilters): string {
 
 export type PeriodPreset = '7' | '30' | '90' | 'all' | 'custom';
 
-export function periodPreset(filters: FindingsFilters): PeriodPreset {
+export function periodPreset(
+  filters: FindingsFilters,
+  now: number = REF_NOW,
+): PeriodPreset {
   const { de, ate } = filters.periodo;
   if (ate !== null) return 'custom';
   if (de === null) return 'all';
-  const days = Math.round((REF_NOW - de) / DAY);
+  const days = Math.round((now - de) / DAY);
   if (days === 7) return '7';
   if (days === 30) return '30';
   if (days === 90) return '90';
   return 'custom';
 }
 
-export function periodNoteLabel(filters: FindingsFilters): string {
-  const preset = periodPreset(filters);
+export function periodNoteLabel(filters: FindingsFilters, now: number = REF_NOW): string {
+  const preset = periodPreset(filters, now);
   if (preset === '7') return 'Últimos 7 dias, por dia';
   if (preset === '30') return 'Últimos 30 dias, por semana';
   if (preset === '90') return 'Últimos 90 dias, por quinzena';
@@ -181,14 +197,25 @@ export function periodNoteLabel(filters: FindingsFilters): string {
 }
 
 /** `true` quando algo além do padrão está aplicado — controla a barra de chips. */
-export function anyFilterActive(filters: FindingsFilters): boolean {
+export function anyFilterActive(filters: FindingsFilters, now: number = REF_NOW): boolean {
   const dimsActive = FF_DIMS.some((dim) => (filters[dim] as unknown[]).length > 0);
-  return dimsActive || !!filters.status || !!filters.busca || periodPreset(filters) !== '90';
+  return (
+    dimsActive || !!filters.status || !!filters.busca || periodPreset(filters, now) !== '90'
+  );
 }
 
-/** Aplica todas as dimensões — mesma ordem do `applyScope()` original. */
-export function applyScope(filters: FindingsFilters): Finding[] {
-  let scope = FINDINGS.slice();
+/**
+ * Aplica todas as dimensões — mesma ordem do `applyScope()` original.
+ *
+ * `source` é parâmetro porque a tela passou a receber os findings da API; o
+ * default mantém o dataset do protótipo para quem ainda depende dele.
+ */
+export function applyScope(
+  filters: FindingsFilters,
+  source: Finding[] = FINDINGS,
+  now: number = REF_NOW,
+): Finding[] {
+  let scope = source.slice();
 
   if (filters.repositorios.length)
     scope = scope.filter((x) => filters.repositorios.includes(x.asset));
@@ -200,7 +227,7 @@ export function applyScope(filters: FindingsFilters): Finding[] {
     scope = scope.filter((x) => filters.scanners.includes(x.source));
   if (filters.tiers.length) scope = scope.filter((x) => filters.tiers.includes(x.tier));
   if (filters.faixaAging.length)
-    scope = scope.filter((x) => filters.faixaAging.includes(agingBucketOf(x)));
+    scope = scope.filter((x) => filters.faixaAging.includes(agingBucketOf(x, now)));
   if (filters.periodo.de !== null)
     scope = scope.filter(
       (x) => new Date(x.created_at).getTime() >= (filters.periodo.de as number),

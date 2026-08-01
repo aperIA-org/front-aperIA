@@ -248,9 +248,12 @@ API (it has no session). `?theme=light` forces the theme without persisting it.
 longer exist, cleared on login/logout to tidy up older sessions. `logout()` calls `/api/auth/logout` and
 routes to `/login`.
 
-**Data screens still read mock data**, so they carry `<DemoDataBadge />` next to the `<h1>` whenever the
-connection is real (`showDemoBadge`). In demo mode the whole app is a prototype and the badge stays hidden.
-Delete the badge when a screen starts reading `/repositories/{id}/{findings,scans,reports}`.
+**Início, Findings, Relatórios and Scans read the API** — see
+[Dados reais](#dados-reais-findings-relatórios-e-scans) below. The screens that are *still* mock
+(Remediações, AI Emulation, Time, and the scanners section of Repositórios) carry `<DemoDataBadge />` next
+to their `<h1>` whenever the connection is real
+(`showDemoBadge`). In demo mode the whole app is a prototype and the badge stays hidden. Remove the badge
+from a screen the moment it starts reading the API.
 
 **All data is deterministic mock data** in `src/lib/dash/mock-data.ts`. `buildFindings()` generates 80
 synthetic findings from `VULN_TEMPLATES` with a seeded `mulberry32(20240629)` PRNG, plus 10 hand-written
@@ -326,10 +329,64 @@ The
 API needs a public tunnel for the App's **Webhook URL** and **Setup URL** (GitHub has to reach it); the
 front-end does **not** — that redirect happens in the user's browser.
 
+**Alvo de DAST.** `Repository.target_url` (nullable) is where that repository is deployed — the Tier 3 ZAP
+target. `TargetUrlList` edits it; **`null` clears, and `PATCH` is the only way to clear**, because
+`POST /repositories` is an upsert that preserves the field when omitted (the API distinguishes "not sent"
+from "set to null" by key presence, not by value). The API rejects internal targets — localhost, private
+ranges, cloud metadata — with 422 and a ready-to-show Portuguese message: a DAST scan fires *active*
+requests, so an internal target would turn the product into SSRF against its own infrastructure.
+
 **Manual scan.** `POST /repositories/{id}/scan` resolves the HEAD of the default branch and queues the same
 pipeline a pull request would. `ScansScreen` wires it for real, but the list below it is still mock, so the
 new execution does not show up there — the modal says so explicitly. In demo mode the old fabricated-job
 behaviour is kept.
+
+### Dados reais: Findings, Relatórios e Scans
+
+`src/lib/api/findings.ts` (`fetchFindings`) and `src/lib/api/scans.ts` (`fetchScans`, `fetchScan`,
+`fetchScanReports`) are server-only and map the API DTOs onto the existing local types, so the screens
+barely changed shape. Each page picks its source: `?preview=1` or `connection.demo` → the prototype
+dataset; otherwise the API. Scans and the Relatórios list share `fetchScans()` — same executions, two
+presentations; Início pulls both and its KPIs now agree with the screens they link to.
+
+**The sidebar's Findings badge uses `fetchFindingsCount()`, not `fetchFindings()`.** It is resolved in the
+layout, which runs on *every* dash route — pulling up to 1000 findings there just to render a number would
+be absurd, so the count comes from `GET /findings?limit=1` and its `total`. `null` (could not count) hides
+the badge rather than showing a zero.
+
+**Scans keeps client state only in demo mode.** The fabricated job from "Iniciar scan" and the polling that
+finishes `s2`'s Tier 3 are prototype theatre and are gated on `demo`; with real data the list *is* the
+server's, so the manual-scan action's `revalidatePath('/dash')` is what makes a new execution appear. A
+local copy would drift from the server instead. For the same reason the scan card changes destination: in
+demo it opens that scan's remediations, with real data it opens the commit's report — Remediações is still
+mock, and sending a real id there would land on an empty list.
+
+Four things that are load-bearing:
+
+- **The frozen clock cannot reach real data.** `REF_NOW` is 2024-06-29; real findings are not. `timeAgo`,
+  `defaultFrom`, `agingBucketOf`, `parseFilters`, `serializeFilters`, `periodPreset`, `anyFilterActive` and
+  `applyScope` all take a `now` (default `REF_NOW`). The page computes it — `Date.now()` in the **server
+  component**, `REF_NOW` in demo — and passes it down; calling `Date.now()` on the client would diverge from
+  the server HTML. Miss this and the default 90-day window silently filters *every* real finding out: the
+  screen goes empty with no error. `parseFilters` is the one that materialises the missing `de`, so it needs
+  `now` just as much as `defaultFrom` does.
+- **Findings filtering stays entirely client-side.** `GET /findings` accepts one value per dimension
+  (`severity`, `tier`, `source`, `commit_sha`, `secret_verified`) while the screen filters by several, plus
+  category (derived from the CWE), aging, free text and a date range. Splitting the work would give *wrong*
+  results, because the client half would only see the current page. So the whole set is fetched (200 per
+  page, ceiling of 1000, `truncated` when it is hit) and `findings-filters.ts` is untouched.
+- **Three concepts do not exist in the API**: finding resolution (`status`/`resolved_at`), repository
+  ownership (`owner_team`) and remediations (there is no route at all). The open/resolved split, the
+  "remediados" count and the report's PR/remediation blocks therefore *disappear* when the data is real
+  instead of being filled with invented values. `?status=` is still parsed so old links do not break.
+- **A report's identity is the `commit_sha`** — the API has no `ScanJob.id`. The mapper puts the sha in `id`,
+  so `reportDetailRoute()` keeps working and the URL becomes `/dash/relatorios/<sha>`. `pr_number` is `0` for
+  manual scans (no PR), and the UI hides the `#0`.
+
+**The report itself is the pipeline's markdown** (`report_markdown`, one per tier), rendered by
+`src/components/dash/Markdown.tsx` with `react-markdown` + `remark-gfm`. Raw HTML is off and there is no
+`dangerouslySetInnerHTML`: the content comes from an LLM, so rendering its markup would be an XSS vector.
+Keep it that way.
 
 ### URL as state
 

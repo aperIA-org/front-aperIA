@@ -2,18 +2,15 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import type { ScanReport } from '@/lib/api/scans';
 import { reportDetailRoute, SCREEN_ROUTES, findingRoute } from '@/lib/dash/dash-routes';
 import { fmtAbs, riskColor, shortSha, timeAgo } from '@/lib/dash/format';
-import {
-  ASSETS,
-  FINDINGS,
-  GH_ORG,
-  REMEDIATIONS,
-  SCAN_JOBS,
-} from '@/lib/dash/mock-data';
-import { DemoDataBadge } from './DemoDataBadge';
+import { ASSETS, FINDINGS, GH_ORG, REMEDIATIONS, SCAN_JOBS } from '@/lib/dash/mock-data';
+import type { Finding, RiskLevel, ScanJob } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
 import { DiffView } from './DiffView';
+import { Markdown } from './Markdown';
 import { MiniGauge } from './RiskGauge';
 import { SevBadge } from './SevBadge';
 import { TierStepper } from './TierStepper';
@@ -21,6 +18,14 @@ import { TierStepperCompact } from './TierStepperCompact';
 
 /** Máximo de findings listados na tabela — o resto fica na tela de Findings. */
 const MAX_FINDING_ROWS = 30;
+
+const RISK_LEVEL_PT: Record<Exclude<RiskLevel, null>, string> = {
+  critical: 'crítico',
+  high: 'alto',
+  medium: 'médio',
+  low: 'baixo',
+  blocked: 'bloqueado',
+};
 
 /** Ícone de pull request (mesmo traçado do protótipo). */
 function IconPullRequest() {
@@ -43,35 +48,68 @@ function IconPullRequest() {
   );
 }
 
+function Sep() {
+  return <span aria-hidden="true">·</span>;
+}
+
+type ReportDetailProps = {
+  /** Execução: da API (`GET /scans/{sha}`) ou do dataset do protótipo. */
+  job: ScanJob;
+  /**
+   * Relatórios do pipeline, um por tier — é ESTE markdown que é o relatório.
+   * Vazio em demonstração, onde a tela ainda compõe o conteúdo à mão.
+   */
+  reports: ScanReport[];
+  /** Findings do commit (API) ou do asset (demonstração). */
+  findings: Finding[];
+  /** `false` = a API não respondeu; é diferente de "nenhum finding". */
+  findingsOk: boolean;
+  /**
+   * `true` = dataset do protótipo. Só nesse modo existem PR enviado, patches de
+   * remediação e histórico de scans: a API não expõe rota de remediações e o
+   * detalhe carrega uma única execução. Misturar mock com dado real seria mentir.
+   */
+  demo: boolean;
+  /**
+   * Âncora de tempo, calculada no server component. `REF_NOW` em demonstração;
+   * o agora real com a API. `Date.now()` no cliente divergiria do HTML do
+   * servidor e quebraria a hidratação — ver CLAUDE.md.
+   */
+  now: number;
+};
 
 /**
- * Detalhe de uma execução: o PR enviado com os patches, o histórico de scans do
- * repositório e os findings encontrados pós-scan.
+ * Detalhe de uma execução do pipeline.
  *
- * Porte de `renderReportDetail` (`legacy/dash/index.html`, linhas 2299–2385).
- * O `id` já foi validado na rota, então aqui a busca em `SCAN_JOBS` nunca falha
- * — o `return null` é só o estreitamento de tipo.
+ * Com dados reais o corpo é o markdown gerado pelo pipeline (`report_markdown`),
+ * um relatório por tier, mais os findings daquele commit. Em demonstração o
+ * porte de `renderReportDetail` (`legacy/dash/index.html`, linhas 2299–2385)
+ * segue como estava: PR enviado com os patches e histórico de scans do repo.
  */
-export function ReportDetail({ jobId }: { jobId: string }) {
+export function ReportDetail({
+  job,
+  reports,
+  findings,
+  findingsOk,
+  demo,
+  now,
+}: ReportDetailProps) {
   const router = useRouter();
+  const [tier, setTier] = useState<number>(reports[0]?.tier ?? 1);
 
-  const job = SCAN_JOBS.find((j) => j.id === jobId);
-  if (!job) return null;
+  const activeReport = reports.find((r) => r.tier === tier) ?? reports[0] ?? null;
 
-  const name = job.repo_full_name.split('/')[1];
-  const asset = ASSETS.find((a) => a.name === name);
-  const assetType = asset?.type ?? 'repository';
-
-  const jobs = SCAN_JOBS.filter((j) => j.repo_full_name === `${GH_ORG}/${name}`).sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
-
-  const assetFindings = FINDINGS.filter((f) => f.asset === name);
-  const openFindingsCount = assetFindings.filter((f) => f.status !== 'resolved').length;
-
-  /* PR enviado: o desta execução — existe só se a execução gerou patches. */
-  const prRems = REMEDIATIONS.filter((r) => r.scan_job_id === job.id);
+  const shortName = job.repo_full_name.split('/')[1] ?? job.repo_full_name;
   const running = [job.tier1_status, job.tier2_status, job.tier3_status].includes('running');
+
+  /* Blocos sem fonte na API: só existem sobre o dataset do protótipo. */
+  const asset = demo ? ASSETS.find((a) => a.name === shortName) : undefined;
+  const prRems = demo ? REMEDIATIONS.filter((r) => r.scan_job_id === job.id) : [];
+  const history = demo
+    ? SCAN_JOBS.filter((j) => j.repo_full_name === `${GH_ORG}/${shortName}`).sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+    : [];
 
   return (
     <div className="page-wrap">
@@ -95,43 +133,150 @@ export function ReportDetail({ jobId }: { jobId: string }) {
         Relatórios
       </Link>
 
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <h1 className="text-[24px] font-bold tracking-tight">
-              {GH_ORG}/{name}
-            </h1>
-            <DemoDataBadge className="flex-shrink-0" />
-          </div>
-          <p className="mt-1 text-[13px] text-fg-dim">
-            {jobs.length} {jobs.length === 1 ? 'scan' : 'scans'} · {openFindingsCount}{' '}
-            {openFindingsCount === 1 ? 'finding aberto' : 'findings abertos'}
-            {asset?.criticality ? ` · criticidade ${asset.criticality}` : ''}
-          </p>
-        </div>
-        {job.final_risk_score ? (
-          <div className="flex items-center gap-2">
-            <MiniGauge score={job.final_risk_score} />
-            <span
-              className="mono text-[20px] font-extrabold"
-              style={{ color: riskColor(job.final_risk_score) }}
-            >
-              {job.final_risk_score}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div style={{ minWidth: 0 }}>
+          <h1 className="text-[24px] font-bold tracking-tight">{job.repo_full_name}</h1>
+          <div className="mono mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-fg-dim">
+            <span>commit {shortSha(job.commit_sha)}</span>
+            <Sep />
+            {/* `pr_number = 0` é o scan manual: roda pelo botão, fora de um PR. */}
+            <span>{job.pr_number ? `PR #${job.pr_number}` : 'scan manual'}</span>
+            <Sep />
+            <span title={fmtAbs(job.created_at)} className="cursor-help">
+              {timeAgo(job.created_at, now)}
             </span>
+            {findingsOk ? (
+              <>
+                <Sep />
+                <span>
+                  {findings.length} {findings.length === 1 ? 'finding' : 'findings'}
+                </span>
+              </>
+            ) : null}
+            {asset?.criticality ? (
+              <>
+                <Sep />
+                <span>criticidade {asset.criticality}</span>
+              </>
+            ) : null}
           </div>
+        </div>
+
+        {job.final_risk_score !== null ? (
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <MiniGauge score={job.final_risk_score} />
+            <div>
+              <div
+                className="mono text-[20px] font-extrabold leading-none"
+                style={{ color: riskColor(job.final_risk_score) }}
+              >
+                {job.final_risk_score}
+              </div>
+              {job.final_risk_level ? (
+                <div className="mt-1 text-[11px] text-fg-dim">
+                  risco {RISK_LEVEL_PT[job.final_risk_level]}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : job.final_risk_level ? (
+          <span
+            className={`sev ${job.final_risk_level === 'blocked' ? 'st-blocked' : 'st-queued'}`}
+          >
+            {RISK_LEVEL_PT[job.final_risk_level]}
+          </span>
         ) : null}
       </div>
 
       {/* Stepper completo desta execução. Não estava em `renderReportDetail`
           (o protótipo só mostrava a versão compacta nas linhas do histórico),
-          mas é a informação que dá contexto ao PR e ao risk score acima. */}
+          mas é a informação que dá contexto ao relatório e ao risk score. */}
       <div className="stat-card mb-6">
         <div style={{ maxWidth: 700 }}>
           <TierStepper job={job} />
         </div>
       </div>
 
-      {prRems.length > 0 ? (
+      {!demo ? (
+        <div className="stat-card mb-6" style={{ padding: 0, overflow: 'hidden' }}>
+          <div
+            className="flex flex-wrap items-center gap-3"
+            style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-default)' }}
+          >
+            <h2 className="text-[15px] font-bold">Relatório do pipeline</h2>
+            {reports.length > 1 ? (
+              <div className="ml-auto flex flex-wrap gap-1.5">
+                {reports.map((report) => (
+                  <button
+                    key={report.tier}
+                    type="button"
+                    className={`chip${report.tier === activeReport?.tier ? ' on' : ''}`}
+                    aria-pressed={report.tier === activeReport?.tier}
+                    onClick={() => setTier(report.tier)}
+                  >
+                    Tier {report.tier}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          {activeReport ? (
+            <div style={{ padding: '18px 20px' }}>
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="mono text-[12px] font-bold text-fg">
+                  Tier {activeReport.tier}
+                </span>
+                {activeReport.degraded ? (
+                  <span
+                    className="sev st-queued"
+                    title="O pipeline não conseguiu usar o modelo de IA nesta execução — o conteúdo abaixo veio só dos scanners."
+                  >
+                    Modo degradado · sem IA
+                  </span>
+                ) : null}
+                {job.pr_number ? (
+                  activeReport.posted ? (
+                    <span className="sev st-done">Comentado no PR</span>
+                  ) : (
+                    <span
+                      className="sev st-skipped"
+                      title="O relatório foi gerado mas não chegou a ser publicado como comentário no pull request."
+                    >
+                      Não comentado no PR
+                    </span>
+                  )
+                ) : null}
+                <span
+                  className="mono ml-auto cursor-help text-[11px] text-fg-dim"
+                  title={fmtAbs(activeReport.created_at)}
+                >
+                  {timeAgo(activeReport.created_at, now)}
+                </span>
+              </div>
+
+              {activeReport.report_markdown.trim() ? (
+                <Markdown source={activeReport.report_markdown} />
+              ) : (
+                <p className="text-[13px] text-fg-dim">
+                  O pipeline registrou este tier sem conteúdo de relatório.
+                </p>
+              )}
+            </div>
+          ) : (
+            <EmptyState
+              title="Relatório ainda não disponível"
+              body={
+                running
+                  ? 'Esta execução ainda está em andamento — o relatório aparece aqui quando o tier terminar.'
+                  : 'O pipeline não gerou relatório em markdown para esta execução.'
+              }
+            />
+          )}
+        </div>
+      ) : null}
+
+      {demo && prRems.length > 0 ? (
         <div className="stat-card mb-6" style={{ padding: 0, overflow: 'hidden' }}>
           <div
             className="flex items-center gap-2.5"
@@ -155,7 +300,7 @@ export function ReportDetail({ jobId }: { jobId: string }) {
               aperia/fix-{shortSha(job.commit_sha)} → main · commit{' '}
               {shortSha(job.commit_sha)} ·{' '}
               <span title={fmtAbs(job.created_at)} className="cursor-help">
-                {timeAgo(job.created_at)}
+                {timeAgo(job.created_at, now)}
               </span>
             </div>
 
@@ -183,7 +328,7 @@ export function ReportDetail({ jobId }: { jobId: string }) {
                 </span>
                 <span className="text-[12.5px] font-semibold">aperIA-bot</span>
                 <span className="text-[11px] text-fg-dim">
-                  comentou {timeAgo(job.created_at)}
+                  comentou {timeAgo(job.created_at, now)}
                 </span>
               </div>
               <div
@@ -226,7 +371,9 @@ export function ReportDetail({ jobId }: { jobId: string }) {
             })}
           </div>
         </div>
-      ) : (
+      ) : null}
+
+      {demo && prRems.length === 0 ? (
         <div className="stat-card mb-6">
           <EmptyState
             title="Nenhum Pull Request enviado ainda"
@@ -237,114 +384,124 @@ export function ReportDetail({ jobId }: { jobId: string }) {
             }
           />
         </div>
-      )}
+      ) : null}
 
-      <div className="stat-card mb-6" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-default)' }}>
-          <h2 className="text-[15px] font-bold">Histórico de scans</h2>
-        </div>
-
-        {jobs.length === 0 ? (
-          <div
-            style={{
-              padding: 24,
-              textAlign: 'center',
-              color: 'var(--text-dim)',
-              fontSize: 13,
-            }}
-          >
-            {assetType === 'repository'
-              ? 'Nenhum scan executado neste repositório ainda.'
-              : 'Asset cloud: varreduras contínuas via Prowler, sem histórico de PR.'}
+      {demo ? (
+        <div className="stat-card mb-6" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-default)' }}>
+            <h2 className="text-[15px] font-bold">Histórico de scans</h2>
           </div>
-        ) : (
-          jobs.map((j) => {
-            const remCount = REMEDIATIONS.filter((r) => r.scan_job_id === j.id).length;
-            const current = j.id === job.id;
 
-            return (
-              <Link
-                key={j.id}
-                href={reportDetailRoute(j.id)}
-                className="tbl-row sr-row"
-                style={{
-                  gridTemplateColumns: '1fr 130px 110px 24px',
-                  gap: 16,
-                  alignItems: 'center',
-                  ...(current ? { background: 'var(--accent-tint)' } : {}),
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <div className="lnk text-sm font-medium text-fg">
-                    PR #{j.pr_number}{' '}
-                    <span className="mono text-fg-dim" style={{ fontSize: 11 }}>
-                      {shortSha(j.commit_sha)}
-                    </span>
-                    {remCount ? (
-                      <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-                        {' '}
-                        · {remCount} {remCount === 1 ? 'remediação' : 'remediações'}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div
-                    className="mono mt-0.5"
-                    style={{ fontSize: 11, color: 'var(--text-faint)' }}
-                  >
-                    <span title={fmtAbs(j.created_at)} className="cursor-help">
-                      {timeAgo(j.created_at)}
-                    </span>
-                  </div>
-                </div>
+          {history.length === 0 ? (
+            <div
+              style={{
+                padding: 24,
+                textAlign: 'center',
+                color: 'var(--text-dim)',
+                fontSize: 13,
+              }}
+            >
+              {asset?.type === 'cloud'
+                ? 'Asset cloud: varreduras contínuas via Prowler, sem histórico de PR.'
+                : 'Nenhum scan executado neste repositório ainda.'}
+            </div>
+          ) : (
+            history.map((j) => {
+              const remCount = REMEDIATIONS.filter((r) => r.scan_job_id === j.id).length;
+              const current = j.id === job.id;
 
-                <div className="flex justify-center">
-                  <TierStepperCompact job={j} />
-                </div>
-
-                <div className="flex items-center justify-end gap-1.5">
-                  {j.final_risk_score ? (
-                    <>
-                      <MiniGauge score={j.final_risk_score} />
-                      <span
-                        className="mono font-bold"
-                        style={{ fontSize: 14, color: riskColor(j.final_risk_score) }}
-                      >
-                        {j.final_risk_score}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="mono" style={{ fontSize: 13, color: 'var(--border-mid)' }}>
-                      –
-                    </span>
-                  )}
-                </div>
-
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  className="text-fg-dim"
-                  style={{ justifySelf: 'end' }}
+              return (
+                <Link
+                  key={j.id}
+                  href={reportDetailRoute(j.id)}
+                  className="tbl-row sr-row"
+                  style={{
+                    gridTemplateColumns: '1fr 130px 110px 24px',
+                    gap: 16,
+                    alignItems: 'center',
+                    ...(current ? { background: 'var(--accent-tint)' } : {}),
+                  }}
                 >
-                  <path d="M9 6l6 6-6 6" />
-                </svg>
-              </Link>
-            );
-          })
-        )}
-      </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="lnk text-sm font-medium text-fg">
+                      PR #{j.pr_number}{' '}
+                      <span className="mono text-fg-dim" style={{ fontSize: 11 }}>
+                        {shortSha(j.commit_sha)}
+                      </span>
+                      {remCount ? (
+                        <span
+                          className="text-[11px]"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          {' '}
+                          · {remCount} {remCount === 1 ? 'remediação' : 'remediações'}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div
+                      className="mono mt-0.5"
+                      style={{ fontSize: 11, color: 'var(--text-faint)' }}
+                    >
+                      <span title={fmtAbs(j.created_at)} className="cursor-help">
+                        {timeAgo(j.created_at, now)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center">
+                    <TierStepperCompact job={j} />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-1.5">
+                    {j.final_risk_score ? (
+                      <>
+                        <MiniGauge score={j.final_risk_score} />
+                        <span
+                          className="mono font-bold"
+                          style={{ fontSize: 14, color: riskColor(j.final_risk_score) }}
+                        >
+                          {j.final_risk_score}
+                        </span>
+                      </>
+                    ) : (
+                      <span
+                        className="mono"
+                        style={{ fontSize: 13, color: 'var(--border-mid)' }}
+                      >
+                        –
+                      </span>
+                    )}
+                  </div>
+
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    className="text-fg-dim"
+                    style={{ justifySelf: 'end' }}
+                  >
+                    <path d="M9 6l6 6-6 6" />
+                  </svg>
+                </Link>
+              );
+            })
+          )}
+        </div>
+      ) : null}
 
       <div className="stat-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-default)' }}>
           <h2 className="text-[15px] font-bold">
-            Findings encontrados pós-scan{' '}
-            <span className="text-[12px] font-normal text-fg-dim">
-              · {assetFindings.length} no total
-              {assetFindings.length > MAX_FINDING_ROWS ? ' · exibindo 30' : ''}
-            </span>
+            {demo ? 'Findings encontrados pós-scan' : 'Findings deste commit'}{' '}
+            {findingsOk ? (
+              <span className="text-[12px] font-normal text-fg-dim">
+                · {findings.length} no total
+                {findings.length > MAX_FINDING_ROWS ? ` · exibindo ${MAX_FINDING_ROWS}` : ''}
+              </span>
+            ) : null}
           </h2>
         </div>
 
@@ -362,11 +519,13 @@ export function ReportDetail({ jobId }: { jobId: string }) {
               <th>Arquivo</th>
               <th>CVE/CWE</th>
               <th>Scanner</th>
-              <th>Status</th>
+              {/* A API não modela resolução de finding: tudo que ela devolve
+                  está aberto. Em dado real a coluna útil é o tier. */}
+              <th>{demo ? 'Status' : 'Tier'}</th>
             </tr>
           </thead>
           <tbody>
-            {assetFindings.length === 0 ? (
+            {!findingsOk || findings.length === 0 ? (
               <tr>
                 <td
                   colSpan={5}
@@ -377,11 +536,15 @@ export function ReportDetail({ jobId }: { jobId: string }) {
                     fontSize: 13,
                   }}
                 >
-                  Nenhum finding neste asset.
+                  {!findingsOk
+                    ? 'Não foi possível carregar os findings desta execução.'
+                    : demo
+                      ? 'Nenhum finding neste asset.'
+                      : 'Nenhum finding registrado para este commit.'}
                 </td>
               </tr>
             ) : (
-              assetFindings.slice(0, MAX_FINDING_ROWS).map((f) => (
+              findings.slice(0, MAX_FINDING_ROWS).map((f) => (
                 <tr
                   key={f.id}
                   className="rowlink"
@@ -414,10 +577,14 @@ export function ReportDetail({ jobId }: { jobId: string }) {
                     </span>
                   </td>
                   <td>
-                    {f.status === 'resolved' ? (
-                      <span className="sev st-done">resolvido</span>
+                    {demo ? (
+                      f.status === 'resolved' ? (
+                        <span className="sev st-done">resolvido</span>
+                      ) : (
+                        <span className="sev st-queued">aberto</span>
+                      )
                     ) : (
-                      <span className="sev st-queued">aberto</span>
+                      <span className="mono text-[11px] text-fg-dim">T{f.tier}</span>
                     )}
                   </td>
                 </tr>

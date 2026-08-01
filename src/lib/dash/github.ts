@@ -54,6 +54,14 @@ export type Repository = {
   default_branch: string;
   active: boolean;
   created_at: string;
+  /**
+   * URL da aplicação publicada (staging/preview) — alvo do DAST no Tier 3.
+   *
+   * Sempre presente na resposta da API; `null` quando não há alvo, e é o Tier 3
+   * que registra `reason="no_target_url"` nesse caso. Não confundir com `url`,
+   * que é o endereço do repositório no GitHub.
+   */
+  target_url: string | null;
 };
 
 /**
@@ -164,6 +172,7 @@ export const DEMO_AVAILABLE_REPOS: AvailableRepo[] = INSTALLATION_REPOS.map((rep
 }));
 
 export const DEMO_REPOSITORIES: Repository[] = INSTALLATION_REPOS.map((repo, index) => ({
+  target_url: null,
   id: `demo-${repo.name}`,
   github_account_id: DEMO_ACCOUNT_ID,
   installation_id: 0,

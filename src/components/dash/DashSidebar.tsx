@@ -51,11 +51,13 @@ function navItems(findingsCount: number): (NavItem | null)[] {
   ];
 }
 
-export function DashSidebar() {
+export function DashSidebar({ findingsCount }: { findingsCount: number | null }) {
   const pathname = usePathname();
-  const { connected, sidebarCollapsed, toggleSidebar } = useDashState();
+  const { connected, connection, sidebarCollapsed, toggleSidebar } = useDashState();
   const active = screenFromPathname(pathname);
-  const items = navItems(openFindings().length);
+  // Em demonstração (e no preview do cadastro) o badge conta o dataset do
+  // protótipo; com sessão real vem de `GET /findings?limit=1`.
+  const items = navItems(connection.demo ? openFindings().length : (findingsCount ?? 0));
 
   return (
     <aside
