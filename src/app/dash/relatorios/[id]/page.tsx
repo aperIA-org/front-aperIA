@@ -3,16 +3,16 @@ import { DataScreenGate } from '@/components/dash/DataScreenGate';
 import { ReportDetail } from '@/components/dash/ReportDetail';
 import { fetchFindings } from '@/lib/api/findings';
 import { resolveGitHubConnection } from '@/lib/api/github';
-import { fetchScan, fetchScanReports } from '@/lib/api/scans';
+import { fetchScan, fetchScanHistory, fetchScanReports } from '@/lib/api/scans';
 import { FINDINGS, REF_NOW, SCAN_JOBS } from '@/lib/dash/mock-data';
 
 /**
  * Detalhe de uma execução.
  *
- * O `[id]` mudou de natureza: na API a identidade de um scan é o **`commit_sha`**
- * (não existe id próprio), então a URL passa a ser `/dash/relatorios/<sha>`. No
- * dataset do protótipo continua sendo o id sintético (`s1`, `s2`…), e é por isso
- * que a resolução se divide pelos dois caminhos.
+ * O `[id]` é o id da **execução** — uuid na API, id sintético (`s1`, `s2`…) no
+ * dataset do protótipo. Já foi o `commit_sha`, quando um commit tinha uma
+ * execução só; agora rescanear a mesma branch empilha execuções e cada uma tem
+ * o seu relatório, então o sha não endereça mais uma tela.
  *
  * Um id inexistente dá 404 em vez de tela quebrada, nos dois modos.
  */
@@ -52,10 +52,14 @@ export default async function ReportDetailPage({
   const job = await fetchScan(id);
   if (!job) notFound();
 
-  // Independentes entre si — sequenciar só somaria latência.
-  const [reports, findingsResult] = await Promise.all([
-    fetchScanReports(id),
-    fetchFindings(id),
+  // Independentes entre si — sequenciar só somaria latência. Os findings vão
+  // pelo COMMIT, não pela execução: eles não são escopados por execução (o
+  // mesmo commit é o mesmo código), então duas execuções do mesmo commit
+  // mostram o mesmo conjunto. O que difere entre elas é o relatório.
+  const [reports, findingsResult, history] = await Promise.all([
+    fetchScanReports(job.id),
+    fetchFindings(job.commit_sha),
+    fetchScanHistory(job.id),
   ]);
 
   return (
@@ -65,6 +69,7 @@ export default async function ReportDetailPage({
         reports={reports}
         findings={findingsResult.findings}
         findingsOk={findingsResult.ok}
+        history={history}
         demo={false}
         now={Date.now()}
       />

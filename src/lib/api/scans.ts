@@ -7,19 +7,23 @@ import { getApi } from './client';
 import { COOKIE_NAMES, IS_API_CONFIGURED } from './config';
 
 /**
- * Scans e relatórios vindos da API (`GET /scans`, `GET /scans/{sha}`,
- * `GET /scans/{sha}/report`).
+ * Scans e relatórios vindos da API (`GET /scans`, `GET /scans/{id}`,
+ * `GET /scans/{id}/report`, `GET /scans/{id}/history`).
  *
- * A identidade de uma execução na API é o **`commit_sha`**, não um id próprio:
- * não existe `ScanJob.id`. O tipo local exige `id`, então ele recebe o próprio
- * `commit_sha` — é o que faz `reportDetailRoute()` continuar funcionando, agora
- * com URLs do tipo `/dash/relatorios/<sha>`.
+ * A identidade de uma execução é o **`id`** da API (uuid). Já foi o
+ * `commit_sha`, quando havia uma execução por commit; desde que rescanear a
+ * mesma branch empilha uma execução nova em vez de sobrescrever a anterior, o
+ * sha deixou de identificar um scan sozinho.
+ *
+ * A rota da API ainda aceita o sha — resolve para a execução *corrente* daquele
+ * commit —, mas o front sempre usa o id: é ele que endereça o histórico.
  */
 
 const TIER_STATUSES = ['done', 'running', 'failed', 'skipped'] as const;
 const RISK_LEVELS = ['critical', 'high', 'medium', 'low', 'blocked'] as const;
 
 type ApiScanJob = {
+  id: string;
   commit_sha: string;
   repo_url: string;
   repo_full_name: string | null;
@@ -81,8 +85,7 @@ function repoFullName(dto: ApiScanJob): string {
 
 function toScanJob(dto: ApiScanJob): ScanJob {
   return {
-    // Sem id próprio na API: o commit é a identidade da execução.
-    id: dto.commit_sha,
+    id: dto.id,
     commit_sha: dto.commit_sha,
     repo_full_name: repoFullName(dto),
     // `pr_number` é nullable desde que o scan manual existe (roda sem PR).
@@ -108,6 +111,7 @@ function isApiScanJob(value: unknown): value is ApiScanJob {
   return (
     !!value &&
     typeof value === 'object' &&
+    typeof (value as ApiScanJob).id === 'string' &&
     typeof (value as ApiScanJob).commit_sha === 'string'
   );
 }
@@ -144,8 +148,8 @@ export const fetchScans = cache(async (limit = 200): Promise<ScansResult> => {
   }
 });
 
-/** Uma execução por commit. `null` = 404 ou API fora. */
-export const fetchScan = cache(async (commitSha: string): Promise<ScanJob | null> => {
+/** Uma execução, por id (ou pelo sha, que resolve para a corrente do commit). */
+export const fetchScan = cache(async (scanId: string): Promise<ScanJob | null> => {
   if (!IS_API_CONFIGURED) return null;
 
   const token = await accessToken();
@@ -153,7 +157,7 @@ export const fetchScan = cache(async (commitSha: string): Promise<ScanJob | null
 
   try {
     const { status, data } = await getApi(
-      `/scans/${encodeURIComponent(commitSha)}`,
+      `/scans/${encodeURIComponent(scanId)}`,
       token,
     );
     if (status !== 200 || !isApiScanJob(data)) return null;
@@ -169,7 +173,7 @@ export const fetchScan = cache(async (commitSha: string): Promise<ScanJob | null
  * É este markdown que É o relatório. A tela do protótipo compunha um relatório
  * à mão a partir do dataset mock; com dados reais o conteúdo vem daqui.
  */
-export const fetchScanReports = cache(async (commitSha: string): Promise<ScanReport[]> => {
+export const fetchScanReports = cache(async (scanId: string): Promise<ScanReport[]> => {
   if (!IS_API_CONFIGURED) return [];
 
   const token = await accessToken();
@@ -177,7 +181,7 @@ export const fetchScanReports = cache(async (commitSha: string): Promise<ScanRep
 
   try {
     const { status, data } = await getApi(
-      `/scans/${encodeURIComponent(commitSha)}/report`,
+      `/scans/${encodeURIComponent(scanId)}/report`,
       token,
     );
     if (status !== 200 || !data || typeof data !== 'object') return [];
@@ -189,6 +193,34 @@ export const fetchScanReports = cache(async (commitSha: string): Promise<ScanRep
       (report): report is ScanReport =>
         !!report && typeof report === 'object' && typeof (report as ScanReport).tier === 'number',
     );
+  } catch {
+    return [];
+  }
+});
+
+/**
+ * As execuções anteriores do mesmo commit, da mais recente para a mais antiga.
+ *
+ * Enquanto rescanear sobrescrevia a execução, isso não existia — o detalhe do
+ * relatório só mostrava histórico no dataset do protótipo. Lista vazia é uma
+ * resposta legítima (é o caso da primeira execução de um commit).
+ */
+export const fetchScanHistory = cache(async (scanId: string): Promise<ScanJob[]> => {
+  if (!IS_API_CONFIGURED) return [];
+
+  const token = await accessToken();
+  if (!token) return [];
+
+  try {
+    const { status, data } = await getApi(
+      `/scans/${encodeURIComponent(scanId)}/history`,
+      token,
+    );
+    if (status !== 200 || !data || typeof data !== 'object') return [];
+
+    const page = data as { items?: unknown };
+    if (!Array.isArray(page.items)) return [];
+    return page.items.filter(isApiScanJob).map(toScanJob);
   } catch {
     return [];
   }

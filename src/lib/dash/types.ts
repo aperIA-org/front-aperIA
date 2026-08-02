@@ -40,6 +40,40 @@ export type Finding = {
   placeholder?: boolean;
 };
 
+/**
+ * Um TIPO de vulnerabilidade, com todas as suas ocorrências somadas.
+ *
+ * Espelha `FindingGroupResponse` da API (`GET /findings/groups`). Existe porque
+ * a lista plana ficou ilegível com DAST: um scan do Juice Shop grava ~12 mil
+ * findings que são, na prática, 14 problemas repetidos por milhares de rotas —
+ * e o teto de 1000 da listagem plana cortava o resto. Agrupado, o mesmo
+ * conjunto cabe inteiro na tela.
+ *
+ * As datas são ISO (o mesmo formato de `Finding.created_at`) para que
+ * `timeAgo`/`fmtAbs` sirvam sem conversão.
+ */
+export type FindingGroup = {
+  source: string;
+  severity: Severity;
+  tier: number;
+  title: string;
+  cve_id: string | null;
+  cwe_id: string | null;
+  /** Nullable no schema da API; no dataset do protótipo é sempre preenchido. */
+  asset: string | null;
+  /** Quantos findings o grupo representa. */
+  ocorrencias: number;
+  /** Quantos caminhos DISTINTOS — 3.007 ocorrências podem ser 1 caminho só. */
+  caminhos: number;
+  algum_secret_verificado: boolean;
+  primeiro_em: string;
+  ultimo_em: string;
+  /** Liga o grupo a um finding concreto (deep link `?finding=<id>`). */
+  exemplo_finding_id: string;
+  /** Primeiros caminhos afetados — a expansão da linha não faz nova chamada. */
+  amostra: string[];
+};
+
 export type TierStatus = 'done' | 'running' | 'failed' | 'skipped' | null;
 
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'blocked' | null;

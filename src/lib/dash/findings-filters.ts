@@ -18,8 +18,22 @@ import type { Finding } from './types';
 
 export const FF_PAGE_SIZE = 10;
 
+/**
+ * A visão agrupada tem ~14 linhas com dados reais — paginar de 10 em 10
+ * cortaria em duas páginas justamente o que o agrupamento existe para caber
+ * numa tela só. O dataset do protótipo gera bem mais grupos, então a paginação
+ * continua existindo, só que num passo maior.
+ */
+export const FF_GROUP_PAGE_SIZE = 25;
+
 export type SortColumn = 'sev' | 'tier' | 'when';
 export type SortDir = 'asc' | 'desc';
+
+/**
+ * `grupos` (padrão) = uma linha por tipo de vulnerabilidade;
+ * `todos` = a lista plana de findings, com o teto e a truncagem.
+ */
+export type FindingsView = 'grupos' | 'todos';
 
 export type FindingsFilters = {
   repositorios: string[];
@@ -33,6 +47,14 @@ export type FindingsFilters = {
   periodo: { de: number | null; ate: number | null };
   sort: { col: SortColumn; dir: SortDir };
   page: number;
+  /** Visão da tela. Mora na URL como os filtros — link compartilhável. */
+  vis: FindingsView;
+  /**
+   * Drill-down de um grupo: título EXATO, não busca livre (a busca livre é
+   * `busca`). Vai para a API como `?title=`, então a visão "Todos" de um grupo
+   * pagina só aquele problema em vez de varrer o conjunto inteiro.
+   */
+  titulo: string | null;
 };
 
 /** Dimensões multi-valor, na ordem em que aparecem na barra de filtros ativos. */
@@ -90,6 +112,26 @@ export function agingBucketOf(
   return '+90';
 }
 
+/**
+ * A faixa de aging como JANELA de tempo, e não como rótulo de um finding.
+ *
+ * Um GRUPO não tem uma data: tem um intervalo (`primeiro_em`…`ultimo_em`), que
+ * pode atravessar várias faixas. Então o filtro por aging vira interseção de
+ * intervalos, e para isso a faixa precisa virar `[de, ate]`.
+ *
+ * Os cortes espelham `agingBucketOf`, que usa `Math.floor(dias)`: `age <= 7`
+ * cobre tudo com menos de 8 dias, daí os limites em 8/31/91.
+ */
+export function agingWindow(
+  bucket: string,
+  now: number = REF_NOW,
+): { de: number; ate: number } {
+  if (bucket === '0-7') return { de: now - 8 * DAY, ate: Infinity };
+  if (bucket === '8-30') return { de: now - 31 * DAY, ate: now - 8 * DAY };
+  if (bucket === '31-90') return { de: now - 91 * DAY, ate: now - 31 * DAY };
+  return { de: -Infinity, ate: now - 91 * DAY };
+}
+
 // ── URL ⇄ estado ─────────────────────────────────────────────────────────────
 
 export function parseFilters(
@@ -133,6 +175,9 @@ export function parseFilters(
     },
     sort: { col, dir },
     page: page && page >= 1 ? Math.floor(page) : 1,
+    // Agrupado é o padrão: é a visão legível quando o DAST está ligado.
+    vis: params.get('vis') === 'todos' ? 'todos' : 'grupos',
+    titulo: params.get('titulo') || null,
   };
 }
 
@@ -159,6 +204,9 @@ export function serializeFilters(
     params.set('dir', filters.sort.dir);
   }
   if (filters.page > 1) params.set('page', String(filters.page));
+  // Só o desvio do padrão vai para a URL, como no resto deste módulo.
+  if (filters.vis === 'todos') params.set('vis', 'todos');
+  if (filters.titulo) params.set('titulo', filters.titulo);
 
   return params.toString();
 }
@@ -200,7 +248,11 @@ export function periodNoteLabel(filters: FindingsFilters, now: number = REF_NOW)
 export function anyFilterActive(filters: FindingsFilters, now: number = REF_NOW): boolean {
   const dimsActive = FF_DIMS.some((dim) => (filters[dim] as unknown[]).length > 0);
   return (
-    dimsActive || !!filters.status || !!filters.busca || periodPreset(filters, now) !== '90'
+    dimsActive ||
+    !!filters.status ||
+    !!filters.busca ||
+    !!filters.titulo ||
+    periodPreset(filters, now) !== '90'
   );
 }
 
@@ -217,6 +269,10 @@ export function applyScope(
 ): Finding[] {
   let scope = source.slice();
 
+  // Drill-down de um grupo. Com dados reais a API já filtrou por `?title=`;
+  // aqui isso é idempotente. Em demonstração é o único filtro que existe, e é
+  // o que faz "ver todas as N ocorrências" funcionar sem API.
+  if (filters.titulo) scope = scope.filter((x) => x.title === filters.titulo);
   if (filters.repositorios.length)
     scope = scope.filter((x) => filters.repositorios.includes(x.asset));
   if (filters.categorias.length)

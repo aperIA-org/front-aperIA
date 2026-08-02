@@ -371,17 +371,42 @@ Four things that are load-bearing:
   screen goes empty with no error. `parseFilters` is the one that materialises the missing `de`, so it needs
   `now` just as much as `defaultFrom` does.
 - **Findings filtering stays entirely client-side.** `GET /findings` accepts one value per dimension
-  (`severity`, `tier`, `source`, `commit_sha`, `secret_verified`) while the screen filters by several, plus
-  category (derived from the CWE), aging, free text and a date range. Splitting the work would give *wrong*
-  results, because the client half would only see the current page. So the whole set is fetched (200 per
-  page, ceiling of 1000, `truncated` when it is hit) and `findings-filters.ts` is untouched.
+  (`severity`, `tier`, `source`, `commit_sha`, `secret_verified`, `title`) while the screen filters by
+  several, plus category (derived from the CWE), aging, free text and a date range. Splitting the work would
+  give *wrong* results, because the client half would only see the current page. So the whole set is fetched
+  (200 per page, ceiling of 1000, `truncated` when it is hit) and `findings-filters.ts` is untouched.
+- **The Findings screen defaults to the grouped view, and that is not cosmetic.** With DAST on, a single scan
+  writes ~12k findings that are ~14 actual problems repeated across thousands of routes — 3007 occurrences of
+  "Cross-Domain Misconfiguration", one per URL. The flat list was permanently truncated and ZAP drowned
+  TruffleHog and Semgrep. `GET /findings/groups` aggregates by
+  `source`+`severity`+`tier`+`title`+`cve_id`+`cwe_id`+`asset` and the whole answer fits on one screen, so the
+  grouped view has **no cap at all**. `?vis=todos` switches to the flat list, unchanged.
+  - **The grouping key is seven fields, in two places that must agree**: the SQL `GROUP BY` and
+    `src/lib/dash/findings-groups.ts`, which groups the prototype dataset client-side so demo works without
+    the API. They already drifted once (five fields on one side), which silently merged groups that differ
+    only by CWE.
+  - **A group's drill-down goes through the server**: "ver todas as N ocorrências" pushes `?vis=todos&titulo=`
+    and `titulo` is forwarded to `GET /findings?title=` as an **exact match**. Narrowing on the server is the
+    point — 3007 occurrences would not survive the client's 1000 ceiling.
+  - `?finding=<id>` forces the flat view, since that is where a single row exists.
 - **Three concepts do not exist in the API**: finding resolution (`status`/`resolved_at`), repository
   ownership (`owner_team`) and remediations (there is no route at all). The open/resolved split, the
   "remediados" count and the report's PR/remediation blocks therefore *disappear* when the data is real
   instead of being filled with invented values. `?status=` is still parsed so old links do not break.
-- **A report's identity is the `commit_sha`** — the API has no `ScanJob.id`. The mapper puts the sha in `id`,
-  so `reportDetailRoute()` keeps working and the URL becomes `/dash/relatorios/<sha>`. `pr_number` is `0` for
-  manual scans (no PR), and the UI hides the `#0`.
+- **A report's identity is the execution `id`, not the `commit_sha`.** It used to be the sha, back when a
+  commit had exactly one execution. Re-scanning the same branch now stacks a new execution instead of
+  overwriting the previous one, so the sha no longer addresses a screen — the URL is
+  `/dash/relatorios/<uuid>`. The API route still *accepts* a sha (it resolves to that commit's **current**
+  execution), but the front always sends the id. `pr_number` is `0` for manual scans (no PR), and the UI
+  hides the `#0`.
+- **Findings go by commit; the report goes by execution.** `ReportDetailPage` calls `fetchScanReports(job.id)`
+  but `fetchFindings(job.commit_sha)` — findings are not execution-scoped (same commit, same code), so two
+  executions of one commit show the same finding list and differ in report, risk score and tier statuses.
+  Passing `job.id` to `fetchFindings` would silently return nothing. The caveat and its cost are written up in
+  `../python-api/docs/pendencias.md` §6.1 — DAST is where it is actually false.
+- **`ReportDetail`'s history list means two different things.** In demo it is the repo's scans (the prototype
+  dataset has no repeated commit); with real data it is `GET /scans/{id}/history` — the executions of *this*
+  commit. It renders only when there is more than one, so a first execution does not show a one-row table.
 - **`created_at` on a `ScanJob` is not when the scan ran.** Re-scanning a commit reuses the row: the API's
   `restart_execution` resets the tier timestamps and deliberately *preserves* `created_at`, which marks when
   the commit first entered the system. Showing it made a scan fired seconds ago read "há 10h". Every screen
@@ -399,7 +424,8 @@ Keep it that way.
 
 Findings keeps every filter in the query string (`src/lib/dash/findings-filters.ts` does parse/serialize),
 using the **same parameter names as the prototype** (`repo`, `cat`, `sev`, `scanner`, `tier`, `aging`,
-`status`, `q`, `de`, `ate`) so old links still work. `de=all` means "todo o histórico"; a missing `de` means
+`status`, `q`, `de`, `ate`) so old links still work. Two are new and have no prototype ancestor: `vis`
+(`grupos`|`todos`, grouped being the default) and `titulo` (a group's exact title, for the drill-down). `de=all` means "todo o histórico"; a missing `de` means
 the default 90-day window. This replaces the prototype's hand-rolled `syncURL()`/`parseURLToFF()` and gets
 shareable filters and a working back button for free.
 

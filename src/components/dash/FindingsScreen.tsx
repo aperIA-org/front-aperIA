@@ -1,13 +1,14 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AGING_LABELS,
   anyFilterActive,
   applyScope,
   defaultFrom,
   FF_DIMS,
+  FF_GROUP_PAGE_SIZE,
   FF_PAGE_SIZE,
   pageNumbers,
   parseFilters,
@@ -18,11 +19,17 @@ import {
   sortFindings,
   type FilterDim,
   type FindingsFilters,
+  type FindingsView,
   type SortColumn,
 } from '@/lib/dash/findings-filters';
-import { fmtAbs, hexA, sevColor, timeAgo } from '@/lib/dash/format';
+import {
+  applyScopeToGroups,
+  groupKey,
+  sortGroups,
+} from '@/lib/dash/findings-groups';
+import { fmtAbs, fmtInt, hexA, sevColor, timeAgo } from '@/lib/dash/format';
 import { DAY } from '@/lib/dash/mock-data';
-import type { Finding } from '@/lib/dash/types';
+import type { Finding, FindingGroup } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
 import { SevBadge } from './SevBadge';
 
@@ -45,9 +52,38 @@ function SortArrow({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) {
   );
 }
 
+/** Seta de expansão do grupo — girada por CSS para não trocar de nó. */
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className="shrink-0 text-fg-mute transition-transform"
+      style={{ transform: open ? 'rotate(90deg)' : 'none' }}
+    >
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+
 type FindingsScreenProps = {
-  /** Resolvidos no server component: API real ou dataset do protótipo. */
+  /**
+   * Lista plana — só é buscada quando a visão é "Todos". Na visão agrupada o
+   * servidor nem chega a pedir, porque seriam até 1000 findings para renderizar
+   * ~14 linhas.
+   */
   findings: Finding[];
+  /** Findings agregados por tipo: a visão padrão. */
+  groups: FindingGroup[];
+  /** Soma das ocorrências de TODOS os grupos, antes de qualquer filtro. */
+  groupsTotal: number;
   /** `true` = dataset do protótipo (sem API configurada, ou preview do cadastro). */
   demo: boolean;
   /** `false` = a API não respondeu; é diferente de "nenhum finding". */
@@ -64,6 +100,8 @@ type FindingsScreenProps = {
 
 export function FindingsScreen({
   findings,
+  groups,
+  groupsTotal,
   demo,
   apiOk,
   truncated,
@@ -72,10 +110,23 @@ export function FindingsScreen({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const filters = useMemo(
-    () => parseFilters(new URLSearchParams(searchParams.toString()), now),
-    [searchParams, now],
-  );
+  /**
+   * Deep link para um finding: `/dash/findings?finding=<id>`.
+   *
+   * Contrato usado pelo detalhe de execução e pela tela de Remediações, que
+   * linkam para cá. Aqui a linha correspondente é rolada até a viewport e
+   * destacada — o protótipo abria um slide-over, que ainda não foi portado.
+   */
+  const highlightId = searchParams.get('finding');
+
+  const filters = useMemo(() => {
+    const parsed = parseFilters(new URLSearchParams(searchParams.toString()), now);
+    // `?finding=` aponta para uma LINHA, e linha só existe na lista plana —
+    // então o deep link força a visão "Todos", inclusive nos pushes seguintes.
+    return highlightId ? { ...parsed, vis: 'todos' as const } : parsed;
+  }, [searchParams, now, highlightId]);
+
+  const agrupado = filters.vis === 'grupos';
 
   /** Toda mutação de filtro vira uma troca de URL — a URL é a fonte da verdade. */
   const push = useCallback(
@@ -116,10 +167,40 @@ export function FindingsScreen({
       faixaAging: [],
       status: null,
       busca: '',
+      titulo: null,
       periodo: { de: defaultFrom(now), ate: null },
       page: 1,
     });
   }, [filters, push, now]);
+
+  /**
+   * Troca de visão. Voltar para "Agrupados" solta o drill-down: o título só
+   * existe enquanto se olha as ocorrências de um grupo.
+   */
+  const setView = useCallback(
+    (vis: FindingsView) => {
+      push({
+        ...filters,
+        vis,
+        titulo: vis === 'grupos' ? null : filters.titulo,
+        page: 1,
+      });
+    },
+    [filters, push],
+  );
+
+  /**
+   * "Ver todas as N ocorrências": abre a visão plana escopada NO TÍTULO, que é
+   * a mesma chave que a API aceita em `?title=`. Só o título — as outras
+   * dimensões do grupo viriam junto no resultado de qualquer forma, e fixá-las
+   * como filtro daria a impressão de que o usuário as escolheu.
+   */
+  const drillDown = useCallback(
+    (group: FindingGroup) => {
+      push({ ...filters, vis: 'todos', titulo: group.title, page: 1 });
+    },
+    [filters, push],
+  );
 
   const setPeriod = useCallback(
     (preset: string) => {
@@ -176,22 +257,39 @@ export function FindingsScreen({
     ? findings.filter((x) => x.status !== 'resolved').length
     : findings.length;
 
-  const totalPages = Math.max(1, Math.ceil(list.length / FF_PAGE_SIZE));
+  // ── derivações da visão agrupada ──
+  const groupScope = useMemo(
+    () => applyScopeToGroups(filters, groups, now),
+    [filters, groups, now],
+  );
+  const groupList = useMemo(
+    () => sortGroups(groupScope, filters.sort),
+    [groupScope, filters.sort],
+  );
+  /** Quantos findings os grupos visíveis representam. */
+  const ocorrenciasVisiveis = groupScope.reduce((soma, g) => soma + g.ocorrencias, 0);
+
+  const [expandidos, setExpandidos] = useState<ReadonlySet<string>>(() => new Set());
+  const toggleGrupo = useCallback((chave: string) => {
+    setExpandidos((atual) => {
+      const proximo = new Set(atual);
+      if (!proximo.delete(chave)) proximo.add(chave);
+      return proximo;
+    });
+  }, []);
+
+  // ── paginação, comum às duas visões ──
+  const pageSize = agrupado ? FF_GROUP_PAGE_SIZE : FF_PAGE_SIZE;
+  const totalItens = agrupado ? groupList.length : list.length;
+  const totalPages = Math.max(1, Math.ceil(totalItens / pageSize));
   const page = Math.min(Math.max(filters.page, 1), totalPages);
-  const pageStart = (page - 1) * FF_PAGE_SIZE;
-  const pageList = list.slice(pageStart, pageStart + FF_PAGE_SIZE);
+  const pageStart = (page - 1) * pageSize;
+  const pageList = list.slice(pageStart, pageStart + pageSize);
+  const pageGroups = groupList.slice(pageStart, pageStart + pageSize);
 
   const active = anyFilterActive(filters, now);
   const preset = periodPreset(filters, now);
 
-  /**
-   * Deep link para um finding: `/dash/findings?finding=<id>`.
-   *
-   * Contrato usado pelo detalhe de execução e pela tela de Remediações, que
-   * linkam para cá. Aqui a linha correspondente é rolada até a viewport e
-   * destacada — o protótipo abria um slide-over, que ainda não foi portado.
-   */
-  const highlightId = searchParams.get('finding');
   const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
@@ -237,6 +335,13 @@ export function FindingsScreen({
       onRemove: () => push({ ...filters, busca: '', page: 1 }),
     });
   }
+  if (filters.titulo) {
+    activeChips.push({
+      key: 'titulo',
+      label: `TIPO ${filters.titulo}`,
+      onRemove: () => push({ ...filters, titulo: null, page: 1 }),
+    });
+  }
   if (preset !== '90') {
     const label =
       preset === 'all'
@@ -252,6 +357,41 @@ export function FindingsScreen({
       onRemove: () => setPeriod('90'),
     });
   }
+
+  /**
+   * Estado vazio, compartilhado pelas duas visões — as três causas são as
+   * mesmas: a API não respondeu, não há nada registrado ainda, ou os filtros
+   * não deixaram nada passar.
+   */
+  const nadaRegistrado = agrupado ? groups.length === 0 : totalDisponivel === 0;
+  const estadoVazio = !apiOk ? (
+    <EmptyState
+      title="Não foi possível carregar os findings"
+      body="A API não respondeu ou a sessão expirou. Atualize a página em instantes — nada foi perdido, os findings continuam registrados."
+    />
+  ) : nadaRegistrado ? (
+    demo ? (
+      <EmptyState
+        title="Nenhum finding, seu código está limpo neste commit."
+        body="O último scan não encontrou vulnerabilidades. Novos findings aparecem aqui a cada scan."
+      />
+    ) : (
+      <EmptyState
+        title="Nenhum finding encontrado até agora."
+        body="Os scans rodam a cada pull request nos repositórios monitorados. Assim que uma vulnerabilidade aparecer, ela é listada aqui."
+      />
+    )
+  ) : (
+    <EmptyState
+      title="Sem dados para os filtros aplicados"
+      body="Ajuste ou limpe os filtros para ver os findings desta execução."
+      action={
+        <button type="button" className="chip chip-clear" onClick={clearAll}>
+          Limpar filtros
+        </button>
+      }
+    />
+  );
 
   const periodButton = (value: string, label: string) => (
     <button
@@ -274,7 +414,14 @@ export function FindingsScreen({
             <h1 className="text-[24px] font-bold tracking-tight">
               Findings{' '}
               <span className="text-[14px] font-normal text-fg-mute">
-                {demo ? (
+                {agrupado ? (
+                  <>
+                    {fmtInt(groupList.length)}{' '}
+                    {groupList.length === 1 ? 'tipo' : 'tipos'} ·{' '}
+                    {fmtInt(ocorrenciasVisiveis)}{' '}
+                    {ocorrenciasVisiveis === 1 ? 'ocorrência' : 'ocorrências'}
+                  </>
+                ) : demo ? (
                   <>
                     {listBeforeSort.length}{' '}
                     {listBeforeSort.length === 1 ? 'aberto' : 'abertos'}
@@ -287,21 +434,55 @@ export function FindingsScreen({
             </h1>
           </div>
           <p className="mt-1 text-[13px] text-fg-dim">
-            Vulnerabilidades encontradas nos scans, das mais críticas para as menos.
+            {agrupado
+              ? 'Cada linha é um tipo de vulnerabilidade, com todas as ocorrências somadas. Abra uma linha para ver os caminhos afetados.'
+              : 'Vulnerabilidades encontradas nos scans, das mais críticas para as menos.'}
           </p>
+          {/* Os dois tetos existem, mas são de natureza diferente: 1000
+              findings na lista plana (comum, o ZAP passa disso sozinho) e 500
+              GRUPOS no agrupado (uma trava de segurança que na prática não é
+              atingida — hoje são 14). Quando é, a contagem de ocorrências
+              também subestima, e isso precisa aparecer. */}
           {truncated && (
             <p className="mt-1 text-[12px] text-fg-mute">
-              Lista limitada aos findings mais recentes — os filtros valem sobre esse
-              subconjunto.
+              {agrupado
+                ? 'Limite de tipos atingido — a contagem de ocorrências considera apenas os tipos exibidos.'
+                : 'Lista limitada aos findings mais recentes — os filtros valem sobre esse subconjunto.'}
+            </p>
+          )}
+          {agrupado && filters.busca && (
+            <p className="mt-1 text-[12px] text-fg-mute">
+              Nesta visão a busca compara título, CVE/CWE e repositório. Para procurar
+              por arquivo, use “Todos”.
             </p>
           )}
         </div>
-        <div className="perwrap">
-          <div className="perseg">
-            {periodButton('7', '7d')}
-            {periodButton('30', '30d')}
-            {periodButton('90', '90d')}
-            {periodButton('all', 'Tudo')}
+        <div className="flex items-center gap-3">
+          <div className="perwrap">
+            <div className="perseg">
+              <button
+                type="button"
+                className={`perbtn${agrupado ? ' on' : ''}`}
+                onClick={() => setView('grupos')}
+              >
+                Agrupados
+              </button>
+              <button
+                type="button"
+                className={`perbtn${!agrupado ? ' on' : ''}`}
+                onClick={() => setView('todos')}
+              >
+                Todos
+              </button>
+            </div>
+          </div>
+          <div className="perwrap">
+            <div className="perseg">
+              {periodButton('7', '7d')}
+              {periodButton('30', '30d')}
+              {periodButton('90', '90d')}
+              {periodButton('all', 'Tudo')}
+            </div>
           </div>
         </div>
       </div>
@@ -309,7 +490,16 @@ export function FindingsScreen({
       {active && (
         <div className="filtbar">
           <span className="filtbar-count">
-            <b>{listBeforeSort.length}</b> de {findings.length} findings
+            {agrupado ? (
+              <>
+                <b>{fmtInt(groupList.length)}</b> de {fmtInt(groups.length)} tipos ·{' '}
+                {fmtInt(ocorrenciasVisiveis)} de {fmtInt(groupsTotal)} ocorrências
+              </>
+            ) : (
+              <>
+                <b>{listBeforeSort.length}</b> de {findings.length} findings
+              </>
+            )}
           </span>
           <div className="filtbar-chips">
             {activeChips.map((chip) => (
@@ -329,7 +519,9 @@ export function FindingsScreen({
         <input
           className="inp"
           style={{ width: 240 }}
-          placeholder="Buscar título, arquivo, CVE…"
+          placeholder={
+            agrupado ? 'Buscar tipo, CVE, repositório…' : 'Buscar título, arquivo, CVE…'
+          }
           aria-label="Buscar findings"
           value={filters.busca}
           onChange={(event) => push({ ...filters, busca: event.target.value, page: 1 })}
@@ -402,6 +594,198 @@ export function FindingsScreen({
       </div>
 
       <div className="stat-card" style={{ padding: 0, overflow: 'hidden' }}>
+        {agrupado ? (
+          <table className="dtbl">
+            <colgroup>
+              <col style={{ width: 120 }} />
+              <col />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 130 }} />
+              <col style={{ width: 70 }} />
+              <col style={{ width: 130 }} />
+              <col style={{ width: 100 }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th className="sort-h" onClick={() => setSort('sev')}>
+                  <span className="dtbl-h">
+                    Severidade
+                    <SortArrow active={filters.sort.col === 'sev'} dir={filters.sort.dir} />
+                  </span>
+                </th>
+                <th className="cl">Tipo de vulnerabilidade / Repositório</th>
+                <th>Scanner</th>
+                <th>CVE / CWE</th>
+                <th className="sort-h" onClick={() => setSort('tier')}>
+                  <span className="dtbl-h">
+                    Tier
+                    <SortArrow active={filters.sort.col === 'tier'} dir={filters.sort.dir} />
+                  </span>
+                </th>
+                <th>Ocorrências</th>
+                <th className="sort-h" onClick={() => setSort('when')}>
+                  <span className="dtbl-h">
+                    Última
+                    <SortArrow active={filters.sort.col === 'when'} dir={filters.sort.dir} />
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {pageGroups.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: 0 }}>
+                    {estadoVazio}
+                  </td>
+                </tr>
+              ) : (
+                pageGroups.map((group) => {
+                  const chave = groupKey(group);
+                  const aberto = expandidos.has(chave);
+                  const faltam = group.ocorrencias - group.amostra.length;
+                  return (
+                    <Fragment key={chave}>
+                      <tr
+                        className="rowlink"
+                        aria-expanded={aberto}
+                        onClick={() => toggleGrupo(chave)}
+                      >
+                        <td>
+                          <SevBadge severity={group.severity} />
+                        </td>
+                        <td className="cl" style={{ overflow: 'hidden' }}>
+                          <div className="flex items-center gap-1.5" style={{ minWidth: 0 }}>
+                            <Chevron open={aberto} />
+                            <span
+                              className="truncate font-medium text-fg"
+                              title={group.title}
+                            >
+                              {group.title}
+                            </span>
+                            {group.algum_secret_verificado && (
+                              <span
+                                className="mono shrink-0 px-1.5 py-0.5 text-[9px]"
+                                style={{
+                                  color: '#ff2d3d',
+                                  background: 'rgba(255,45,61,.1)',
+                                  border: '1px solid rgba(255,45,61,.4)',
+                                  borderRadius: 999,
+                                }}
+                              >
+                                Verified
+                              </span>
+                            )}
+                          </div>
+                          <div className="mono mt-0.5 truncate pl-[17px] text-[10px] text-fg-dim">
+                            {group.asset && (
+                              <span className="text-fg-mute">{group.asset} · </span>
+                            )}
+                            {/* "Desde" dá a idade do problema; a coluna Última
+                                dá a reincidência. As duas juntas dizem se é
+                                antigo e ainda ativo. */}
+                            desde {timeAgo(group.primeiro_em, now)}
+                          </div>
+                        </td>
+                        <td>
+                          <span className="mono block truncate text-[10px] text-fg-mute">
+                            {group.source}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className="mono block truncate text-[10px] text-fg-dim"
+                            title={group.cve_id || group.cwe_id || undefined}
+                          >
+                            {group.cve_id || group.cwe_id || '—'}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className="mono rounded px-1.5 py-0.5 text-[10px]"
+                            style={{
+                              background: 'var(--bg-surface-raised)',
+                              color: 'var(--text-secondary)',
+                            }}
+                          >
+                            T{group.tier}
+                          </span>
+                        </td>
+                        <td>
+                          <div
+                            className="text-[14px] font-bold text-fg"
+                            style={{ fontVariantNumeric: 'tabular-nums' }}
+                          >
+                            {fmtInt(group.ocorrencias)}
+                          </div>
+                          <div className="text-[10px] text-fg-dim">
+                            {fmtInt(group.caminhos)}{' '}
+                            {group.caminhos === 1 ? 'caminho' : 'caminhos'}
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            className="cursor-help text-[12px] text-fg-dim"
+                            title={fmtAbs(group.ultimo_em)}
+                          >
+                            {timeAgo(group.ultimo_em, now)}
+                          </span>
+                        </td>
+                      </tr>
+                      {aberto && (
+                        <tr>
+                          <td
+                            colSpan={7}
+                            className="cl"
+                            style={{ background: 'var(--bg-surface-raised)' }}
+                          >
+                            <div className="mono mb-2 text-[9px] uppercase tracking-[.1em] text-fg-mute">
+                              Caminhos afetados
+                              {faltam > 0
+                                ? ` — amostra de ${group.amostra.length} de ${fmtInt(group.ocorrencias)}`
+                                : ''}
+                            </div>
+                            {group.amostra.length === 0 ? (
+                              <p className="text-[12px] text-fg-dim">
+                                Este detector não reportou caminho para estas ocorrências.
+                              </p>
+                            ) : (
+                              <ul className="grid gap-1">
+                                {group.amostra.map((caminho, indice) => (
+                                  <li
+                                    // O caminho pode repetir (o ZAP reporta a
+                                    // mesma URL em ocorrências diferentes), então
+                                    // o índice entra na chave.
+                                    key={`${caminho}-${indice}`}
+                                    className="mono truncate text-[11px] text-fg-dim"
+                                    title={caminho}
+                                  >
+                                    {caminho}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {faltam > 0 && (
+                              <button
+                                type="button"
+                                className="chip chip-clear mt-3"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  drillDown(group);
+                                }}
+                              >
+                                Ver todas as {fmtInt(group.ocorrencias)} ocorrências →
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        ) : (
         <table className="dtbl">
           <colgroup>
             <col style={{ width: 120 }} />
@@ -440,34 +824,7 @@ export function FindingsScreen({
             {pageList.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ padding: 0 }}>
-                  {!apiOk ? (
-                    <EmptyState
-                      title="Não foi possível carregar os findings"
-                      body="A API não respondeu ou a sessão expirou. Atualize a página em instantes — nada foi perdido, os findings continuam registrados."
-                    />
-                  ) : totalDisponivel === 0 ? (
-                    demo ? (
-                      <EmptyState
-                        title="Nenhum finding, seu código está limpo neste commit."
-                        body="O último scan não encontrou vulnerabilidades. Novos findings aparecem aqui a cada scan."
-                      />
-                    ) : (
-                      <EmptyState
-                        title="Nenhum finding encontrado até agora."
-                        body="Os scans rodam a cada pull request nos repositórios monitorados. Assim que uma vulnerabilidade aparecer, ela é listada aqui."
-                      />
-                    )
-                  ) : (
-                    <EmptyState
-                      title="Sem dados para os filtros aplicados"
-                      body="Ajuste ou limpe os filtros para ver os findings desta execução."
-                      action={
-                        <button type="button" className="chip chip-clear" onClick={clearAll}>
-                          Limpar filtros
-                        </button>
-                      }
-                    />
-                  )}
+                  {estadoVazio}
                 </td>
               </tr>
             ) : (
@@ -570,8 +927,9 @@ export function FindingsScreen({
             )}
           </tbody>
         </table>
+        )}
 
-        {list.length > FF_PAGE_SIZE && (
+        {totalItens > pageSize && (
           <div
             className="flex items-center justify-between gap-3"
             style={{ padding: '10px 16px', borderTop: '1px solid var(--border-default)' }}
@@ -579,9 +937,9 @@ export function FindingsScreen({
             <span className="text-[12px] text-fg-dim">
               Mostrando{' '}
               <b style={{ color: 'var(--text-secondary)' }}>
-                {pageStart + 1}–{Math.min(pageStart + FF_PAGE_SIZE, list.length)}
+                {pageStart + 1}–{Math.min(pageStart + pageSize, totalItens)}
               </b>{' '}
-              de {list.length}
+              de {totalItens} {agrupado ? 'tipos' : ''}
             </span>
             <div className="flex items-center gap-[5px]">
               <button

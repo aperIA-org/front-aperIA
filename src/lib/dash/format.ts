@@ -123,6 +123,17 @@ export function fmtAbs(iso: string): string {
   )}:${p(d.getUTCMinutes())} (UTC)`;
 }
 
+/**
+ * Inteiro com separador de milhar (3007 → "3.007").
+ *
+ * À mão, sem `Intl.NumberFormat`: o número é renderizado no servidor e
+ * hidratado no cliente, e basta uma diferença de ICU entre os dois para o React
+ * acusar mismatch. Agrupar de três em três com regex não depende de locale.
+ */
+export function fmtInt(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
 export function shortSha(sha: string): string {
   return sha.slice(0, 8);
 }

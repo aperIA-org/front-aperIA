@@ -65,6 +65,12 @@ type ReportDetailProps = {
   /** `false` = a API não respondeu; é diferente de "nenhum finding". */
   findingsOk: boolean;
   /**
+   * Execuções anteriores do MESMO commit (`GET /scans/{id}/history`), da mais
+   * recente para a mais antiga. Em modo demo é ignorada: o dataset do protótipo
+   * não tem commit repetido, então lá o histórico é o do repositório.
+   */
+  history?: ScanJob[];
+  /**
    * `true` = dataset do protótipo. Só nesse modo existem PR enviado, patches de
    * remediação e histórico de scans: a API não expõe rota de remediações e o
    * detalhe carrega uma única execução. Misturar mock com dado real seria mentir.
@@ -91,6 +97,7 @@ export function ReportDetail({
   reports,
   findings,
   findingsOk,
+  history: historyProp = [],
   demo,
   now,
 }: ReportDetailProps) {
@@ -105,11 +112,19 @@ export function ReportDetail({
   /* Blocos sem fonte na API: só existem sobre o dataset do protótipo. */
   const asset = demo ? ASSETS.find((a) => a.name === shortName) : undefined;
   const prRems = demo ? REMEDIATIONS.filter((r) => r.scan_job_id === job.id) : [];
+  /*
+   * Duas coisas diferentes com a mesma apresentação: no protótipo, os scans do
+   * repositório (nenhum commit se repete lá); com dados reais, as execuções
+   * deste commit — que passaram a existir quando rescanear a mesma branch
+   * deixou de sobrescrever a execução anterior.
+   */
   const history = demo
     ? SCAN_JOBS.filter((j) => j.repo_full_name === `${GH_ORG}/${shortName}`).sort(
         (a, b) => Date.parse(scanRanAt(b)) - Date.parse(scanRanAt(a)),
       )
-    : [];
+    : historyProp;
+  // Com uma execução só não há histórico — a linha seria a própria tela.
+  const showHistory = demo || history.length > 1;
 
   return (
     <div className="page-wrap">
@@ -386,10 +401,17 @@ export function ReportDetail({
         </div>
       ) : null}
 
-      {demo ? (
+      {showHistory ? (
         <div className="stat-card mb-6" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-default)' }}>
-            <h2 className="text-[15px] font-bold">Histórico de scans</h2>
+            <h2 className="text-[15px] font-bold">
+              {demo ? 'Histórico de scans' : 'Execuções deste commit'}
+            </h2>
+            {!demo && (
+              <p className="mt-0.5 text-[12px] text-fg-dim">
+                Cada rescan da mesma branch guarda o próprio relatório.
+              </p>
+            )}
           </div>
 
           {history.length === 0 ? (
@@ -407,7 +429,10 @@ export function ReportDetail({
             </div>
           ) : (
             history.map((j) => {
-              const remCount = REMEDIATIONS.filter((r) => r.scan_job_id === j.id).length;
+              // Remediações são mock; com dados reais não há rota para elas.
+              const remCount = demo
+                ? REMEDIATIONS.filter((r) => r.scan_job_id === j.id).length
+                : 0;
               const current = j.id === job.id;
 
               return (
@@ -424,7 +449,8 @@ export function ReportDetail({
                 >
                   <div style={{ minWidth: 0 }}>
                     <div className="lnk text-sm font-medium text-fg">
-                      PR #{j.pr_number}{' '}
+                      {/* `pr_number` é 0 em scan manual (roda sem PR). */}
+                      {j.pr_number > 0 ? `PR #${j.pr_number} ` : 'Execução '}
                       <span className="mono text-fg-dim" style={{ fontSize: 11 }}>
                         {shortSha(j.commit_sha)}
                       </span>

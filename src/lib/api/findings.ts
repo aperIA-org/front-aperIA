@@ -3,7 +3,7 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { repoShortName } from '@/lib/dash/github';
-import type { Criticality, Finding, Severity } from '@/lib/dash/types';
+import type { Criticality, Finding, FindingGroup, Severity } from '@/lib/dash/types';
 import { getApi } from './client';
 import { COOKIE_NAMES, IS_API_CONFIGURED } from './config';
 
@@ -156,9 +156,15 @@ export const fetchFindingsCount = cache(async (): Promise<number | null> => {
  *
  * `commitSha` escopa a um commit (usado pelo detalhe de relatório). Sem ele, é
  * o conjunto do usuário — que é o que a tela de Findings filtra.
+ *
+ * `title` é o drill-down de um grupo de `GET /findings/groups`: igualdade
+ * EXATA, não busca livre (a busca livre continua no cliente, em
+ * `findings-filters.ts`). É o que faz a visão "Todos" de um grupo mostrar as
+ * ocorrências DAQUELE problema em vez de cair no teto de 1000 varrendo o
+ * conjunto inteiro.
  */
 export const fetchFindings = cache(
-  async (commitSha?: string): Promise<FindingsResult> => {
+  async (commitSha?: string, title?: string): Promise<FindingsResult> => {
     if (!IS_API_CONFIGURED) {
       return { findings: [], total: 0, truncated: false, ok: false };
     }
@@ -177,6 +183,7 @@ export const fetchFindings = cache(
           offset: String(offset),
         });
         if (commitSha) query.set('commit_sha', commitSha);
+        if (title) query.set('title', title);
 
         const { status, data } = await getApi(`/findings?${query.toString()}`, token);
         if (status !== 200 || !data || typeof data !== 'object') {
@@ -204,5 +211,124 @@ export const fetchFindings = cache(
       truncated: total > collected.length,
       ok: true,
     };
+  },
+);
+
+// ── Grupos ───────────────────────────────────────────────────────────────────
+
+type ApiFindingGroup = {
+  source: string;
+  severity: string;
+  tier: number;
+  title: string;
+  cve_id: string | null;
+  cwe_id: string | null;
+  asset: string | null;
+  ocorrencias: number;
+  caminhos: number;
+  algum_secret_verificado: boolean;
+  primeiro_em: string;
+  ultimo_em: string;
+  exemplo_finding_id: string;
+  amostra: unknown;
+};
+
+export type FindingGroupsResult = {
+  groups: FindingGroup[];
+  /** Soma das ocorrências — o tamanho REAL do conjunto por trás dos grupos. */
+  totalFindings: number;
+  /**
+   * Teto de grupos atingido (500). Aí `totalFindings` soma só os devolvidos e
+   * subestima o real — um número cortado sem aviso mente pior do que o aviso.
+   */
+  truncated: boolean;
+  /** `false` quando a API não respondeu — a tela mostra estado neutro. */
+  ok: boolean;
+};
+
+const GROUPS_FAILED: FindingGroupsResult = {
+  groups: [],
+  totalFindings: 0,
+  truncated: false,
+  ok: false,
+};
+
+/**
+ * Quantos caminhos de exemplo vêm por grupo.
+ *
+ * É o que a expansão da linha mostra sem nova chamada. Oito cabe na tela e
+ * mantém a resposta pequena; acima disso o usuário quer mesmo é a visão
+ * "Todos" daquele grupo.
+ */
+const GROUP_SAMPLE_SIZE = 8;
+
+function isApiFindingGroup(value: unknown): value is ApiFindingGroup {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    typeof (value as ApiFindingGroup).title === 'string' &&
+    typeof (value as ApiFindingGroup).ocorrencias === 'number' &&
+    typeof (value as ApiFindingGroup).exemplo_finding_id === 'string'
+  );
+}
+
+function toGroup(dto: ApiFindingGroup): FindingGroup {
+  return {
+    source: dto.source,
+    severity: toSeverity(dto.severity),
+    tier: dto.tier,
+    title: dto.title,
+    cve_id: dto.cve_id,
+    cwe_id: dto.cwe_id,
+    asset: dto.asset,
+    ocorrencias: dto.ocorrencias,
+    caminhos: dto.caminhos,
+    algum_secret_verificado: dto.algum_secret_verificado,
+    primeiro_em: dto.primeiro_em,
+    ultimo_em: dto.ultimo_em,
+    exemplo_finding_id: dto.exemplo_finding_id,
+    amostra: Array.isArray(dto.amostra) ? dto.amostra.filter((p) => typeof p === 'string') : [],
+  };
+}
+
+/**
+ * Findings agrupados por tipo (`GET /findings/groups`).
+ *
+ * Sem paginação de propósito: o agrupamento derruba a cardinalidade em três
+ * ordens de grandeza (12 mil findings → ~14 grupos) e a resposta inteira cabe
+ * numa tela. Já vem ordenada por severidade desc e depois volume desc — a
+ * ordem do servidor é a ordem padrão da tela.
+ */
+export const fetchFindingGroups = cache(
+  async (commitSha?: string): Promise<FindingGroupsResult> => {
+    if (!IS_API_CONFIGURED) return GROUPS_FAILED;
+
+    const token = await accessToken();
+    if (!token) return GROUPS_FAILED;
+
+    try {
+      const query = new URLSearchParams({ amostra: String(GROUP_SAMPLE_SIZE) });
+      if (commitSha) query.set('commit_sha', commitSha);
+
+      const { status, data } = await getApi(`/findings/groups?${query.toString()}`, token);
+      if (status !== 200 || !data || typeof data !== 'object') return GROUPS_FAILED;
+
+      const payload = data as {
+        items?: unknown;
+        total_findings?: unknown;
+        truncado?: unknown;
+      };
+      if (!Array.isArray(payload.items)) return GROUPS_FAILED;
+
+      const groups = payload.items.filter(isApiFindingGroup).map(toGroup);
+      const totalFindings =
+        typeof payload.total_findings === 'number'
+          ? payload.total_findings
+          : groups.reduce((soma, g) => soma + g.ocorrencias, 0);
+
+      return { groups, totalFindings, truncated: payload.truncado === true, ok: true };
+    } catch {
+      return GROUPS_FAILED;
+    }
   },
 );
