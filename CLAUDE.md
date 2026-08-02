@@ -382,6 +382,13 @@ Four things that are load-bearing:
 - **A report's identity is the `commit_sha`** — the API has no `ScanJob.id`. The mapper puts the sha in `id`,
   so `reportDetailRoute()` keeps working and the URL becomes `/dash/relatorios/<sha>`. `pr_number` is `0` for
   manual scans (no PR), and the UI hides the `#0`.
+- **`created_at` on a `ScanJob` is not when the scan ran.** Re-scanning a commit reuses the row: the API's
+  `restart_execution` resets the tier timestamps and deliberately *preserves* `created_at`, which marks when
+  the commit first entered the system. Showing it made a scan fired seconds ago read "há 10h". Every screen
+  displays **`scanRanAt(job)`** (`format.ts`) instead — `started_at ?? created_at`, where `started_at` is the
+  API's `tier1_started_at`; the fallback covers the prototype dataset and jobs queued but not yet started.
+  Sorting uses it too, on both sides: `GET /scans` orders by `COALESCE(tier1_started_at, created_at) desc`,
+  otherwise a re-scanned old commit would sink in the list *and* be cut by the pagination window.
 
 **The report itself is the pipeline's markdown** (`report_markdown`, one per tier), rendered by
 `src/components/dash/Markdown.tsx` with `react-markdown` + `remark-gfm`. Raw HTML is off and there is no

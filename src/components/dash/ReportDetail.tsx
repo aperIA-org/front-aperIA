@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { ScanReport } from '@/lib/api/scans';
 import { reportDetailRoute, SCREEN_ROUTES, findingRoute } from '@/lib/dash/dash-routes';
-import { fmtAbs, riskColor, shortSha, timeAgo, riskMax } from '@/lib/dash/format';
+import { fmtAbs, riskColor, riskMax, scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
 import { ASSETS, FINDINGS, GH_ORG, REMEDIATIONS, SCAN_JOBS } from '@/lib/dash/mock-data';
 import type { Finding, RiskLevel, ScanJob } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
@@ -107,7 +107,7 @@ export function ReportDetail({
   const prRems = demo ? REMEDIATIONS.filter((r) => r.scan_job_id === job.id) : [];
   const history = demo
     ? SCAN_JOBS.filter((j) => j.repo_full_name === `${GH_ORG}/${shortName}`).sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        (a, b) => Date.parse(scanRanAt(b)) - Date.parse(scanRanAt(a)),
       )
     : [];
 
@@ -142,8 +142,8 @@ export function ReportDetail({
             {/* `pr_number = 0` é o scan manual: roda pelo botão, fora de um PR. */}
             <span>{job.pr_number ? `PR #${job.pr_number}` : 'scan manual'}</span>
             <Sep />
-            <span title={fmtAbs(job.created_at)} className="cursor-help">
-              {timeAgo(job.created_at, now)}
+            <span title={fmtAbs(scanRanAt(job))} className="cursor-help">
+              {timeAgo(scanRanAt(job), now)}
             </span>
             {findingsOk ? (
               <>
@@ -299,8 +299,8 @@ export function ReportDetail({
             <div className="mono mt-1 text-[11px] text-fg-dim">
               aperia/fix-{shortSha(job.commit_sha)} → main · commit{' '}
               {shortSha(job.commit_sha)} ·{' '}
-              <span title={fmtAbs(job.created_at)} className="cursor-help">
-                {timeAgo(job.created_at, now)}
+              <span title={fmtAbs(scanRanAt(job))} className="cursor-help">
+                {timeAgo(scanRanAt(job), now)}
               </span>
             </div>
 
@@ -328,7 +328,7 @@ export function ReportDetail({
                 </span>
                 <span className="text-[12.5px] font-semibold">aperIA-bot</span>
                 <span className="text-[11px] text-fg-dim">
-                  comentou {timeAgo(job.created_at, now)}
+                  comentou {timeAgo(scanRanAt(job), now)}
                 </span>
               </div>
               <div
@@ -442,8 +442,8 @@ export function ReportDetail({
                       className="mono mt-0.5"
                       style={{ fontSize: 11, color: 'var(--text-faint)' }}
                     >
-                      <span title={fmtAbs(j.created_at)} className="cursor-help">
-                        {timeAgo(j.created_at, now)}
+                      <span title={fmtAbs(scanRanAt(j))} className="cursor-help">
+                        {timeAgo(scanRanAt(j), now)}
                       </span>
                     </div>
                   </div>

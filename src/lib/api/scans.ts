@@ -94,6 +94,10 @@ function toScanJob(dto: ApiScanJob): ScanJob {
     final_risk_score: dto.final_risk_score,
     final_risk_level: toRiskLevel(dto.final_risk_level),
     created_at: dto.created_at,
+    // `created_at` é preservado quando um commit é reescaneado, então exibi-lo
+    // como "quando rodou" mostrava a primeira entrada do commit — um scan
+    // recém-disparado aparecia como "há 10h".
+    started_at: dto.tier1_started_at ?? dto.created_at,
     t1_dur: duration(dto.tier1_started_at, dto.tier1_completed_at),
     t2_dur: duration(dto.tier2_started_at, dto.tier2_completed_at),
     t3_dur: duration(dto.tier3_started_at, dto.tier3_completed_at),

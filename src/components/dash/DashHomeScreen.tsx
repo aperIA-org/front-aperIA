@@ -8,7 +8,7 @@ import {
   SCREEN_ROUTES,
 } from '@/lib/dash/dash-routes';
 import { useDashState } from '@/lib/dash/dash-state';
-import { shortSha, timeAgo, TIER_STATUS_LABEL, riskMax } from '@/lib/dash/format';
+import { riskMax, scanRanAt, shortSha, timeAgo, TIER_STATUS_LABEL } from '@/lib/dash/format';
 import { REMEDIATIONS } from '@/lib/dash/mock-data';
 import type { Finding, ScanJob } from '@/lib/dash/types';
 import { CountUp } from './CountUp';
@@ -226,7 +226,7 @@ export function DashHomeScreen({
                     {lastJob.pr_number > 0 && ` · PR #${lastJob.pr_number}`}
                   </div>
                   <div className="mono mt-1 text-[12px] text-fg-dim">
-                    {shortSha(lastJob.commit_sha)} · {timeAgo(lastJob.created_at, now)}
+                    {shortSha(lastJob.commit_sha)} · {timeAgo(scanRanAt(lastJob), now)}
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -324,7 +324,7 @@ export function DashHomeScreen({
                 <TierPill status={job.tier3_status} />
               </span>
               <span className="mono text-[12px] text-fg-dim">
-                {timeAgo(job.created_at, now)}
+                {timeAgo(scanRanAt(job), now)}
               </span>
             </Link>
           ))

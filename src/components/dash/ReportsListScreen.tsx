@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { reportDetailRoute, SCREEN_ROUTES } from '@/lib/dash/dash-routes';
-import { fmtAbs, riskColor, shortSha, timeAgo, riskMax } from '@/lib/dash/format';
+import { fmtAbs, riskColor, riskMax, scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
 import type { ScanJob } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
 import { MiniGauge } from './RiskGauge';
@@ -105,8 +105,8 @@ export function ReportsListScreen({
                       style={{ fontSize: 11, color: 'var(--text-faint)' }}
                     >
                       {shortSha(job.commit_sha)} ·{' '}
-                      <span title={fmtAbs(job.created_at)} className="cursor-help">
-                        {timeAgo(job.created_at, now)}
+                      <span title={fmtAbs(scanRanAt(job))} className="cursor-help">
+                        {timeAgo(scanRanAt(job), now)}
                       </span>
                     </div>
                   </div>

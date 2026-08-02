@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { requestManualScan } from '@/lib/api/github-actions';
 import { reportDetailRoute, SCREEN_ROUTES } from '@/lib/dash/dash-routes';
 import { useDashState } from '@/lib/dash/dash-state';
-import { fmtAbs, riskColor, shortSha, timeAgo, riskMax } from '@/lib/dash/format';
+import { fmtAbs, riskColor, riskMax, scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
 import {
   GH_ORG,
   INSTALLATION_REPOS,
@@ -327,7 +327,7 @@ export function ScansScreen({
     return [...byRepo.entries()].map(([repo, list]) => ({
       repo,
       jobs: [...list].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        (a, b) => Date.parse(scanRanAt(b)) - Date.parse(scanRanAt(a)),
       ),
     }));
   }, [filtered]);
@@ -458,7 +458,7 @@ export function ScansScreen({
               <span className="text-[15px] font-semibold">{group.repo}</span>
               <span className="text-[12px] text-fg-dim">
                 · {group.jobs.length} scan{group.jobs.length === 1 ? '' : 's'} · último{' '}
-                {timeAgo(group.jobs[0].created_at, now)}
+                {timeAgo(scanRanAt(group.jobs[0]), now)}
               </span>
             </div>
 
@@ -562,8 +562,8 @@ function ScanCard({ job, demo, now }: { job: ScanJob; demo: boolean; now: number
             {gate1Blocked && <span className="sev st-blocked">gate1 bloqueado</span>}
           </div>
           <div className="mt-0.5 text-[12px] text-fg-dim">
-            <span title={fmtAbs(job.created_at)} className="cursor-help">
-              {timeAgo(job.created_at, now)}
+            <span title={fmtAbs(scanRanAt(job))} className="cursor-help">
+              {timeAgo(scanRanAt(job), now)}
             </span>
             {remCount > 0 && (
               <>

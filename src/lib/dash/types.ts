@@ -55,7 +55,19 @@ export type ScanJob = {
   blocked_at_tier: number | null;
   final_risk_score: number | null;
   final_risk_level: RiskLevel;
+  /**
+   * Quando o COMMIT entrou no sistema — preservado entre reexecuções.
+   *
+   * Não é quando o scan rodou: reescanear o mesmo commit reaproveita a linha e
+   * mantém este campo. Para "quando executou", use `started_at`.
+   */
   created_at: string;
+  /**
+   * Início desta execução (`tier1_started_at` da API). Opcional porque o
+   * dataset do protótipo não tem o campo — lá `created_at` já é a execução.
+   * Leia sempre via `scanRanAt()`, nunca direto.
+   */
+  started_at?: string;
   t1_dur: string | null;
   t2_dur: string | null;
   t3_dur: string | null;

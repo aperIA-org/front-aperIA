@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { SCREEN_ROUTES } from '@/lib/dash/dash-routes';
-import { riskColor, shortSha, timeAgo } from '@/lib/dash/format';
+import { riskColor, scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
 import { FINDINGS, INSIGHTS, SCAN_JOBS } from '@/lib/dash/mock-data';
 import type { ScanJob } from '@/lib/dash/types';
 import { AttackChain } from './AttackChain';
@@ -167,7 +167,7 @@ function ExecSelect({ job }: { job: ScanJob }) {
         <span className="text-[13px] text-fg-dim">
           {job.repo_full_name} · PR #{job.pr_number} ·{' '}
           <span className="mono text-[12px]">{shortSha(job.commit_sha)}</span> ·{' '}
-          {timeAgo(job.created_at)}
+          {timeAgo(scanRanAt(job))}
         </span>
         <IconChevronDown />
       </button>
@@ -217,7 +217,7 @@ function ExecSelect({ job }: { job: ScanJob }) {
                   </span>
                   <span className="text-[11px] text-fg-dim">
                     <span className="mono">{shortSha(option.commit_sha)}</span> ·{' '}
-                    {timeAgo(option.created_at)}
+                    {timeAgo(scanRanAt(option))}
                   </span>
                 </span>
               </span>

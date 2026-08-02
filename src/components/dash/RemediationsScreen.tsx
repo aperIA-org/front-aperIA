@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SCREEN_ROUTES } from '@/lib/dash/dash-routes';
-import { shortSha, timeAgo } from '@/lib/dash/format';
+import { scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
 import { FINDINGS, REMEDIATIONS, SCAN_JOBS } from '@/lib/dash/mock-data';
 import type { RemediationStatus } from '@/lib/dash/types';
 import { DemoDataBadge } from './DemoDataBadge';
@@ -101,7 +101,7 @@ export function RemediationsScreen() {
             <b style={{ color: 'var(--text-primary)' }}>{ctxJob.repo_full_name}</b> ·{' '}
             <span className="mono">PR #{ctxJob.pr_number}</span> ·{' '}
             <span className="mono">{shortSha(ctxJob.commit_sha)}</span> ·{' '}
-            {timeAgo(ctxJob.created_at)}
+            {timeAgo(scanRanAt(ctxJob))}
           </span>
           <Link
             href={SCREEN_ROUTES.remediations}

@@ -1,5 +1,5 @@
 import { REF_NOW } from './mock-data';
-import type { Criticality, Severity } from './types';
+import type { Criticality, ScanJob, Severity } from './types';
 
 export const SEV_ORDER: Record<Severity, number> = {
   critical: 5,
@@ -190,4 +190,16 @@ export function gaugeBand(
   if (fracao > 0.7) return { color: '#ff2d3d', label: 'Crítico', gradientFrom: '#f5a524' };
   if (fracao >= 0.4) return { color: '#f5a524', label: 'Moderado', gradientFrom: '#f5d524' };
   return { color: '#2ecc8b', label: 'Baixo', gradientFrom: '#2ecc8b' };
+}
+
+/**
+ * Quando a execução rodou — o que as telas devem exibir.
+ *
+ * `created_at` é a entrada do COMMIT no sistema e sobrevive a reexecuções: um
+ * scan disparado agora sobre um commit de ontem mostrava "há 10h". `started_at`
+ * (o `tier1_started_at` da API) é o início desta execução; o fallback cobre o
+ * dataset do protótipo e jobs enfileirados que ainda não começaram o Tier 1.
+ */
+export function scanRanAt(job: Pick<ScanJob, 'created_at' | 'started_at'>): string {
+  return job.started_at ?? job.created_at;
 }
