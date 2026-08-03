@@ -542,7 +542,7 @@ export function AttackEmulationScreen() {
             borderTop: '1px solid var(--border-default)',
           }}
         >
-          <EngineBadge label="Threat Intel" title="OpenCTI · inteligência de ameaças" />
+          <EngineBadge label="Threat Intel" title="CISA KEV + EPSS · inteligência de ameaças" />
           <EngineBadge label="Emulation" title="Caldera · emulação de adversário" />
         </div>
       </div>

@@ -267,7 +267,7 @@ export const INTEGRATIONS: Integration[] = [
   {id:'trivy',name:'Trivy',desc:'SCA, CVEs em dependências e containers',tier:'T2',status:'operational',last_run:'2024-06-29T14:26:00Z',findings_total:2,version:'0.52.0'},
   {id:'prowler',name:'Prowler',desc:'Cloud security posture (AWS/GCP/Azure)',tier:'T2',status:'operational',last_run:'2024-06-29T14:27:00Z',findings_total:1,version:'4.2.1'},
   {id:'zap',name:'OWASP ZAP',desc:'DAST, testes de segurança dinâmicos',tier:'T3',status:'operational',last_run:'2024-06-28T10:12:00Z',findings_total:1,version:'2.14.0'},
-  {id:'opencti',name:'OpenCTI',desc:'Threat intelligence contextual',tier:'T3',status:'degraded',last_run:'2024-06-27T08:00:00Z',findings_total:0,version:'5.12.4',impact:'Enriquecimento de threat intel indisponível, attack paths sem contexto CTI'},
+  {id:'threat-intel',name:'CISA KEV + EPSS',desc:'Threat intel: CVEs explorados (KEV) e probabilidade de exploração (EPSS)',tier:'T3',status:'operational',last_run:'2024-06-29T14:26:00Z',findings_total:null,version:'feed'},
   {id:'caldera',name:'Caldera',desc:'Adversary simulation (MITRE ATT&CK)',tier:'T3',status:'operational',last_run:'2024-06-28T10:15:00Z',findings_total:0,version:'5.0.0'},
   {id:'claude',name:'I.A',desc:'Raciocínio de IA, cadeia de eventos e attack path',tier:'T2+T3',status:'operational',last_run:'2024-06-29T14:35:00Z',findings_total:null,version:'claude-sonnet-4-5'},
 ];

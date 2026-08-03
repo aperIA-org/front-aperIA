@@ -80,11 +80,12 @@ export const ECOSYSTEM_TILES: readonly EcosystemTile[] = [
     fitClassName: 'max-h-[46px] max-w-[128px]',
   },
   {
-    kind: 'image',
-    name: 'OpenCTI',
-    src: '/assets/logo-opencti.png',
-    width: 1440,
-    height: 1270,
-    fitClassName: 'max-h-[44px] max-w-[96px]',
+    // OpenCTI saiu do stack (exigia ElasticSearch/RabbitMQ, vários GB). O threat
+    // intel agora é CISA KEV + EPSS — feeds públicos, sem logo único, então tile
+    // de texto como PROWLER/TruffleHog.
+    kind: 'text',
+    name: 'CISA KEV + EPSS',
+    textClassName:
+      'font-heading text-[16px] font-bold tracking-[-0.01em] text-[#17191d]',
   },
 ];
