@@ -45,15 +45,21 @@ export function DashHomeScreen({
   now: number;
 }) {
   const router = useRouter();
-  const { connected, monitored } = useDashState();
+  const { connected, resolved, monitored } = useDashState();
 
   // Sem guard de `mounted`: a conexão é resolvida no servidor, então o
   // onboarding já vem no HTML do SSR em vez de aparecer depois do 1º efeito.
-  if (!connected) return <OnboardingFlow />;
+  //
+  // Só o estado RESOLVIDO manda ao onboarding / "nenhum repo". Um `resolved:
+  // false` (API não respondeu ou sessão indisponível naquele render, comum sob
+  // carga do scan) não prova desconexão — nesse caso segue para o dashboard, que
+  // renderiza com dados vazios e se recompõe no próximo poll, em vez de expulsar
+  // quem está de fato conectado. Ver DataScreenGate.
+  if (resolved && !connected) return <OnboardingFlow />;
 
   // Vale tanto para quem acabou de instalar o App (instalar dá visibilidade, não
   // ativa nada) quanto para quem desmarcou tudo depois.
-  if (monitored.length === 0) {
+  if (resolved && monitored.length === 0) {
     return (
       <div className="page-wrap">
         <div className="mb-6">

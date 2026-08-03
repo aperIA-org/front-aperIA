@@ -41,6 +41,13 @@ type DashState = {
   connection: GitHubConnection;
   /** ≥1 instalação do GitHub App vinculada. */
   connected: boolean;
+  /**
+   * A conexão foi de fato resolvida pelo servidor (`false` = API não respondeu
+   * ou não havia sessão naquele render — tipicamente um tropeço transitório sob
+   * carga do scan). Distingue "não conectado" de "não sei" — o gate precisa
+   * disso para não jogar o usuário no onboarding num timeout.
+   */
+  resolved: boolean;
   /** Repositórios com `active=true` — os que o pipeline analisa. */
   monitored: Repository[];
   /**
@@ -127,6 +134,8 @@ export function DashStateProvider({
       isPreview,
       connection,
       connected: isConnected(connection),
+      // demo é sempre "resolvido" (mock não depende da API).
+      resolved: connection.demo || connection.resolved,
       monitored: monitoredRepos(connection),
       showDemoBadge: !connection.demo,
       sidebarCollapsed,

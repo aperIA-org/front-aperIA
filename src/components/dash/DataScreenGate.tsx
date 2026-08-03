@@ -13,11 +13,19 @@ import { useDashState } from '@/lib/dash/dash-state';
  *
  * Não há mais guard de `mounted`: a conexão é resolvida no servidor, então o
  * aviso já vem no HTML do SSR em vez de aparecer depois do primeiro efeito.
+ *
+ * **Só o estado RESOLVIDO manda o usuário ao onboarding.** Quando a conexão não
+ * resolveu (`resolved: false` — API não respondeu ou sessão indisponível naquele
+ * render, comum sob carga do scan), não sabemos se há contas: mostrar "Conecte-se
+ * com o GitHub" seria mentir sobre uma queda transitória. Nesse caso renderiza-se
+ * o conteúdo (que se recompõe no próximo `router.refresh()`), em vez de expulsar
+ * quem está de fato conectado. O onboarding fica reservado ao caso genuíno:
+ * resolveu e não há nenhuma conta.
  */
 export function DataScreenGate({ children }: { children: React.ReactNode }) {
-  const { connected } = useDashState();
+  const { connected, resolved } = useDashState();
 
-  if (connected) return <>{children}</>;
+  if (connected || !resolved) return <>{children}</>;
 
   return (
     <div className="page-wrap">

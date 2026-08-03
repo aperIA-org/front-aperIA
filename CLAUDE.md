@@ -181,7 +181,7 @@ the Python API server-side. Two reasons, both load-bearing:
 |---|---|---|
 | `POST /api/auth/signup` | `POST /users` → `POST /auth/login` | Two calls: `/users` returns only `{id}`, no tokens |
 | `POST /api/auth/login` | `POST /auth/login` | 401 → "E-mail ou senha inválidos." |
-| `POST /api/auth/refresh` | `POST /auth/refresh` | Token rotation; clears cookies on any failure |
+| `POST /api/auth/refresh` | `POST /auth/refresh` | Token rotation with a grace window for concurrent replays; middleware clears cookies only on 401 |
 | `POST /api/auth/logout` | `POST /auth/logout` | Clears cookies even if revocation fails |
 
 **Field names differ between the UI and the API** — the BFF translates, do not "fix" one side to match the
@@ -200,9 +200,16 @@ no organization endpoint.
 
 ### Silent session refresh — `src/middleware.ts`
 
-The access cookie lives 15 minutes; the refresh cookie 7 days. When the access cookie expires the browser
-just stops sending it, so the middleware (matcher `/dash/:path*`) exchanges the refresh token for a new
-pair before the page renders.
+The access cookie lives 15 minutes; the refresh cookie 7 days. The middleware (matcher `/dash/:path*`)
+exchanges the refresh token for a new pair before the page renders when the access token is expired **or
+within `REFRESH_SKEW_MS` (60s) of expiring** — it decodes the JWT `exp` (no signature check; the API is the
+authority), it does **not** rely on the cookie being absent. That distinction was a real bug: the access
+cookie's `Max-Age` and the JWT's `exp` are both 15 min, but the cookie is set a few seconds *after* the JWT
+is minted (API latency, worse under load), so it outlives the token. In that window the browser still sent
+the access cookie, the old middleware saw "cookie present → session valid" and skipped the refresh, and the
+server components hit the API with a dead JWT → `401` → the dashboard rendered logged-out mid-session. The
+60s skew also buys resilience: the old token is still valid during the skew, so a refresh that times out
+under load doesn't drop anything — the render proceeds on the old token and retries next request.
 
 **Why middleware and not the layout:** server components **cannot set cookies** in Next.js — only Route
 Handlers, Server Actions, and middleware can. And middleware is the only one that runs *before* the page,
@@ -218,8 +225,22 @@ Two things that are easy to get wrong and are load-bearing:
    warns "A Node.js API is used … not supported in the Edge Runtime". `adapter: 'fetch'` does not help
    because the warning comes from `utils.js`, imported with the package. Do not "fix" this back to axios.
 
-On a rejected refresh (expired, revoked, or reuse detected — the API invalidates the whole token family)
-the middleware clears both cookies, so it does not retry on every request with a token that will never work.
+**Only a `401` clears the cookies — not any non-200.** The middleware distinguishes three outcomes
+(`RefreshOutcome`): `renewed` (200 + valid pair → new cookies), `rejected` (**401** → token definitively
+refused → clear both cookies), and `unavailable` (5xx, timeout, network, unparseable body → proceed without
+a session but **keep** the cookies). The distinction is load-bearing: a transient API hiccup during a scan
+must not log the user out, and a concurrent request may have just renewed the session. Clearing on *any*
+non-200 (the old behavior) turned a server blip into a logout.
+
+**The refresh-token rotation race, and why it stopped logging people out.** `Início`/Scans polls
+`router.refresh()` every 5s while a scan runs, so when the 15-minute access cookie expires there is a
+cluster of concurrent `/dash/*` requests, all carrying the same refresh cookie. The API rotates on refresh
+(old token revoked, new pair issued), so only one concurrent request could win — the losers got 401 and the
+middleware logged the user out mid-scan. The fix is on the API side (`../python-api`): a **rotation grace
+window** (`REFRESH_ROTATION_GRACE_SECONDS`, 30s) treats a just-rotated token replayed within the window as a
+benign concurrent replay and issues a fresh pair instead of 401 + family revocation. Genuine reuse (a token
+revoked long ago) still invalidates the whole family. The middleware's `unavailable`-doesn't-clear rule is
+the second layer. Reproduced before the fix: two concurrent refreshes with one token → `A:200, B:401`.
 
 ## Dashboard (`/dash/*`)
 
@@ -293,6 +314,15 @@ function of that state, not a stored step:
 `resolved: false` means "the API is configured but did not answer / there is no session" — distinct from
 "answered that there are no accounts". Keep the distinction: without it the UI tells the user to connect
 GitHub when the real problem is a timeout.
+
+**`isConnected` only checks `accounts.length` — so the gate must check `resolved` itself.** `DataScreenGate`
+renders its children when `connected || !resolved`, and shows the "Conecte-se com o GitHub" onboarding CTA
+**only** when `resolved && !connected` (the API answered and there really are no accounts). This was a real
+bug: an `UNRESOLVED_CONNECTION` (empty `accounts`, `resolved: false`) made `isConnected` return false, so a
+*transient* failure to resolve — a slow/failed `resolveGitHubConnection` during scan load, or an expired
+access token the middleware couldn't refresh in time — kicked a fully-connected user to the onboarding page
+("página sem scans"). A `!resolved` render now keeps the data screen (which self-heals on the next
+`router.refresh()`), instead of asserting a disconnection we cannot confirm.
 
 Load-bearing details:
 
