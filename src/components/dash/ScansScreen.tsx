@@ -133,6 +133,9 @@ type Filters = {
 
 const EMPTY_FILTERS: Filters = { repo: null, status: null, tier: null };
 
+/** Quantos scans um repo mostra quando o histórico está expandido. */
+const HISTORICO_MAX = 10;
+
 const STATUS_OPTIONS: [PipeStatus, string][] = [
   ['done', 'Concluído'],
   ['running', 'Em execução'],
@@ -168,6 +171,16 @@ export function ScansScreen({
   const [demoJobs, setDemoJobs] = useState<ScanJob[]>(() => serverJobs);
   const jobs = demo ? demoJobs : serverJobs;
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  // Repos com o histórico expandido. Por padrão cada repo mostra só o último
+  // scan — a lista completa não escala quando um repo acumula execuções.
+  const [expandedRepos, setExpandedRepos] = useState<Set<string>>(() => new Set());
+  const toggleRepoExpanded = (repo: string) =>
+    setExpandedRepos((prev) => {
+      const next = new Set(prev);
+      if (next.has(repo)) next.delete(repo);
+      else next.add(repo);
+      return next;
+    });
   const [modalOpen, setModalOpen] = useState(false);
   const [startedCount, setStartedCount] = useState(0);
   const [scanFeedback, setScanFeedback] = useState<{ ok: boolean; message: string } | null>(
@@ -462,9 +475,38 @@ export function ScansScreen({
               </span>
             </div>
 
-            {group.jobs.map((job) => (
-              <ScanCard key={job.id} job={job} demo={demo} now={now} />
-            ))}
+            {(() => {
+              const isExpanded = expandedRepos.has(group.repo);
+              // Colapsado: só o último. Expandido: até 10 mais recentes.
+              const visible = isExpanded
+                ? group.jobs.slice(0, HISTORICO_MAX)
+                : group.jobs.slice(0, 1);
+              const extras = group.jobs.length - 1;
+              return (
+                <>
+                  {visible.map((job) => (
+                    <ScanCard key={job.id} job={job} demo={demo} now={now} />
+                  ))}
+                  {extras > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => toggleRepoExpanded(group.repo)}
+                      className="lnk mt-1 text-[12.5px] text-fg-dim"
+                      aria-expanded={isExpanded}
+                    >
+                      {isExpanded
+                        ? 'Mostrar menos'
+                        : `Ver mais ${Math.min(extras, HISTORICO_MAX - 1)} scan${
+                            Math.min(extras, HISTORICO_MAX - 1) === 1 ? '' : 's'
+                          }`}
+                      {isExpanded && group.jobs.length > HISTORICO_MAX
+                        ? ` (mostrando os ${HISTORICO_MAX} mais recentes de ${group.jobs.length})`
+                        : ''}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </div>
         ))
       ) : !ok ? (
