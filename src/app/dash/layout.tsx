@@ -1,0 +1,60 @@
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import { DashShell } from '@/components/dash/DashShell';
+import { PreviewNavigationBridge } from '@/components/dash/PreviewNavigationBridge';
+import { fetchFindingsCount } from '@/lib/api/findings';
+import { resolveGitHubConnection } from '@/lib/api/github';
+import { getCurrentUser } from '@/lib/api/user';
+import { DashStateProvider } from '@/lib/dash/dash-state';
+import './dash.css';
+
+export const metadata: Metadata = {
+  title: 'aperIA · Dashboard',
+  description: 'Postura de segurança, findings validados e emulação de adversário.',
+};
+
+/**
+ * Aplica o tema ANTES da primeira pintura, evitando o flash de tema errado.
+ * O `DashStateProvider` também mantém o atributo em sincronia depois de montar,
+ * mas isso já é tarde para o primeiro paint.
+ *
+ * Escuro é a baseline: o atributo só é setado quando o tema é claro.
+ */
+const THEME_SCRIPT = `
+(function(){try{
+  var p=new URLSearchParams(location.search).get('theme');
+  var t=p||localStorage.getItem('aperia-theme');
+  if(!t)t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';
+  if(t==='light')document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+}catch(e){}})();
+`;
+
+export default async function DashLayout({ children }: { children: React.ReactNode }) {
+  // Resolvidos no servidor: o access token é um cookie httpOnly, então o
+  // browser não conseguiria fazer estas buscas nem se quisesse. Em paralelo —
+  // são independentes, e sequenciá-las só somaria latência.
+  //
+  // Resolver a conexão AQUI é o que devolve conteúdo no SSR às telas de dados:
+  // enquanto `connected` vivia em localStorage, elas renderizavam `null` até o
+  // primeiro efeito.
+  const [user, connection, findingsCount] = await Promise.all([
+    getCurrentUser(),
+    resolveGitHubConnection(),
+    fetchFindingsCount(),
+  ]);
+
+  return (
+    <>
+      <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+
+      {/* useSearchParams (preview/theme) exige Suspense no App Router. */}
+      <Suspense fallback={null}>
+        <DashStateProvider initialConnection={connection}>
+          <PreviewNavigationBridge />
+          <DashShell user={user} findingsCount={findingsCount}>{children}</DashShell>
+        </DashStateProvider>
+      </Suspense>
+    </>
+  );
+}
