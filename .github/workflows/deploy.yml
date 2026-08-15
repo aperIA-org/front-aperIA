@@ -1,0 +1,56 @@
+name: deploy
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO: aperia-front
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configura credenciais AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login no ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build e push
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG: ${{ github.sha }}
+        run: |
+          IMAGE="$REGISTRY/$ECR_REPO"
+          docker build \
+            --build-arg NEXT_PUBLIC_SITE_URL=https://app.aperiaspm.com.br \
+            -t "$IMAGE:${TAG::7}" -t "$IMAGE:latest" .
+          docker push "$IMAGE:${TAG::7}"
+          docker push "$IMAGE:latest"
+
+      - name: Atualiza tag no repo de infra
+        env:
+          GH_TOKEN: ${{ secrets.INFRA_REPO_TOKEN }}
+          TAG: ${{ github.sha }}
+        run: |
+          git clone https://x-access-token:$GH_TOKEN@github.com/${{ github.repository_owner }}/aperia-infra.git infra
+          cd infra/gitops/apps/aperia-front
+          curl -sSLo /usr/local/bin/kustomize.tar.gz https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz
+          tar -xzf /usr/local/bin/kustomize.tar.gz -C /usr/local/bin
+          kustomize edit set image aperia-front=$(grep newName kustomization.yaml | awk '{print $2}'):${TAG::7}
+          cd ../../..
+          git config user.email "ci@aperiaspm.com.br"
+          git config user.name "aperia-ci"
+          git commit -am "front: atualiza imagem para ${TAG::7}"
+          git push
