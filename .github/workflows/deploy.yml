@@ -1,7 +1,7 @@
 name: deploy
 on:
   push:
-    branches: [main]
+    branches: [main, deploy-eks]
 
 permissions:
   id-token: write
