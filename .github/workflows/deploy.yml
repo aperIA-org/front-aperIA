@@ -44,7 +44,7 @@ jobs:
           GH_TOKEN: ${{ secrets.INFRA_REPO_TOKEN }}
           TAG: ${{ github.sha }}
         run: |
-          git clone https://x-access-token:$GH_TOKEN@github.com/${{ github.repository_owner }}/aperia-infra.git infra
+          git clone https://x-access-token:$GH_TOKEN@github.com/${{ github.repository_owner }}/infra-aperIA.git infra
           cd infra/gitops/apps/aperia-front
           curl -sSLo "$RUNNER_TEMP/kustomize.tar.gz" https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz
           tar -xzf "$RUNNER_TEMP/kustomize.tar.gz" -C "$RUNNER_TEMP"
