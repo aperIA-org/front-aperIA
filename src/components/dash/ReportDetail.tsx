@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { ScanReport } from '@/lib/api/scans';
 import { reportDetailRoute, SCREEN_ROUTES, findingRoute } from '@/lib/dash/dash-routes';
+import { useDashState } from '@/lib/dash/dash-state';
+import type { ScanIaSummary, ToolRunDto } from '@/lib/dash/pipeline-tools';
 import { fmtAbs, riskColor, riskMax, scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
 import { ASSETS, FINDINGS, GH_ORG, REMEDIATIONS, SCAN_JOBS } from '@/lib/dash/mock-data';
 import type { Finding, RiskLevel, ScanJob } from '@/lib/dash/types';
@@ -13,7 +15,7 @@ import { DiffView } from './DiffView';
 import { Markdown } from './Markdown';
 import { MiniGauge } from './RiskGauge';
 import { SevBadge } from './SevBadge';
-import { TierStepper } from './TierStepper';
+import { ScanPipeline } from './ScanPipeline';
 import { TierStepperCompact } from './TierStepperCompact';
 
 /** Máximo de findings listados na tabela — o resto fica na tela de Findings. */
@@ -71,6 +73,13 @@ type ReportDetailProps = {
    */
   history?: ScanJob[];
   /**
+   * `GET /scans/{id}/tools` — o desfecho real de cada ferramenta desta
+   * execução. Vazio ou ausente faz a faixa cair para o status do tier.
+   */
+  toolRuns?: ToolRunDto[];
+  /** Resumo da camada I.A do Tier 3 (`ia` da mesma rota). */
+  ia?: ScanIaSummary | null;
+  /**
    * `true` = dataset do protótipo. Só nesse modo existem PR enviado, patches de
    * remediação e histórico de scans: a API não expõe rota de remediações e o
    * detalhe carrega uma única execução. Misturar mock com dado real seria mentir.
@@ -98,11 +107,24 @@ export function ReportDetail({
   findings,
   findingsOk,
   history: historyProp = [],
+  toolRuns,
+  ia,
   demo,
   now,
 }: ReportDetailProps) {
   const router = useRouter();
+  const { monitored } = useDashState();
   const [tier, setTier] = useState<number>(reports[0]?.tier ?? 1);
+
+  /**
+   * Alvo de DAST deste repositório — decide se o ZAP tinha o que escanear no
+   * Tier 3. `undefined` (repositório fora da lista monitorada, ou demonstração)
+   * significa "não sabemos", e a faixa de ferramentas não afirma nada.
+   */
+  const monitoredRepo = demo
+    ? undefined
+    : monitored.find((repo) => repo.full_name === job.repo_full_name);
+  const dastTarget = monitoredRepo ? monitoredRepo.target_url : undefined;
 
   const activeReport = reports.find((r) => r.tier === tier) ?? reports[0] ?? null;
 
@@ -206,10 +228,14 @@ export function ReportDetail({
       {/* Stepper completo desta execução. Não estava em `renderReportDetail`
           (o protótipo só mostrava a versão compacta nas linhas do histórico),
           mas é a informação que dá contexto ao relatório e ao risk score. */}
-      <div className="stat-card mb-6">
-        <div style={{ maxWidth: 700 }}>
-          <TierStepper job={job} />
-        </div>
+      {/* Mesmo pipeline da tela de Scans. Esta tela é o destino do "Ver relatório
+          completo" de lá, e dois desenhos para a mesma informação fariam a
+          navegação parecer troca de produto. */}
+      {/* `.scan-card`, não `.stat-card`: o nó e o losango do trilho têm o fundo do
+          card por baixo (é assim que eles "cobrem" a linha vertical), então o
+          card precisa ser a mesma superfície que eles usam. */}
+      <div className="scan-card mb-6">
+        <ScanPipeline job={job} runs={toolRuns} ia={ia} targetUrl={dastTarget} />
       </div>
 
       {!demo ? (

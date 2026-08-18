@@ -2,6 +2,7 @@ import 'server-only';
 
 import { cookies } from 'next/headers';
 import { cache } from 'react';
+import type { ScanIaSummary } from '@/lib/dash/pipeline-tools';
 import type { RiskLevel, ScanJob, TierStatus } from '@/lib/dash/types';
 import { getApi } from './client';
 import { COOKIE_NAMES, IS_API_CONFIGURED } from './config';
@@ -223,5 +224,96 @@ export const fetchScanHistory = cache(async (scanId: string): Promise<ScanJob[]>
     return page.items.filter(isApiScanJob).map(toScanJob);
   } catch {
     return [];
+  }
+});
+
+/* ═══════════════════════ status por ferramenta ═══════════════════════ */
+
+/**
+ * `GET /scans/{id}/tools` — o desfecho de cada ferramenta desta execução.
+ *
+ * Complementa `tier{1,2,3}_status`: o tier diz em que etapa o pipeline está,
+ * isto diz o que aconteceu dentro dela. Em particular, separa "rodou e não
+ * achou nada" (`done` com `findings_count: 0`) de "quebrou" (`failed` com o
+ * tipo da exceção em `reason`) — distinção que se perdia no `return []` do
+ * `run_safe` da API antes da tabela `scan_tool_runs` existir.
+ *
+ * **Lista vazia é resposta legítima** e significa uma de duas coisas: o
+ * pipeline ainda não chegou a nenhuma ferramenta, ou a execução é anterior à
+ * migration (nada foi backfillado). Nos dois casos a tela cai para o status do
+ * tier — por isso `expected` vem preenchido mesmo com `tools` vazio.
+ */
+export type ApiToolRun = {
+  tier: number;
+  tool: string;
+  status: string;
+  reason: string | null;
+  findings_count: number | null;
+  duration_ms: number | null;
+  started_at: string | null;
+  completed_at: string | null;
+};
+
+export type ScanToolsResult = {
+  tools: ApiToolRun[];
+  /** Catálogo por tier, como a API o conhece (chave = número do tier). */
+  expected: Record<string, string[]>;
+  /**
+   * Resumo da camada I.A do Tier 3, compactado pela API a partir do
+   * `analysis_json` do relatório. `null` = não há relatório de Tier 3.
+   *
+   * A compactação é o ponto: o blob cru traz o array inteiro de findings com
+   * `raw_output` (dezenas de KB por execução) e a lista de `finding_ids` em
+   * frases longas. O que chega aqui é ~1 KB.
+   */
+  ia: ScanIaSummary | null;
+  /** `false` = a API não respondeu. Diferente de "nenhuma ferramenta ainda". */
+  ok: boolean;
+};
+
+const EMPTY_TOOLS: ScanToolsResult = { tools: [], expected: {}, ia: null, ok: false };
+
+function isApiToolRun(value: unknown): value is ApiToolRun {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    typeof (value as ApiToolRun).tool === 'string' &&
+    typeof (value as ApiToolRun).status === 'string' &&
+    typeof (value as ApiToolRun).tier === 'number'
+  );
+}
+
+export const fetchScanTools = cache(async (scanId: string): Promise<ScanToolsResult> => {
+  if (!IS_API_CONFIGURED) return EMPTY_TOOLS;
+
+  const token = await accessToken();
+  if (!token) return EMPTY_TOOLS;
+
+  try {
+    const { status, data } = await getApi(
+      `/scans/${encodeURIComponent(scanId)}/tools`,
+      token,
+    );
+    if (status !== 200 || !data || typeof data !== 'object') return EMPTY_TOOLS;
+
+    const payload = data as { tools?: unknown; expected?: unknown; ia?: unknown };
+    if (!Array.isArray(payload.tools)) return EMPTY_TOOLS;
+
+    return {
+      tools: payload.tools.filter(isApiToolRun),
+      expected:
+        payload.expected && typeof payload.expected === 'object'
+          ? (payload.expected as Record<string, string[]>)
+          : {},
+      // A API já valida campo por campo contra o blob do LLM; aqui só o
+      // contorno básico, porque `paths` é o único campo que a tela percorre.
+      ia:
+        payload.ia && typeof payload.ia === 'object' && Array.isArray((payload.ia as ScanIaSummary).paths)
+          ? (payload.ia as ScanIaSummary)
+          : null,
+      ok: true,
+    };
+  } catch {
+    return EMPTY_TOOLS;
   }
 });
