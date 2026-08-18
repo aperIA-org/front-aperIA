@@ -371,6 +371,94 @@ pipeline a pull request would. `ScansScreen` wires it for real, but the list bel
 new execution does not show up there — the modal says so explicitly. In demo mode the old fabricated-job
 behaviour is kept.
 
+### O pipeline de um scan (`ScanPipeline`)
+
+`src/components/dash/ScanPipeline.tsx` + `src/lib/dash/pipeline-tools.ts`. Um trilho vertical à esquerda
+(nó por tier, losango por gate) e um painel por tier à direita, usado na tela de **Scans** e no **detalhe do
+relatório** — as duas, de propósito: o detalhe é o destino do "Ver relatório completo", e dois desenhos para
+a mesma informação fariam a navegação parecer troca de produto. `TierStepper`/`TierTools` foram removidos.
+
+**O Tier 3 é deliberadamente desigual.** Ele não é "mais um passo": é o diferencial do produto. Ganha
+superfície própria (`--ia-tint`), nó maior no trilho, badge de estado da camada, e um layout em duas colunas
+— `Ferramentas da fase` à esquerda, o card do attack path à direita. Os tokens `--ia*` em `globals.css` são
+**indigo, nunca o vermelho da marca**: nesta interface vermelho significa severidade, e o Tier 3 é um
+diferencial, não um alerta.
+
+O card não é mais um `<Link>` envolvendo tudo — tem botões dentro (expandir histórico, CTA), e `<button>`
+dentro de `<a>` é HTML inválido. O destino virou o CTA do rodapé.
+
+**Três fontes, nesta ordem de autoridade:**
+
+1. **`GET /scans/{id}/tools` → `tools`** — o desfecho real por ferramenta (`scan_tool_runs`). Onde existe
+   linha, ela manda. `run_safe` grava `running` **antes** de executar e o desfecho depois, então a tela sabe
+   *qual* ferramenta está rodando em vez de deduzir pela ordem do pipeline.
+2. **`GET /scans/{id}/tools` → `ia`** — o `analysis_json` do relatório de Tier 3, compactado no servidor:
+   `paths` (passo, fase, técnica MITRE, descrição, `finding_count`, `caldera_validated`), `cti`, `caldera`,
+   `risk_*`, `kill_chain_complete`. **Por que compactado e por que nesta rota:** o blob cru carrega o array
+   inteiro de findings com `raw_output` (dezenas de KB por execução) e `finding_ids` em frases longas — a
+   resposta inteira agora tem ~1 KB, e uma requisição por card traz ferramentas *e* I.A.
+3. **O status do tier** — o piso, onde não há linha.
+
+**Nada na tela é prosa inventada.** O mockup que originou este layout pedia coisas como "14 arquivos
+varridos", "regras OWASP Top 10" e um checklist de sub-etapas da I.A durante a execução. **Nenhum desses
+dados é persistido pelo pipeline** — `toolDetail()` monta a linha de detalhe só com contagem de findings,
+duração, motivo do pulo e os números do `analysis_json`. Onde não há dado, a tela mostra menos, não mais.
+
+Três distinções que a UI **precisa** manter, e que já foram bugs aqui:
+
+- **`ia` ausente ≠ zero caminhos.** Sem resumo (demonstração, ou execução sem relatório de Tier 3) o card diz
+  *"ninguém calculou"*, não *"não há caminho de ataque"*. A primeira versão afirmava a segunda.
+- **Sem linhas reais, o rodapé não conta.** Ele diz "Status por etapa — esta execução não tem registro por
+  ferramenta" em vez de "10 de 10 rodaram", que seria uma dedução do status do tier apresentada como contagem.
+- **Pulada ≠ na fila.** Pílula/linha pulada carrega a etiqueta `não rodou` e o motivo em texto corrido; na
+  fila fica tracejada e apagada. O tracejado sozinho tornava as duas idênticas.
+
+**O checklist do Tier 3 em execução são as ferramentas do tier**, com o estado real de cada uma. O pipeline
+não expõe sub-etapas dentro da chamada ao Claude — uma barra de progresso interna seria encenação.
+
+**`tierProgress` não conta pulada no numerador**: "3/4 rodaram" com o Prowler pulado diz a verdade; "4/4"
+diria que tudo rodou.
+
+**A matemática do trilho vive no CSS**, não no TSX (`--pipe-node-pad`, `data-pos="first|mid|last|gate"`): o
+ponto onde o segmento começa e termina é o centro do nó, isto é, o padding da célula mais metade do nó — e
+esses dois valores são definidos em `dash.css`, junto dos tamanhos que os produzem.
+
+**Nó e losango são posicionados por `left:50%` + `translateX(-50%)`, nunca por `justify-content`.** Com flex,
+um quadrado de lado **ímpar** rotacionado 45° caía meio pixel fora do trilho: o arredondamento de subpixel
+deslocava o losango e não o círculo, então o desalinhamento aparecia só nos gates. O losango passou a ter
+lado **par** (10px) pelo mesmo motivo. E os dois usam `--scan-surface` de fundo — é assim que eles cobrem a
+linha vertical —, então **o card por baixo tem de ser `.scan-card`**, não `.stat-card`, ou aparece um halo.
+
+**Superfícies: `--scan-surface` / `--scan-panel`, não `--bg-surface` / `--chip-bg`.** O card de scan empilha
+três superfícies (card → painel de tier → card da I.A). No tema claro a página é o beige `#f2f0e9`, o
+`--bg-surface` é branco puro e o `--chip-bg` é cinza **azulado** — três temperaturas na mesma pilha, e a
+leitura era de peça de outro produto. Os dois tokens novos ficam na família quente do fundo. Eles são
+escopados ao pipeline: o resto do dash segue em `--bg-surface`.
+
+**Minimizar é diferente de "Relatórios anteriores".** O `−`/`+` colapsa o card inteiro para uma linha
+(`ScanMiniRow`: estado + o que está acontecendo + `T1·T2·T3` + Expandir); "Relatórios anteriores" abre as
+execuções passadas do repositório. O estado de minimização fica em `useState`, **não** em `localStorage`:
+`?preview=1` não pode poluir estado real.
+
+**A linha compacta também não deduz.** Sem registro por ferramenta ela diz qual *etapa* está aberta
+("Tier 3 · Deep Heuristic em execução") em vez de listar as quatro ferramentas do tier como se todas
+estivessem rodando — que é o que a herança do status do tier produziria.
+
+**Por que um tier foi pulado.** Só dois call sites alcançam `mark_tier_skipped`: Gate 1 (secret verificado,
+pula os tiers 2 **e** 3 e grava `blocked_at_tier = 1`) e Gate 2 (severidade abaixo de `high`, pula só o tier
+3, `blocked_at_tier` fica `null`). Então `skipped` + `blocked_at_tier == null` é *necessariamente* o Gate 2, e
+`tierSkipReason()` recupera isso. A frase longa aparece uma vez por card (no tier mais à esquerda que a
+carrega), já que o Gate 1 pula dois tiers com a mesma justificativa. A API também grava esse motivo por
+ferramenta (`gate1_secret_verificado` / `gate2_abaixo_do_limiar`), então com dado real ele vem de lá.
+
+**ZAP sem alvo**, e só como *fallback* quando a API não reportou linha: o front conhece
+`Repository.target_url` (via `monitored`), então com `null` a linha do ZAP é rebaixada para "não executada".
+`undefined` (repo fora da lista monitorada, ou demo) significa "não sabemos" e nada é afirmado.
+
+**Custo na lista.** Uma requisição por execução, então `scans/page.tsx` busca só `latestPerRepo()` com teto
+`MAX_TOOL_LOOKUPS` (12) — exatamente o que renderiza antes de expandir o histórico. Cards revelados ao
+expandir caem para o piso do tier. O detalhe do relatório não tem esse problema: um scan, uma requisição.
+
 ### Dados reais: Findings, Relatórios e Scans
 
 `src/lib/api/findings.ts` (`fetchFindings`) and `src/lib/api/scans.ts` (`fetchScans`, `fetchScan`,

@@ -144,6 +144,9 @@ body{font-family:var(--font-sans);}
 .st-skipped{background:rgba(112,112,112,.12);color:var(--text-dim);border:1px solid rgba(112,112,112,.22);}
 .st-queued{background:rgba(234,179,8,.12);color:#eab308;border:1px solid rgba(234,179,8,.22);}
 .st-blocked{background:rgba(239,68,68,.14);color:#ef4444;border:1px solid rgba(239,68,68,.25);}
+/* "nao escalou": o Tier 3 nao rodou, e isso e um bom desfecho — verde,
+   mas tracejado, porque nada foi executado. Nao confundir com .st-done. */
+.st-nogate{background:rgba(34,197,94,.07);color:var(--text-secondary);border:1px dashed rgba(34,197,94,.4);}
 /* Slide-over */
 .slide-over{position:fixed;top:0;right:0;bottom:0;width:520px;background:var(--bg-surface);border-left:1px solid var(--border-default);z-index:50;transform:translateX(100%);transition:transform .25s cubic-bezier(.22,.61,.36,1);overflow-y:auto;}
 .slide-over.open{transform:translateX(0);}
@@ -345,6 +348,77 @@ svg:hover .evo-pt{opacity:1;}
   .node-ring,.node-pulse,.spin,.spin-15,.conn-flow,.gauge-arc{animation:none!important;}
   .conn-flow{background-image:none;background-color:rgba(34,197,94,.5);}
 }
+/* Ferramentas por etapa (faixa abaixo do stepper, tela Scans).
+   O estado vem do tier, nao da ferramenta: a API nao expoe status por scanner.
+   Uma coluna por tier; a borda esquerda repete o estado do tier para o olho
+   achar a etapa em execucao sem ler as pilulas. */
+.tools-band{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px;}
+@media (max-width:860px){.tools-band{grid-template-columns:1fr;}}
+.tools-col{min-width:0;padding-left:10px;border-left:1.5px solid var(--border-default);}
+.tools-col[data-state="done"]{border-left-color:rgba(34,197,94,.45);}
+.tools-col[data-state="running"]{border-left-color:rgba(59,130,246,.6);}
+.tools-col[data-state="failed"],.tools-col[data-state="blocked"]{border-left-color:rgba(239,68,68,.5);}
+.tools-col[data-state="degraded"]{border-left-color:rgba(234,179,8,.5);}
+/* Espinha tracejada = a etapa nao rodou. E o mesmo sinal das pilulas. */
+.tools-col[data-state="skipped"],.tools-col[data-state="queued"]{border-left-style:dashed;}
+.tools-hd{display:flex;align-items:baseline;gap:6px;margin-bottom:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;}
+.tools-hd-n{font-weight:700;color:var(--text-secondary);white-space:nowrap;}
+.tools-hd-s{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tools-col[data-state="running"] .tools-hd-s{color:#3b82f6;}
+.tools-list{display:flex;flex-wrap:wrap;gap:5px;}
+.tpill{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:2.5px 7px 2.5px 5px;border-radius:4px;border:1px solid var(--border-default);background:var(--chip-bg);font-size:11px;line-height:1.35;color:var(--text-dim);white-space:nowrap;cursor:help;transition:background .15s,border-color .15s,color .15s;}
+.tpill-ico{display:grid;place-items:center;width:11px;height:11px;flex-shrink:0;}
+.tpill-nm{overflow:hidden;text-overflow:ellipsis;}
+.tpill.is-done{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.28);color:var(--text-secondary);}
+.tpill.is-running{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.42);color:var(--text-primary);font-weight:600;}
+.tpill.is-failed{background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.32);color:#ef4444;}
+/* Degradada: respondeu, mas pelo plano B (o Claude caiu e o passo usou a
+   heuristica). Nem verde nem vermelho — o tier fecha como `done` mesmo assim. */
+.tpill.is-degraded{background:rgba(234,179,8,.10);border-color:rgba(234,179,8,.34);color:#eab308;}
+.tpill.is-blocked{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.22);color:var(--text-dim);}
+/* "nao rodou" dito na propria pilula. O tracejado sozinho nao bastava: ele era
+   igual ao de `queued`, entao "a decisao foi nao rodar" e "ainda nao chegou a
+   vez" tinham exatamente a mesma aparencia. */
+.tpill-tag{flex-shrink:0;padding:0 4px;border-radius:3px;font-family:var(--font-mono);font-size:8.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--veil-06);color:var(--text-dim);}
+.tpill.is-skipped{background:var(--chip-bg);border-style:dashed;border-color:var(--border-strong);color:var(--text-secondary);}
+.tpill.is-skipped .tpill-nm{opacity:.75;}
+.tpill.is-skipped .tpill-tag{background:rgba(234,179,8,.14);color:#eab308;}
+.tpill.is-queued{border-style:dashed;background:transparent;color:var(--text-dim);}
+
+/* ── Tooltip da ferramenta ──────────────────────────────────────────────
+   Mesma linguagem do `.exec-dd`: superficie, --divider, raio 8, sombra.
+   E' CSS puro (hover/focus-within) de proposito — sao ate 10 pilulas por card
+   e uma pilula e' filha de um <a>, entao estado React por pilula custaria caro
+   e um <button> aninhado em link seria HTML invalido.
+   O conteudo fica NO DOM (so invisivel), nao em `title`: leitor de tela le o
+   texto normalmente, e assim nenhuma tab stop nova e' criada. */
+.tpill{position:relative;}
+.ttip{position:absolute;bottom:calc(100% + 7px);left:0;z-index:45;width:max-content;max-width:264px;padding:9px 11px;background:var(--bg-surface);border:1px solid var(--divider);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;pointer-events:none;transform:translateY(-3px);transition:opacity .14s ease,transform .14s ease;text-align:left;white-space:normal;cursor:default;}
+[data-theme="light"] .ttip{box-shadow:0 8px 24px rgba(0,0,0,.14);}
+/* Ultima coluna ancora a direita: um tooltip de 264px a partir da borda
+   esquerda da pilula do Tier 3 estouraria o card. */
+.tools-col:last-child .ttip{left:auto;right:0;}
+.tpill:hover .ttip,.tpill:focus-within .ttip{opacity:1;transform:translateY(0);}
+@media (prefers-reduced-motion: reduce){.ttip{transition:none;}}
+.ttip-hd{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.ttip-nm{font-size:12.5px;font-weight:700;color:var(--text-primary);line-height:1.25;}
+.ttip-role{display:block;font-size:11.5px;line-height:1.45;color:var(--text-secondary);text-wrap:pretty;}
+.ttip-meta{display:block;margin-top:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--text-dim);}
+.ttip-reason{display:block;margin-top:7px;padding-top:7px;border-top:1px solid var(--border-default);font-size:11px;line-height:1.45;color:var(--text-secondary);text-wrap:pretty;}
+.ttip-reason b{color:var(--text-primary);font-weight:700;}
+/* Ferramenta condicional que RODOU: a ressalva e' so contexto, fica apagada. */
+.ttip-cond{display:block;margin-top:6px;font-size:10.5px;line-height:1.4;color:var(--text-dim);text-wrap:pretty;}
+
+/* Lista dos "nao rodou" individuais, abaixo das pilulas da coluna. */
+.tools-notrun{margin-top:7px;display:flex;flex-direction:column;gap:3px;}
+.tools-notrun li{font-size:10.5px;line-height:1.45;color:var(--text-dim);text-wrap:pretty;}
+.tools-notrun b{color:var(--text-secondary);font-weight:600;}
+/* Motivo do pulo, dito na tela: um tier "nao executado" sem explicacao le
+   igual a "ainda nao chegou nesse tier". */
+.tools-skip{margin-top:7px;font-size:10.5px;line-height:1.5;color:var(--text-dim);text-wrap:pretty;}
+.tools-legend{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.tools-legend-t{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-right:2px;}
+.tools-note{margin-top:10px;font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--text-dim);}
 /* Data table (real table, shared column axes, vertical dividers) */
 .dtbl{width:100%;border-collapse:collapse;table-layout:fixed;}
 .dtbl th{padding:10px 16px;font-size:13px;font-weight:700;color:var(--text-hi);background:var(--th-bg);border-bottom:1px solid var(--border-default);text-align:center;white-space:nowrap;}
@@ -391,3 +465,169 @@ svg:hover .evo-pt{opacity:1;}
 ::-webkit-scrollbar{width:6px;height:6px;}
 ::-webkit-scrollbar-thumb{background:var(--gauge-track);border-radius:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
+
+/* ═══════════════ Pipeline do scan (tela de Scans) ═══════════════════════
+   Trilho vertical a esquerda + um painel por tier, com o Tier 3 elevado.
+   O Tier 3 e' o diferencial do produto, entao ele nao e' "mais um passo":
+   ganha superficie propria, cor de camada I.A e o resultado do attack path
+   em destaque ao lado das ferramentas. */
+
+/* Bloco de uma execucao. A barra a esquerda acompanha toda a altura e muda de
+   cor com o estado — e' o unico sinal visivel quando o card esta' rolado. */
+.exec-block{position:relative;padding-left:16px;}
+.exec-block::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:2px;border-radius:2px;background:var(--border-mid);}
+.exec-block[data-run="running"]::before{background:linear-gradient(180deg,var(--ia),rgba(59,130,246,.5));}
+.exec-block[data-run="done"]::before{background:rgba(34,197,94,.45);}
+.exec-block[data-run="blocked"]::before,.exec-block[data-run="failed"]::before{background:rgba(239,68,68,.5);}
+
+/* Cabecalho da execucao: PR, commit, quando, estado, e o gauge a direita. */
+.exec-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.exec-hd-pr{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text-primary);}
+.exec-hd-sep{color:var(--text-faint);}
+.exec-hd-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+
+/* Grade: coluna do trilho + coluna dos paineis. As linhas de "gate" sao
+   proprias, para o losango cair exatamente entre dois paineis. */
+.pipe{display:grid;grid-template-columns:26px minmax(0,1fr);column-gap:14px;}
+/* No' e losango sao centrados por `left:50%` + `translateX(-50%)`, nao por
+   `justify-content`. Com flex, um quadrado de lado IMPAR rotacionado 45graus
+   caia meio pixel fora do trilho — o arredondamento de subpixel do navegador
+   deslocava o losango e nao o circulo, e o desalinhamento so' aparecia nos
+   gates. Ancorar os dois no mesmo `50%` do mesmo elemento elimina isso. */
+.pipe-rail{position:relative;}
+/* Segmento vertical do trilho. `--seg-top` permite o primeiro no' comecar no
+   proprio no' em vez de acima dele. */
+.pipe-rail::before{content:"";position:absolute;left:50%;margin-left:-1px;top:var(--seg-top,0);bottom:var(--seg-bottom,0);width:2px;background:var(--border-default);}
+/* Onde o segmento comeca/termina depende do CENTRO do no', que e' o padding da
+   celula mais metade do no'. Os dois valores vivem aqui, junto dos tamanhos que
+   os produzem — calcular isso no TSX era so' uma forma de deixar os numeros
+   longe de `--pipe-node-pad` e do `width` do no'. */
+/* `min-height` porque no' e losango sao absolutos e nao empurram mais a celula:
+   a linha do gate precisa de altura propria para o losango caber. */
+.pipe-rail{--pipe-node-pad:12px;min-height:34px;}
+.pipe-rail[data-pos="gate"]{min-height:20px;}
+/* Primeiro no': nada de trilho acima dele. 22px de no' -> centro em pad + 11. */
+.pipe-rail[data-pos="first"]{--seg-top:calc(var(--pipe-node-pad) + 11px);}
+/* Ultimo no': o trilho morre nele. 28px (no' do Tier 3) -> centro em pad + 14. */
+.pipe-rail[data-pos="last"]{--seg-bottom:calc(100% - var(--pipe-node-pad) - 14px);}
+/* Linha de gate nao tem no', so' o losango: o trilho atravessa inteiro. */
+
+.pipe-rail[data-on="true"]::before{background:var(--ia-line);}
+.pipe-node{position:absolute;left:50%;transform:translateX(-50%);z-index:1;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:var(--scan-surface);border:2px solid var(--border-strong);}
+.pipe-node[data-s="done"]{background:#22c55e;border-color:#22c55e;color:#fff;}
+.pipe-node[data-s="running"]{background:var(--scan-surface);border-color:transparent;}
+.pipe-node[data-s="failed"]{background:#ef4444;border-color:#ef4444;color:#fff;}
+.pipe-node[data-s="skipped"],.pipe-node[data-s="blocked"]{border-style:dashed;}
+/* No' do Tier 3: maior e na cor da camada I.A — o olho tem que achar ele. */
+.pipe-node{top:var(--pipe-node-pad);}
+.pipe-node.is-ia{width:28px;height:28px;border-width:2.5px;}
+.pipe-node.is-ia[data-s="done"]{background:var(--ia);border-color:var(--ia);color:var(--ia-on);}
+/* Lado PAR (10px): metade e' inteira, entao o centro cai em pixel cheio. */
+.pipe-gate{position:absolute;left:50%;top:50%;width:10px;height:10px;transform:translate(-50%,-50%) rotate(45deg);z-index:1;background:var(--scan-surface);border:1.5px solid var(--border-strong);}
+.pipe-gate[data-g="passed"]{background:var(--ia);border-color:var(--ia);}
+.pipe-gate[data-g="held"]{background:var(--scan-surface);border-color:rgba(34,197,94,.55);}
+.pipe-gate[data-g="blocked"]{background:#ef4444;border-color:#ef4444;}
+
+/* Painel de um tier. */
+.tier-panel{background:var(--scan-panel);border:1px solid var(--border-default);border-radius:8px;padding:14px 16px;display:grid;grid-template-columns:190px minmax(0,1fr);gap:12px 18px;}
+@media (max-width:820px){.tier-panel{grid-template-columns:1fr;}}
+.tier-id-nm{font-size:13.5px;font-weight:700;color:var(--text-primary);line-height:1.3;}
+.tier-id-meta{margin-top:3px;font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--text-dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.tier-id-meta .on{color:#3b82f6;}
+.tier-rows{display:flex;flex-direction:column;gap:7px;min-width:0;}
+
+/* Uma ferramenta: icone + nome + detalhe. O detalhe e' texto derivado de dado
+   real (contagem, duracao, motivo) — nunca prosa inventada. */
+.trow{display:flex;align-items:flex-start;gap:8px;min-width:0;}
+.trow-ico{flex-shrink:0;width:16px;height:16px;display:grid;place-items:center;margin-top:1px;}
+.trow-body{min-width:0;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;}
+.trow-nm{font-size:12.5px;font-weight:600;color:var(--text-primary);}
+.trow[data-s="skipped"] .trow-nm,.trow[data-s="queued"] .trow-nm{font-weight:500;color:var(--text-dim);}
+.trow[data-s="running"] .trow-nm{color:var(--ia-strong);}
+.trow-dt{font-size:12px;line-height:1.45;color:var(--text-secondary);text-wrap:pretty;}
+.trow[data-s="skipped"] .trow-dt,.trow[data-s="queued"] .trow-dt{color:var(--text-dim);}
+.trow-dash{flex-shrink:0;width:16px;text-align:center;color:var(--text-faint);font-size:12px;margin-top:1px;}
+
+/* ── Tier 3: painel elevado ─────────────────────────────────────────── */
+.tier-panel.is-ia{grid-template-columns:1fr;background:var(--ia-tint);border-color:var(--ia-line);border-radius:10px;padding:16px 18px 18px;gap:14px;}
+.ia-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.ia-hd-nm{font-size:16px;font-weight:800;color:var(--text-primary);letter-spacing:-.01em;}
+.ia-hd-meta{font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--text-dim);}
+.ia-badge{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:5px;background:var(--ia);color:var(--ia-on);font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;}
+.ia-badge.is-idle{background:transparent;border:1px dashed var(--ia-line);color:var(--text-dim);}
+.ia-split{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;}
+@media (max-width:900px){.ia-split{grid-template-columns:1fr;}}
+.ia-tools-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;}
+
+/* Card do resultado da I.A. */
+.ia-card{background:var(--scan-surface);border:1px solid var(--ia-line);border-radius:9px;padding:13px 14px;min-width:0;}
+.ia-card-hd{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.ia-card-ico{flex-shrink:0;width:22px;height:22px;border-radius:6px;background:var(--ia);display:grid;place-items:center;}
+.ia-card-nm{font-size:13px;font-weight:700;color:var(--text-primary);}
+.ia-card-tag{margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:2px 7px;border-radius:4px;background:var(--ia-tint-hi);color:var(--ia-strong);font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;}
+.ia-prose{font-size:12.5px;line-height:1.55;color:var(--text-secondary);text-wrap:pretty;}
+.ia-prose b{color:var(--text-primary);font-weight:700;}
+
+/* Caminhos de ataque: um por linha, numerados. */
+.ia-paths{margin-top:11px;display:flex;flex-direction:column;gap:7px;}
+.ia-path{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;background:var(--ia-tint);border:1px solid var(--ia-line);border-radius:7px;}
+.ia-path-n{flex-shrink:0;width:18px;height:18px;border-radius:5px;background:var(--ia);color:var(--ia-on);display:grid;place-items:center;font-family:var(--font-mono);font-size:10px;font-weight:700;}
+.ia-path-b{min-width:0;flex:1;}
+.ia-path-tx{font-size:12px;line-height:1.5;color:var(--text-primary);text-wrap:pretty;}
+.ia-path-mt{margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.04em;color:var(--text-dim);}
+.ia-path-val{color:#22c55e;}
+
+/* Checklist do Tier 3 em execucao: os passos SAO as ferramentas do tier, com o
+   estado real de cada uma. Nao e' um roteiro de progresso inventado. */
+.ia-steps{margin-top:11px;display:flex;flex-direction:column;gap:9px;}
+.ia-step{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text-dim);}
+.ia-step[data-s="done"]{color:var(--text-primary);}
+.ia-step[data-s="running"]{color:var(--ia-strong);font-weight:600;}
+.ia-step-ico{flex-shrink:0;width:18px;height:18px;display:grid;place-items:center;}
+.ia-step-hint{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.04em;color:var(--text-dim);font-weight:400;}
+.ia-note{margin-top:11px;display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--ia-tint);border:1px solid var(--ia-line);border-radius:7px;font-size:12px;line-height:1.5;color:var(--text-secondary);}
+.ia-note b{color:var(--text-primary);font-weight:700;}
+.ia-note-dot{flex-shrink:0;width:6px;height:6px;border-radius:50%;background:var(--ia);margin-top:5px;}
+
+/* Rodape agregado da execucao. */
+.exec-ft{margin-top:16px;padding-top:14px;border-top:1px solid var(--border-default);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.exec-ft-tx{font-size:12px;color:var(--text-dim);}
+.exec-ft .btn{margin-left:auto;}
+
+/* Cabecalho do repositorio, agora dentro do card. */
+.repo-hd{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:16px;}
+.repo-hd-nm{font-size:15px;font-weight:700;color:var(--text-primary);}
+.repo-hd-meta{font-size:12px;color:var(--text-dim);}
+.repo-hd-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.repo-tgl{width:28px;height:28px;flex-shrink:0;display:grid;place-items:center;border-radius:6px;border:1px solid var(--border-default);background:var(--scan-surface);color:var(--text-dim);cursor:pointer;transition:background .12s,color .12s,border-color .12s;}
+.repo-tgl:hover{background:var(--bg-surface-raised);color:var(--text-primary);border-color:var(--border-strong);}
+
+/* Card do repositorio na tela de Scans.
+   Nao usa `.stat-card` porque este card e' enorme e empilha tres superficies
+   (card > painel de tier > card da I.A). Com --bg-surface (branco puro no tema
+   claro) sobre o beige da pagina, a pilha inteira ficava com temperaturas
+   diferentes: pagina quente, card neutro, paineis azulados. */
+.scan-card{background:var(--scan-surface);border:1px solid var(--border-default);border-radius:10px;padding:18px 20px;}
+
+/* ── Card minimizado ──────────────────────────────────────────────────
+   Uma linha: estado + o que esta' acontecendo + os tres tiers + expandir.
+   E' o que permite acompanhar varios repositorios sem rolar a tela. */
+.scan-mini{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.scan-mini-st{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;}
+.scan-mini-st[data-run="running"]{color:var(--ia-strong);}
+.scan-mini-st[data-run="done"]{color:#22c55e;}
+.scan-mini-st[data-run="failed"],.scan-mini-st[data-run="blocked"]{color:#ef4444;}
+.scan-mini-tx{font-size:12.5px;color:var(--text-secondary);min-width:0;}
+.scan-mini-right{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+/* Os tres tiers em miniatura: e' o resumo do pipeline sem abrir o card. */
+.scan-mini-tiers{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;color:var(--text-dim);}
+.scan-mini-tier{display:inline-flex;align-items:center;gap:4px;}
+.scan-mini-tier[data-s="done"]{color:#22c55e;}
+.scan-mini-tier[data-s="running"]{color:var(--ia-strong);}
+.scan-mini-tier[data-s="failed"],.scan-mini-tier[data-s="blocked"]{color:#ef4444;}
+.scan-mini-dot{color:var(--text-faint);}
+/* A linha compacta e o "Expandir" na mesma faixa. */
+.scan-mini-wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.scan-mini-wrap .scan-mini{flex:1;min-width:0;}
+/* Minimizado nao tem margem inferior no cabecalho: e' uma linha so'. */
+.scan-card:has(.scan-mini-wrap) .repo-hd{margin-bottom:12px;}

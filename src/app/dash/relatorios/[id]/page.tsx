@@ -3,7 +3,12 @@ import { DataScreenGate } from '@/components/dash/DataScreenGate';
 import { ReportDetail } from '@/components/dash/ReportDetail';
 import { fetchFindings } from '@/lib/api/findings';
 import { resolveGitHubConnection } from '@/lib/api/github';
-import { fetchScan, fetchScanHistory, fetchScanReports } from '@/lib/api/scans';
+import {
+  fetchScan,
+  fetchScanHistory,
+  fetchScanReports,
+  fetchScanTools,
+} from '@/lib/api/scans';
 import { FINDINGS, REF_NOW, SCAN_JOBS } from '@/lib/dash/mock-data';
 
 /**
@@ -56,10 +61,13 @@ export default async function ReportDetailPage({
   // pelo COMMIT, não pela execução: eles não são escopados por execução (o
   // mesmo commit é o mesmo código), então duas execuções do mesmo commit
   // mostram o mesmo conjunto. O que difere entre elas é o relatório.
-  const [reports, findingsResult, history] = await Promise.all([
+  const [reports, findingsResult, history, tools] = await Promise.all([
     fetchScanReports(job.id),
     fetchFindings(job.commit_sha),
     fetchScanHistory(job.id),
+    // Por execução, e não por commit: duas execuções do mesmo commit rodam as
+    // ferramentas de novo, com desfechos que podem divergir.
+    fetchScanTools(job.id),
   ]);
 
   return (
@@ -70,6 +78,8 @@ export default async function ReportDetailPage({
         findings={findingsResult.findings}
         findingsOk={findingsResult.ok}
         history={history}
+        toolRuns={tools.tools}
+        ia={tools.ia}
         demo={false}
         now={Date.now()}
       />

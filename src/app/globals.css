@@ -127,6 +127,23 @@
   --text-dim: #707070;
   --text-faint: #5c5c5c;
 
+  /* Superficie do card de scan e dos paineis de tier.
+     Existem separadas de --bg-surface porque o card de scan e' enorme e empilha
+     tres superficies (card > painel > card da I.A): sem um degrade proprio, ou
+     tudo vira a mesma chapa ou os contrastes brigam. */
+  --scan-surface: #15161a;
+  --scan-panel: #1b1c21;
+
+  /* Camada I.A (Tier 3): indigo. Deliberadamente NAO o vermelho da marca, que
+     nesta interface significa severidade — o Tier 3 e' o diferencial do
+     produto, nao um alerta. */
+  --ia: #8b8cf0;
+  --ia-strong: #a5a6f6;
+  --ia-line: rgba(139, 140, 240, 0.34);
+  --ia-tint: rgba(139, 140, 240, 0.07);
+  --ia-tint-hi: rgba(139, 140, 240, 0.14);
+  --ia-on: #ffffff;
+
   --gauge-track: #26272a;
   --chart-track: #1a1a1a;
   --chart-grid: #1e1e1e;
@@ -185,6 +202,19 @@
   --text-muted: #6b7488;
   --text-dim: #6b7488;
   --text-faint: #98a1b3;
+
+  /* O branco puro sobre o beige da pagina (#f2f0e9) destoava: a pagina e' quente
+     e o card era neutro, com os paineis internos em cinza AZULADO (--chip-bg).
+     Tres temperaturas empilhadas. Estas duas ficam na mesma familia do fundo. */
+  --scan-surface: #fdfcf9;
+  --scan-panel: #f6f4ed;
+
+  --ia: #5b5bd6;
+  --ia-strong: #4a4ac4;
+  --ia-line: rgba(91, 91, 214, 0.26);
+  --ia-tint: rgba(91, 91, 214, 0.045);
+  --ia-tint-hi: rgba(91, 91, 214, 0.1);
+  --ia-on: #ffffff;
 
   --gauge-track: #e8ecf2;
   --chart-track: #edf0f6;

@@ -8,6 +8,12 @@ import { reportDetailRoute, SCREEN_ROUTES } from '@/lib/dash/dash-routes';
 import { useDashState } from '@/lib/dash/dash-state';
 import { fmtAbs, riskColor, riskMax, scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
 import {
+  SKIP_REASON_LONG,
+  tierSkipReason,
+  type ScanIaSummary,
+  type ToolRunDto,
+} from '@/lib/dash/pipeline-tools';
+import {
   GH_ORG,
   INSTALLATION_REPOS,
   REF_NOW,
@@ -15,7 +21,7 @@ import {
 } from '@/lib/dash/mock-data';
 import type { ScanJob } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
-import { TierStepper } from './TierStepper';
+import { ScanMiniRow, ScanPipeline, ScanPipelineFooter } from './ScanPipeline';
 import { MiniGauge } from './RiskGauge';
 import { IconPlay, ScanModal, Spinner, type ScanTarget } from './ScanModal';
 
@@ -150,6 +156,8 @@ export function ScansScreen({
   ok,
   demo,
   now,
+  toolRuns = {},
+  iaByScan = {},
 }: {
   /** `GET /scans` no server component, ou o dataset do protótipo. */
   jobs: ScanJob[];
@@ -158,6 +166,18 @@ export function ScansScreen({
   demo: boolean;
   /** Âncora de tempo: `REF_NOW` em demonstração, o agora real com a API. */
   now: number;
+  /**
+   * `GET /scans/{id}/tools` por execução, indexado pelo id — só para as que a
+   * página buscou (as mais recentes de cada repositório). Ausente é normal: a
+   * faixa cai para o status do tier.
+   */
+  toolRuns?: Record<string, ToolRunDto[]>;
+  /**
+   * Resumo da camada I.A por execução, indexado pelo id — só para as que a
+   * página buscou. Ausente é normal (demonstração, ou execução sem relatório de
+   * Tier 3), e o painel do Tier 3 então mostra só as ferramentas.
+   */
+  iaByScan?: Record<string, ScanIaSummary | null>;
 }) {
   const router = useRouter();
   const { monitored } = useDashState();
@@ -176,6 +196,19 @@ export function ScansScreen({
   const [expandedRepos, setExpandedRepos] = useState<Set<string>>(() => new Set());
   const toggleRepoExpanded = (repo: string) =>
     setExpandedRepos((prev) => {
+      const next = new Set(prev);
+      if (next.has(repo)) next.delete(repo);
+      else next.add(repo);
+      return next;
+    });
+  /**
+   * Repositórios com o card minimizado. Fica em `useState` e NÃO em
+   * `localStorage`: `?preview=1` (o carrossel do cadastro) não pode poluir
+   * estado real, e o dashboard só persiste tema e colapso da sidebar.
+   */
+  const [minimized, setMinimized] = useState<Set<string>>(() => new Set());
+  const toggleMinimized = (repo: string) =>
+    setMinimized((prev) => {
       const next = new Set(prev);
       if (next.has(repo)) next.delete(repo);
       else next.add(repo);
@@ -350,6 +383,16 @@ export function ScansScreen({
     [jobs],
   );
 
+  /**
+   * Alvo de DAST por repositório — é o que diz se o ZAP tinha o que escanear no
+   * Tier 3. Ausente do mapa (repositório não monitorado, ou demonstração)
+   * significa "não sabemos", e a faixa de ferramentas não afirma nada.
+   */
+  const targetUrls = useMemo(() => {
+    if (demo) return new Map<string, string | null>();
+    return new Map(monitored.map((repo) => [repo.full_name, repo.target_url]));
+  }, [demo, monitored]);
+
   const runningCount = jobs.filter(isJobRunning).length;
   const anyFilter = !!(filters.repo || filters.status || filters.tier);
 
@@ -450,65 +493,118 @@ export function ScansScreen({
       </div>
 
       {groups.length > 0 ? (
-        groups.map((group) => (
-          <div key={group.repo} className="mb-8">
-            <div
-              className="mb-3 flex items-center gap-2"
-              style={{ paddingBottom: 8, borderBottom: '1px solid var(--border-default)' }}
-            >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                className="text-fg-dim"
-              >
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-              </svg>
-              <span className="text-[15px] font-semibold">{group.repo}</span>
-              <span className="text-[12px] text-fg-dim">
-                · {group.jobs.length} scan{group.jobs.length === 1 ? '' : 's'} · último{' '}
-                {timeAgo(scanRanAt(group.jobs[0]), now)}
-              </span>
-            </div>
+        groups.map((group) => {
+          const isExpanded = expandedRepos.has(group.repo);
+          // Colapsado: só a execução mais recente. Expandido: até 10.
+          const visible = isExpanded
+            ? group.jobs.slice(0, HISTORICO_MAX)
+            : group.jobs.slice(0, 1);
+          const extras = group.jobs.length - 1;
+          const isMin = minimized.has(group.repo);
+          const ultimo = group.jobs[0];
 
-            {(() => {
-              const isExpanded = expandedRepos.has(group.repo);
-              // Colapsado: só o último. Expandido: até 10 mais recentes.
-              const visible = isExpanded
-                ? group.jobs.slice(0, HISTORICO_MAX)
-                : group.jobs.slice(0, 1);
-              const extras = group.jobs.length - 1;
-              return (
-                <>
-                  {visible.map((job) => (
-                    <ScanCard key={job.id} job={job} demo={demo} now={now} />
-                  ))}
-                  {extras > 0 && (
+          return (
+            <div key={group.repo} className="scan-card mb-4">
+              <div className="repo-hd">
+                <svg
+                  width="15" height="15" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="1.6" className="text-fg-dim"
+                >
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+                <span className="repo-hd-nm">{group.repo}</span>
+                <span className="repo-hd-meta">
+                  · {group.jobs.length} scan{group.jobs.length === 1 ? '' : 's'} · último{' '}
+                  {timeAgo(scanRanAt(group.jobs[0]), now)}
+                </span>
+                <span className="repo-hd-right">
+                  {extras > 0 && !isMin && (
                     <button
                       type="button"
+                      className="btn btn-sm btn-ghost"
                       onClick={() => toggleRepoExpanded(group.repo)}
-                      className="lnk mt-1 text-[12.5px] text-fg-dim"
                       aria-expanded={isExpanded}
                     >
                       {isExpanded
-                        ? 'Mostrar menos'
-                        : `Ver mais ${Math.min(extras, HISTORICO_MAX - 1)} scan${
-                            Math.min(extras, HISTORICO_MAX - 1) === 1 ? '' : 's'
-                          }`}
-                      {isExpanded && group.jobs.length > HISTORICO_MAX
-                        ? ` (mostrando os ${HISTORICO_MAX} mais recentes de ${group.jobs.length})`
-                        : ''}
+                        ? 'Ocultar anteriores'
+                        : `Relatórios anteriores (${Math.min(extras, HISTORICO_MAX - 1)})`}
                     </button>
                   )}
-                </>
-              );
-            })()}
-          </div>
-        ))
+                  <button
+                    type="button"
+                    className="repo-tgl"
+                    onClick={() => toggleMinimized(group.repo)}
+                    aria-expanded={!isMin}
+                    aria-label={
+                      isMin
+                        ? `Expandir o pipeline de ${group.repo}`
+                        : `Minimizar o pipeline de ${group.repo}`
+                    }
+                    title={isMin ? 'Expandir' : 'Minimizar'}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                      <path d="M5 12h14" />
+                      {isMin && <path d="M12 5v14" />}
+                    </svg>
+                  </button>
+                </span>
+              </div>
+
+              {isMin ? (
+                <div className="scan-mini-wrap">
+                  <ScanMiniRow
+                    job={ultimo}
+                    status={pipeStatus(ultimo)}
+                    runs={toolRuns[ultimo.id]}
+                    ia={iaByScan[ultimo.id]}
+                    targetUrl={
+                      targetUrls.has(ultimo.repo_full_name)
+                        ? targetUrls.get(ultimo.repo_full_name)
+                        : undefined
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => toggleMinimized(group.repo)}
+                  >
+                    Expandir
+                    <span aria-hidden="true">▾</span>
+                  </button>
+                </div>
+              ) : (
+                visible.map((job, i) => (
+                <div
+                  key={job.id}
+                  style={
+                    i > 0
+                      ? {
+                          marginTop: 20,
+                          paddingTop: 20,
+                          borderTop: '1px solid var(--border-default)',
+                        }
+                      : undefined
+                  }
+                >
+                  <ScanExecution
+                    job={job}
+                    demo={demo}
+                    now={now}
+                    targetUrl={
+                      targetUrls.has(job.repo_full_name)
+                        ? targetUrls.get(job.repo_full_name)
+                        : undefined
+                    }
+                    toolRuns={toolRuns[job.id]}
+                    ia={iaByScan[job.id]}
+                  />
+                </div>
+                ))
+              )}
+            </div>
+          );
+        })
       ) : !ok ? (
         <div className="stat-card">
           <EmptyState
@@ -563,73 +659,101 @@ export function ScansScreen({
 }
 
 /**
- * Card de um scan.
+ * Uma execução dentro do card do repositório.
  *
- * O destino do clique depende da origem do dado: em demonstração abre as
- * remediações DESTE scan, como no protótipo. Com dados reais vai para o
- * relatório do commit — a API não expõe remediações, e mandar um id real para
- * uma tela mock levaria a uma lista vazia.
+ * Deixou de ser um `<Link>` envolvendo tudo: o card agora tem botões dentro
+ * (expandir histórico, ver relatório), e um `<button>` dentro de `<a>` é HTML
+ * inválido. O destino virou o CTA do rodapé, que é mais explícito de todo modo.
+ *
+ * O destino depende da origem do dado: em demonstração abre as remediações
+ * DESTE scan, como no protótipo. Com dados reais vai para o relatório — a API
+ * não expõe remediações, e mandar um id real para uma tela mock daria lista
+ * vazia.
  */
-function ScanCard({ job, demo, now }: { job: ScanJob; demo: boolean; now: number }) {
-  const running = isJobRunning(job);
+function ScanExecution({
+  job,
+  demo,
+  now,
+  targetUrl,
+  toolRuns,
+  ia,
+}: {
+  job: ScanJob;
+  demo: boolean;
+  now: number;
+  /** `null` = repositório sem alvo de DAST; `undefined` = não sabemos. */
+  targetUrl?: string | null;
+  /** Desfecho real por ferramenta, quando a página buscou para esta execução. */
+  toolRuns?: ToolRunDto[];
+  /** Resumo da camada I.A do Tier 3, quando há relatório. */
+  ia?: ScanIaSummary | null;
+}) {
+  const status = pipeStatus(job);
+  const running = status === 'running';
   const gate1Blocked = job.final_risk_level === 'blocked';
   const remCount = demo
     ? REMEDIATIONS.filter((rem) => rem.scan_job_id === job.id).length
     : 0;
+  // Tier 3 pulado pelo Gate 2 é um desfecho, não uma pendência.
+  const noEscalation = tierSkipReason(job, 2) === 'gate2-sem-escalada';
+  const href = demo
+    ? `${SCREEN_ROUTES.remediations}?scan=${job.id}`
+    : reportDetailRoute(job.id);
 
   return (
-    <Link
-      href={
-        demo
-          ? `${SCREEN_ROUTES.remediations}?scan=${job.id}`
-          : reportDetailRoute(job.id)
-      }
-      className="stat-card card-link mb-3 block"
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="mono text-[12.5px] font-semibold text-fg">
-              PR #{job.pr_number}
-            </span>
-            <span className="mono text-[11px] text-fg-dim">
-              commit {shortSha(job.commit_sha)}
-            </span>
-            {running && (
-              <span className="sev st-running" style={{ gap: 4 }}>
-                <Spinner />
-                em execução
-              </span>
-            )}
-            {gate1Blocked && <span className="sev st-blocked">gate1 bloqueado</span>}
-          </div>
-          <div className="mt-0.5 text-[12px] text-fg-dim">
-            <span title={fmtAbs(scanRanAt(job))} className="cursor-help">
-              {timeAgo(scanRanAt(job), now)}
-            </span>
-            {remCount > 0 && (
-              <>
-                {' · '}
-                <span style={{ color: 'var(--text-secondary)' }}>
-                  {remCount} remediaç{remCount === 1 ? 'ão' : 'ões'}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
+    <div className="exec-block" data-run={status}>
+      <div className="exec-hd">
+        <span className="exec-hd-pr">
+          {/* `pr_number` é 0 em scan manual (roda sem PR) — não mostra "#0". */}
+          {job.pr_number > 0 ? `PR #${job.pr_number}` : 'Scan manual'}
+        </span>
+        <span className="mono text-[11.5px] text-fg-dim">
+          commit {shortSha(job.commit_sha)}
+        </span>
+        <span className="exec-hd-sep">·</span>
+        <span className="text-[12px] text-fg-dim" title={fmtAbs(scanRanAt(job))}>
+          {timeAgo(scanRanAt(job), now)}
+        </span>
+        {running ? (
+          <span className="sev st-running" style={{ gap: 5 }}>
+            <Spinner />
+            em execução
+          </span>
+        ) : status === 'done' ? (
+          <span className="sev st-done">concluído</span>
+        ) : status === 'failed' ? (
+          <span className="sev st-failed">falhou</span>
+        ) : null}
+        {gate1Blocked && <span className="sev st-blocked">gate1 bloqueado</span>}
+        {noEscalation && (
+          <span className="sev st-nogate" title={SKIP_REASON_LONG['gate2-sem-escalada']}>
+            tier 3 dispensado
+          </span>
+        )}
+        {remCount > 0 && (
+          <span className="text-[12px]" style={{ color: 'var(--text-secondary)' }}>
+            {remCount} remediaç{remCount === 1 ? 'ão' : 'ões'}
+          </span>
+        )}
 
-        <RiskCompact
-          score={job.final_risk_score}
-          level={job.final_risk_level}
-          max={riskMax(demo)}
-        />
+        <span className="exec-hd-right">
+          <RiskCompact
+            score={job.final_risk_score}
+            level={job.final_risk_level}
+            max={riskMax(demo)}
+          />
+        </span>
       </div>
 
-      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-default)' }}>
-        <div style={{ maxWidth: 700 }}>
-          <TierStepper job={job} />
-        </div>
+      <ScanPipeline job={job} runs={toolRuns} ia={ia} targetUrl={targetUrl} />
+
+      <div className="exec-ft">
+        <ScanPipelineFooter job={job} runs={toolRuns} ia={ia} targetUrl={targetUrl} />
+        <Link href={href} className="btn btn-md btn-primary">
+          {demo ? 'Ver remediações' : 'Ver relatório completo'}
+          <span aria-hidden="true">→</span>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }
