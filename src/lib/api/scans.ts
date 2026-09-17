@@ -3,13 +3,17 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import type { ScanIaSummary } from '@/lib/dash/pipeline-tools';
-import type { RiskLevel, ScanJob, TierStatus } from '@/lib/dash/types';
+import type { FindingsSummary, RiskLevel, ScanJob, TierStatus } from '@/lib/dash/types';
 import { getApi } from './client';
 import { COOKIE_NAMES, IS_API_CONFIGURED } from './config';
 
 /**
- * Scans e relatórios vindos da API (`GET /scans`, `GET /scans/{id}`,
- * `GET /scans/{id}/report`, `GET /scans/{id}/history`).
+ * Scans vindos da API (`GET /scans`, `GET /scans/{id}`,
+ * `GET /scans/{id}/history`, `GET /scans/{id}/tools`).
+ *
+ * `GET /scans/{id}/report` — o markdown gerado pelo pipeline — deixou de ter
+ * consumidor quando a tela de relatório passou a mostrar a leitura estruturada
+ * (veredito, caminhos de ataque, findings por etapa) em vez da prosa do LLM.
  *
  * A identidade de uma execução é o **`id`** da API (uuid). Já foi o
  * `commit_sha`, quando havia uma execução por commit; desde que rescanear a
@@ -42,16 +46,13 @@ type ApiScanJob = {
   final_risk_score: number | null;
   final_risk_level: string | null;
   created_at: string;
-};
-
-export type ScanReport = {
-  tier: number;
-  report_markdown: string;
-  analysis_json: Record<string, unknown>;
-  degraded: boolean;
-  comment_id: number | null;
-  posted: boolean;
-  created_at: string;
+  findings_summary?: {
+    by_severity?: Record<string, number>;
+    by_tier?: Record<string, number>;
+    total?: number;
+  };
+  /** Só na listagem (`ScanJobSummary`): o total, sem a quebra por severidade. */
+  findings_total?: number | null;
 };
 
 function toTierStatus(value: string | null): TierStatus {
@@ -75,6 +76,33 @@ function duration(startedAt: string | null, completedAt: string | null): string 
   if (minutes < 1) return '<1m';
   if (minutes < 60) return `${minutes}m`;
   return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
+/**
+ * `findings_summary` normalizado, ou `undefined` quando a API não o mandou.
+ *
+ * `undefined` importa: é "não sabemos" (execução vinda de uma rota que não
+ * agrega, ou payload antigo), e a tela cai para contar o que tem em mão. Um
+ * objeto zerado no lugar afirmaria "nenhum finding".
+ */
+function toFindingsSummary(dto: ApiScanJob): FindingsSummary | undefined {
+  const raw = dto.findings_summary;
+  if (!raw || typeof raw !== 'object') {
+    /*
+     * A LISTAGEM não manda o resumo completo, só o total (`ScanJobSummary`).
+     * Ele entra aqui como um resumo sem quebra por severidade — é o mesmo número
+     * que o detalhe devolve, porque as duas contam findings do commit, e é o que
+     * permite a lista de Scans mostrar a contagem sem uma requisição por card.
+     */
+    return typeof dto.findings_total === 'number'
+      ? { by_severity: {}, by_tier: {}, total: dto.findings_total }
+      : undefined;
+  }
+  return {
+    by_severity: raw.by_severity && typeof raw.by_severity === 'object' ? raw.by_severity : {},
+    by_tier: raw.by_tier && typeof raw.by_tier === 'object' ? raw.by_tier : {},
+    total: typeof raw.total === 'number' ? raw.total : 0,
+  };
 }
 
 /** `repo_full_name` é nullable no schema; a URL do repo é o fallback. */
@@ -105,6 +133,15 @@ function toScanJob(dto: ApiScanJob): ScanJob {
     t1_dur: duration(dto.tier1_started_at, dto.tier1_completed_at),
     t2_dur: duration(dto.tier2_started_at, dto.tier2_completed_at),
     t3_dur: duration(dto.tier3_started_at, dto.tier3_completed_at),
+    // Os inícios crus, além das durações: um tier em execução não tem
+    // `completed_at`, então `duration()` devolve `null` e o tempo decorrido só
+    // sai do `started_at`.
+    tier_started_at: [
+      dto.tier1_started_at,
+      dto.tier2_started_at,
+      dto.tier3_started_at,
+    ],
+    findings_summary: toFindingsSummary(dto),
   };
 }
 
@@ -165,37 +202,6 @@ export const fetchScan = cache(async (scanId: string): Promise<ScanJob | null> =
     return toScanJob(data);
   } catch {
     return null;
-  }
-});
-
-/**
- * Relatórios de um commit — um por tier, em markdown gerado pelo pipeline.
- *
- * É este markdown que É o relatório. A tela do protótipo compunha um relatório
- * à mão a partir do dataset mock; com dados reais o conteúdo vem daqui.
- */
-export const fetchScanReports = cache(async (scanId: string): Promise<ScanReport[]> => {
-  if (!IS_API_CONFIGURED) return [];
-
-  const token = await accessToken();
-  if (!token) return [];
-
-  try {
-    const { status, data } = await getApi(
-      `/scans/${encodeURIComponent(scanId)}/report`,
-      token,
-    );
-    if (status !== 200 || !data || typeof data !== 'object') return [];
-
-    const payload = data as { reports?: unknown };
-    if (!Array.isArray(payload.reports)) return [];
-
-    return payload.reports.filter(
-      (report): report is ScanReport =>
-        !!report && typeof report === 'object' && typeof (report as ScanReport).tier === 'number',
-    );
-  } catch {
-    return [];
   }
 });
 
@@ -305,10 +311,20 @@ export const fetchScanTools = cache(async (scanId: string): Promise<ScanToolsRes
         payload.expected && typeof payload.expected === 'object'
           ? (payload.expected as Record<string, string[]>)
           : {},
-      // A API já valida campo por campo contra o blob do LLM; aqui só o
-      // contorno básico, porque `paths` é o único campo que a tela percorre.
+      /*
+       * A API já valida campo por campo contra o blob do LLM; aqui só o
+       * contorno básico.
+       *
+       * `paths` OU `chains`, e não só `paths`: as duas telas percorrem `chains`
+       * desde que o attack path passou a ser desenhado por cadeia, e um
+       * relatório que traga apenas `attack_chains` perderia o `ia` inteiro —
+       * o card diria "ninguém calculou" para uma execução que calculou.
+       */
       ia:
-        payload.ia && typeof payload.ia === 'object' && Array.isArray((payload.ia as ScanIaSummary).paths)
+        payload.ia &&
+        typeof payload.ia === 'object' &&
+        (Array.isArray((payload.ia as ScanIaSummary).paths) ||
+          Array.isArray((payload.ia as ScanIaSummary).chains))
           ? (payload.ia as ScanIaSummary)
           : null,
       ok: true,

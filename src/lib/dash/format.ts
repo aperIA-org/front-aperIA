@@ -1,5 +1,5 @@
 import { REF_NOW } from './mock-data';
-import type { Criticality, ScanJob, Severity } from './types';
+import type { Criticality, RiskLevel, ScanJob, Severity } from './types';
 
 export const SEV_ORDER: Record<Severity, number> = {
   critical: 5,
@@ -7,6 +7,15 @@ export const SEV_ORDER: Record<Severity, number> = {
   medium: 3,
   low: 2,
   info: 1,
+};
+
+/** Nível de risco da API em português — rótulo, não dado. */
+export const RISK_LEVEL_PT: Record<Exclude<RiskLevel, null>, string> = {
+  critical: 'crítico',
+  high: 'alto',
+  medium: 'médio',
+  low: 'baixo',
+  blocked: 'bloqueado',
 };
 
 export const STATUS_PT: Record<string, string> = {
@@ -213,4 +222,63 @@ export function gaugeBand(
  */
 export function scanRanAt(job: Pick<ScanJob, 'created_at' | 'started_at'>): string {
   return job.started_at ?? job.created_at;
+}
+
+/**
+ * O que cada etapa está fazendo enquanto ninguém tem resultado ainda.
+ *
+ * Cópia de produto, não dado: é a descrição fixa do que a etapa faz, e serve
+ * para a espera ser compreensível em vez de um retângulo cinza. Nada aqui é
+ * derivado de uma execução específica — por isso pode ser constante.
+ */
+export const TIER_EXPECT = [
+  'Procurando segredos no diff e rodando análise estática nas linhas alteradas',
+  'Dependências, SAST completo e agrupamento de findings em cadeias de risco',
+  'Emulação adversária e simulação de attack path por I.A — gera a leitura executiva de risco',
+] as const;
+
+/**
+ * Tempo decorrido como DURAÇÃO ("4s", "12min", "1h 20min"), não como "há X".
+ *
+ * `timeAgo` arredonda para minutos e devolve "há 0m" para um scan disparado há
+ * 4 segundos — que é justamente o momento em que a tela mais precisa dizer algo.
+ * Aqui a frase é montada por quem chama ("Scan iniciado há 4s", "rodando há
+ * 12min"), então a função devolve só a duração.
+ *
+ * Deliberadamente **não** existe uma versão que projete o fim: o pipeline não
+ * persiste estimativa nenhuma, e "~28min restantes" seria número inventado. O
+ * que a tela pode dizer com honestidade é quanto já passou, e o SLA da etapa
+ * (`TIER_META[i].sla`), que é uma característica do produto.
+ */
+export function elapsedSince(iso: string, now: number): string | null {
+  const inicio = Date.parse(iso);
+  if (!Number.isFinite(inicio)) return null;
+  const s = Math.floor((now - inicio) / 1000);
+  if (s < 0) return null;
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}min`;
+  return `${Math.floor(m / 60)}h ${m % 60}min`;
+}
+
+/** Início de um tier específico, quando a API o informou (`undefined` = não sabemos). */
+export function tierStartedAt(job: ScanJob, tierIndex: number): string | null {
+  return job.tier_started_at?.[tierIndex] ?? null;
+}
+
+/**
+ * As severidades de um `findings_summary`, da mais grave para a menos, já sem as
+ * que não ocorreram.
+ *
+ * A API só devolve a chave da severidade que existe no conjunto, então uma
+ * severidade ausente é ausência de verdade — não um zero a exibir.
+ */
+export function severityCounts(
+  bySeverity: Record<string, number> | undefined,
+): { severity: Severity; count: number }[] {
+  if (!bySeverity) return [];
+  return (Object.keys(SEV_ORDER) as Severity[])
+    .sort((a, b) => SEV_ORDER[b] - SEV_ORDER[a])
+    .map((severity) => ({ severity, count: bySeverity[severity] ?? 0 }))
+    .filter((item) => item.count > 0);
 }

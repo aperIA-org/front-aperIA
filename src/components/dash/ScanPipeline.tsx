@@ -2,14 +2,21 @@ import { TIER_META } from '@/lib/dash/format';
 import {
   SKIP_REASON_LONG,
   TIER_TOOLS,
+  chainEmulated,
+  chainEmulatedPhrase,
+  chainTitle,
   fmtToolDuration,
   phasePt,
+  iaChainStats,
+  iaChains,
+  iaPathCount,
   pipelineProgress,
   tierProgress,
   tierSkipReason,
   tierState,
   tierToolRuns,
   toolDetail,
+  type IaChain,
   type ScanIaSummary,
   type ToolRun,
   type ToolRunDto,
@@ -32,7 +39,7 @@ import type { ScanJob } from '@/lib/dash/types';
 
 /* ═══════════════════════ ícones ═══════════════════════ */
 
-function IconCheck({ size = 11, color = 'currentColor' }: { size?: number; color?: string }) {
+export function IconCheck({ size = 11, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" width={size} height={size}>
       <path d="M4 12.5l5 5L20 7" />
@@ -41,7 +48,7 @@ function IconCheck({ size = 11, color = 'currentColor' }: { size?: number; color
 }
 
 /** Anel girando. `bare` desenha só o arco, sem o trilho de fundo. */
-function IconSpin({ size = 16, color = 'var(--ia)' }: { size?: number; color?: string }) {
+export function IconSpin({ size = 16, color = 'var(--ia)' }: { size?: number; color?: string }) {
   return (
     <svg className="spin-15" viewBox="0 0 20 20" fill="none" width={size} height={size}>
       <circle cx="10" cy="10" r="8.4" stroke="var(--gauge-track)" strokeWidth="2.2" />
@@ -103,7 +110,14 @@ function ToolIcon({ state }: { state: ToolState }) {
 
 /* ═══════════════════════ linha de ferramenta ═══════════════════════ */
 
-function ToolRowLine({ run, ia }: { run: ToolRun; ia?: ScanIaSummary | null }) {
+/**
+ * Uma ferramenta: icone + nome + detalhe.
+ *
+ * Exportada porque o card de findings do relatorio abre as MESMAS linhas ao
+ * expandir a banda de uma etapa. Duas implementacoes da mesma linha seriam
+ * dois desenhos para o mesmo dado, nas duas telas do mesmo fluxo.
+ */
+export function ToolRowLine({ run, ia }: { run: ToolRun; ia?: ScanIaSummary | null }) {
   const detail = toolDetail(run, ia);
   const skipped = run.state === 'skipped' || run.state === 'blocked';
 
@@ -140,7 +154,21 @@ function IaCard({
   ia?: ScanIaSummary | null;
   running: boolean;
 }) {
-  const paths = ia?.paths ?? [];
+  /*
+   * CADEIAS, não passos.
+   *
+   * Este card desenhava `ia.paths` — a lista PLANA de passos — enquanto a
+   * etiqueta contava cadeias: dizia "2 caminhos" no cabeçalho e desenhava 11
+   * itens numerados logo abaixo, e quem lê conta os itens. O relatório sempre
+   * agrupou por `attack_chains`, então as duas telas mostravam a mesma execução
+   * em unidades diferentes.
+   *
+   * `caminhos` é `chains.length` por construção (`iaPathCount` deriva de
+   * `iaChains`), então o número da etiqueta é exatamente quantas linhas isto
+   * renderiza. Se um dia divergirem, é bug.
+   */
+  const chains = iaChains(ia);
+  const caminhos = iaPathCount(ia);
   const degraded = !!ia?.degraded;
   // `ia` ausente é "não sabemos", NÃO "não há caminho": é o caso da demonstração
   // e de execuções sem relatório de Tier 3. Dizer "nenhum caminho encadeável"
@@ -154,8 +182,8 @@ function IaCard({
       ? 'sem dados'
       : degraded
         ? 'heurística'
-        : paths.length > 0
-          ? `${paths.length} caminho${paths.length === 1 ? '' : 's'}`
+        : caminhos > 0
+          ? `${caminhos} caminho${caminhos === 1 ? '' : 's'}`
           : 'sem caminho';
 
   return (
@@ -209,7 +237,10 @@ function IaCard({
           , então o Tier 3 fechou com a heurística de fallback. <b>Não há attack path
           encadeado</b> para este commit — os achados das ferramentas continuam válidos.
         </p>
-      ) : paths.length === 0 ? (
+      ) : chains.length === 0 ? (
+        /* Sobre o que É desenhado: um relatório que traga só `attack_chains`
+           (sem a lista plana) tem caminho, e afirmar que não há seria negar o
+           que a outra tela mostra. */
         <p className="ia-prose">
           A I.A analisou os achados e <b>não encontrou caminho de ataque encadeável</b> entre
           eles. Os findings seguem listados individualmente no relatório.
@@ -218,28 +249,9 @@ function IaCard({
         <>
           <IaProse ia={ia!} />
           <div className="ia-paths">
-            {paths.map((path) => (
-              <div key={path.step} className="ia-path">
-                <span className="ia-path-n">{path.step}</span>
-                <span className="ia-path-b">
-                  <span className="ia-path-tx">{path.description}</span>
-                  <span className="ia-path-mt">
-                    <span>{phasePt(path.phase)}</span>
-                    <span>·</span>
-                    <span>{path.technique}</span>
-                    <span>·</span>
-                    <span>
-                      {path.finding_count} finding{path.finding_count === 1 ? '' : 's'}
-                    </span>
-                    {path.caldera_validated && (
-                      <>
-                        <span>·</span>
-                        <span className="ia-path-val">validado no Caldera</span>
-                      </>
-                    )}
-                  </span>
-                </span>
-              </div>
+            {/* `key` pelo índice: cadeia não tem id, igual ao relatório. */}
+            {chains.map((chain, i) => (
+              <IaChainRow key={i} chain={chain} index={i} />
             ))}
           </div>
         </>
@@ -248,11 +260,68 @@ function IaCard({
   );
 }
 
+/**
+ * Uma CADEIA por linha: número, título e o que ela atravessa.
+ *
+ * É a forma compacta do bloco que o relatório abre passo a passo. A numeração e
+ * o título são os mesmos (`chainTitle`), para quem clicou numa linha aqui
+ * reconhecê-la lá.
+ *
+ * O `finding_count` por passo, que a lista plana trazia, **não tem equivalente
+ * em `attack_chains`** e sai de propósito: recuperá-lo exigiria voltar a
+ * desenhar a outra representação, que é a origem do bug que isto conserta.
+ */
+function IaChainRow({ chain, index }: { chain: IaChain; index: number }) {
+  const steps = chain.steps ?? [];
+  // A sequência de fases é a kill chain em forma curta — o dado mais informativo
+  // que cabe numa linha. `phase` é anulável, e `phasePt` espera `string`.
+  const fases = steps
+    .map((step) => step.phase)
+    .filter((fase): fase is string => !!fase)
+    .map(phasePt);
+  const { ok } = chainEmulated(chain);
+
+  return (
+    <div className="ia-path" data-sev={chain.severity ?? undefined}>
+      <span className="ia-path-n">{index + 1}</span>
+      <span className="ia-path-b">
+        <span className="ia-path-tx">{chainTitle(chain, index)}</span>
+        <span className="ia-path-mt">
+          <span>
+            {steps.length} passo{steps.length === 1 ? '' : 's'}
+          </span>
+          {fases.length > 0 && (
+            <>
+              <span>·</span>
+              <span>{fases.join(' → ')}</span>
+            </>
+          )}
+          {ok > 0 && (
+            <>
+              <span>·</span>
+              <span className="ia-path-val">{chainEmulatedPhrase(chain)}</span>
+            </>
+          )}
+        </span>
+      </span>
+    </div>
+  );
+}
+
 /** Frase de abertura montada com os números reais do `analysis_json`. */
 function IaProse({ ia }: { ia: ScanIaSummary }) {
-  const n = ia.paths.length;
-  const validados = ia.paths.filter((p) => p.caldera_validated).length;
-  const fases = new Set(ia.paths.map((p) => p.phase)).size;
+  /*
+   * TODOS os números da mesma base.
+   *
+   * `caminhos`/`passos` saíam das cadeias e `fases`/`validados` da lista plana,
+   * na mesma frase — com `chains` presente e `paths` vazio isso dava "2 caminhos
+   * em 12 passos, atravessando 0 fases", e o `validados === passos` comparava
+   * bases diferentes.
+   */
+  const { caminhos: n, passos, fases, emulados, outcomes } = iaChainStats(ia);
+  // `bloqueado` é uma defesa que funcionou: não pode ser somado a "não emulado".
+  const nenhumaEmulacao =
+    emulados === 0 && outcomes.nao_emulado + outcomes.projecao === passos;
 
   return (
     <p className="ia-prose">
@@ -260,14 +329,15 @@ function IaProse({ ia }: { ia: ScanIaSummary }) {
       <b>
         {n} caminho{n === 1 ? '' : 's'} de ataque
       </b>{' '}
-      atravessando {fases} fase{fases === 1 ? '' : 's'} do MITRE ATT&amp;CK
-      {validados > 0 ? (
+      em {passos} passo{passos === 1 ? '' : 's'}, atravessando {fases} fase
+      {fases === 1 ? '' : 's'} do MITRE ATT&amp;CK
+      {emulados > 0 ? (
         <>
-          , {validados === n ? 'todos' : `${validados}`} com a técnica{' '}
-          <b>validada na emulação do Caldera</b>
+          , {emulados} <b>emulado{emulados === 1 ? '' : 's'} pelo Caldera</b>
         </>
       ) : null}
       .{' '}
+      {nenhumaEmulacao ? 'Nenhum passo foi emulado nesta execução. ' : ''}
       {ia.kill_chain_complete ? (
         <>
           A cadeia está <b>completa</b> — há rota do acesso inicial até o impacto.
@@ -532,7 +602,7 @@ export function ScanPipelineFooter({
     tierToolRuns(job, index, { targetUrl, runs }),
   );
   const { ran, total } = pipelineProgress(byTier);
-  const paths = ia?.paths.length ?? 0;
+  const caminhos = iaPathCount(ia);
   const totalMs = byTier
     .flat()
     .reduce((acc, run) => acc + (run.durationMs ?? 0), 0);
@@ -547,7 +617,7 @@ export function ScanPipelineFooter({
         `${ran} de ${total} ferramentas rodaram`,
         totalMs > 0 ? `${fmtToolDuration(totalMs)} somados` : null,
         ia && !ia.degraded
-          ? `${paths} caminho${paths === 1 ? '' : 's'} de attack path`
+          ? `${caminhos} caminho${caminhos === 1 ? '' : 's'} de ataque`
           : null,
       ]
     : ['Status por etapa — esta execução não tem registro por ferramenta'];
@@ -610,8 +680,9 @@ export function ScanMiniRow({
       aberto === undefined
         ? 'Pipeline em andamento'
         : `${TIER_META[aberto].name} · ${TIER_META[aberto].desc} em execução`;
-  } else if (ia && !ia.degraded && ia.paths.length > 0) {
-    resumo = `${ia.paths.length} caminho${ia.paths.length === 1 ? '' : 's'} de attack path encadeado${ia.paths.length === 1 ? '' : 's'}`;
+  } else if (ia && !ia.degraded && iaPathCount(ia) > 0) {
+    const caminhos = iaPathCount(ia);
+    resumo = `${caminhos} caminho${caminhos === 1 ? '' : 's'} de ataque encadeado${caminhos === 1 ? '' : 's'}`;
   } else if (real) {
     const { ran, total } = pipelineProgress(byTier);
     resumo = `${ran} de ${total} ferramentas rodaram`;

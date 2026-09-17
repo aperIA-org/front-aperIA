@@ -62,8 +62,25 @@ export const MONITORED_REPOS_ANCHOR = 'repositorios-monitorados';
 
 export const monitoredReposRoute = `${SCREEN_ROUTES.integrations}#${MONITORED_REPOS_ANCHOR}`;
 
-export function reportDetailRoute(execId: string): string {
-  return `/dash/relatorios/${execId}`;
+/**
+ * Detalhe de uma execução.
+ *
+ * `origem` marca de onde o usuário veio, e existe só para o "voltar" da tela de
+ * destino cair no lugar certo: quem chega pelo card de Scans espera voltar para
+ * Scans, não para a lista de Relatórios — que é uma terceira tela, com as mesmas
+ * execuções em outra apresentação. Sem o parâmetro, o padrão é Relatórios, que é
+ * o índice desta rota.
+ */
+export type ReportOrigin = 'scans' | 'reports';
+
+export function reportDetailRoute(execId: string, origem?: ReportOrigin): string {
+  const base = `/dash/relatorios/${execId}`;
+  return origem === 'scans' ? `${base}?de=scans` : base;
+}
+
+/** Lê o `?de=` de volta, ignorando qualquer valor que não conheçamos. */
+export function reportOrigin(value: string | undefined): ReportOrigin {
+  return value === 'scans' ? 'scans' : 'reports';
 }
 
 /**
@@ -76,6 +93,22 @@ export function reportDetailRoute(execId: string): string {
  */
 export function findingRoute(findingId: string): string {
   return `${SCREEN_ROUTES.findings}?finding=${encodeURIComponent(findingId)}`;
+}
+
+/**
+ * Deep link para as ocorrências de UM tipo de problema.
+ *
+ * É o drill-down de um grupo: `titulo` vai como `?title=` para a API, em
+ * igualdade EXATA, e o recorte acontece no servidor — 3 mil ocorrências não
+ * sobreviveriam ao teto do cliente.
+ *
+ * `de=all` é obrigatório aqui, não estético. Sem ele vale a janela padrão de 90
+ * dias, e o relatório de um commit mais antigo linkaria para uma lista vazia sem
+ * dizer por quê.
+ */
+export function findingsByTitleRoute(title: string): string {
+  const params = new URLSearchParams({ vis: 'todos', titulo: title, de: 'all' });
+  return `${SCREEN_ROUTES.findings}?${params.toString()}`;
 }
 
 /** Resolve a tela a partir do pathname — usado pela sidebar e pelo breadcrumb. */

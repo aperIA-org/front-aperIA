@@ -6,6 +6,12 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { requestManualScan } from '@/lib/api/github-actions';
 import { reportDetailRoute, SCREEN_ROUTES } from '@/lib/dash/dash-routes';
 import { useDashState } from '@/lib/dash/dash-state';
+import {
+  isJobRunning,
+  pipeStatus,
+  pipeTierReached,
+  type PipeStatus,
+} from '@/lib/dash/scan-state';
 import { fmtAbs, riskColor, riskMax, scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
 import {
   SKIP_REASON_LONG,
@@ -24,50 +30,6 @@ import { EmptyState } from './EmptyState';
 import { ScanMiniRow, ScanPipeline, ScanPipelineFooter } from './ScanPipeline';
 import { MiniGauge } from './RiskGauge';
 import { IconPlay, ScanModal, Spinner, type ScanTarget } from './ScanModal';
-
-/* ═══════════════════════ status derivado do scan ═══════════════════════ */
-
-type PipeStatus = 'blocked' | 'failed' | 'running' | 'done';
-
-/** Estados a partir dos quais um tier não muda mais. */
-const TIER_TERMINAL = ['done', 'failed', 'skipped'];
-
-function pipeStatus(job: ScanJob): PipeStatus {
-  if (job.blocked_at_tier === 1 || job.final_risk_level === 'blocked') return 'blocked';
-  if (job.tier2_status === 'failed' || job.tier3_status === 'failed') return 'failed';
-  if (
-    job.tier1_status === 'running' ||
-    job.tier2_status === 'running' ||
-    job.tier3_status === 'running'
-  ) {
-    return 'running';
-  }
-
-  // Nenhum tier `running` NÃO significa concluído. Entre o fim do Tier 1 e o
-  // início do Tier 2 existe uma janela em que `tier2_status` ainda é `null` —
-  // o pipeline está andando, mas nada está marcado como `running`.
-  //
-  // Tratar isso como 'done' tinha dois efeitos ruins: o Tier 2 nunca aparecia
-  // "em execução", e o polling desta tela (que só roda enquanto há job em
-  // andamento) desligava exatamente nessa janela — e como só um refresh traria
-  // o estado novo, ele nunca voltava a ligar. A tela congelava com o Tier 1
-  // concluído e o resto vazio.
-  //
-  // O pipeline só terminou quando o Tier 3 alcançou um estado terminal.
-  if (job.tier3_status && TIER_TERMINAL.includes(job.tier3_status)) return 'done';
-  return 'running';
-}
-
-/** Tier mais profundo que o scan realmente alcançou (skipped não conta). */
-function pipeTierReached(job: ScanJob): number {
-  if (job.tier3_status && job.tier3_status !== 'skipped') return 3;
-  if (job.tier2_status && job.tier2_status !== 'skipped') return 2;
-  return 1;
-}
-
-function isJobRunning(job: ScanJob): boolean {
-  return pipeStatus(job) === 'running';
-}
 
 /* ═══════════════════════ tier stepper completo ═══════════════════════ */
 
@@ -528,7 +490,7 @@ export function ScansScreen({
                     >
                       {isExpanded
                         ? 'Ocultar anteriores'
-                        : `Relatórios anteriores (${Math.min(extras, HISTORICO_MAX - 1)})`}
+                        : `Execuções anteriores do repositório (${Math.min(extras, HISTORICO_MAX - 1)})`}
                     </button>
                   )}
                   <button
@@ -690,6 +652,7 @@ function ScanExecution({
 }) {
   const status = pipeStatus(job);
   const running = status === 'running';
+  const findingsTotal = job.findings_summary?.total;
   const gate1Blocked = job.final_risk_level === 'blocked';
   const remCount = demo
     ? REMEDIATIONS.filter((rem) => rem.scan_job_id === job.id).length
@@ -698,7 +661,8 @@ function ScanExecution({
   const noEscalation = tierSkipReason(job, 2) === 'gate2-sem-escalada';
   const href = demo
     ? `${SCREEN_ROUTES.remediations}?scan=${job.id}`
-    : reportDetailRoute(job.id);
+    // `'scans'`: é o que faz o "voltar" do relatório trazer de volta para cá.
+    : reportDetailRoute(job.id, 'scans');
 
   return (
     <div className="exec-block" data-run={status}>
@@ -714,6 +678,16 @@ function ScanExecution({
         <span className="text-[12px] text-fg-dim" title={fmtAbs(scanRanAt(job))}>
           {timeAgo(scanRanAt(job), now)}
         </span>
+        {/* O mesmo número que abre o relatório desta execução. Sem ele, o
+            "11 findings" de lá aparecia sem antecedente nenhum aqui. */}
+        {findingsTotal !== undefined && (
+          <>
+            <span className="exec-hd-sep">·</span>
+            <span className="text-[12px] text-fg-dim">
+              {findingsTotal} {findingsTotal === 1 ? 'finding' : 'findings'}
+            </span>
+          </>
+        )}
         {running ? (
           <span className="sev st-running" style={{ gap: 5 }}>
             <Spinner />

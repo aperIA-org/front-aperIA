@@ -568,10 +568,12 @@ svg:hover .evo-pt{opacity:1;}
 .ia-prose{font-size:12.5px;line-height:1.55;color:var(--text-secondary);text-wrap:pretty;}
 .ia-prose b{color:var(--text-primary);font-weight:700;}
 
-/* Caminhos de ataque: um por linha, numerados. */
+/* Caminhos de ataque: uma CADEIA por linha, numerada.
+   Já desenhou a lista plana de PASSOS aqui, enquanto a etiqueta do card contava
+   cadeias — o card dizia "2 caminhos" e mostrava 11 itens. */
 .ia-paths{margin-top:11px;display:flex;flex-direction:column;gap:7px;}
 .ia-path{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;background:var(--ia-tint);border:1px solid var(--ia-line);border-radius:7px;}
-.ia-path-n{flex-shrink:0;width:18px;height:18px;border-radius:5px;background:var(--ia);color:var(--ia-on);display:grid;place-items:center;font-family:var(--font-mono);font-size:10px;font-weight:700;}
+.ia-path-n{flex-shrink:0;width:18px;height:18px;border-radius:5px;background:var(--sev-c,var(--ia));color:var(--ia-on);display:grid;place-items:center;font-family:var(--font-mono);font-size:10px;font-weight:700;}
 .ia-path-b{min-width:0;flex:1;}
 .ia-path-tx{font-size:12px;line-height:1.5;color:var(--text-primary);text-wrap:pretty;}
 .ia-path-mt{margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.04em;color:var(--text-dim);}
@@ -631,3 +633,397 @@ svg:hover .evo-pt{opacity:1;}
 .scan-mini-wrap .scan-mini{flex:1;min-width:0;}
 /* Minimizado nao tem margem inferior no cabecalho: e' uma linha so'. */
 .scan-card:has(.scan-mini-wrap) .repo-hd{margin-bottom:12px;}
+
+/* ═══════════════ Detalhe do relatorio: os estados da espera ═══════════════
+   Um scan real leva de 3 a 60 minutos, entao "em andamento" e' o estado mais
+   visto desta tela — nao um piscar antes do resultado. Tres estados, uma regra:
+   NUNCA um spinner na pagina inteira. O que ja' existe aparece de verdade, e so'
+   o que falta fica em progresso.
+
+   Tres familias de cor, e elas nao se misturam: vermelho e' severidade, --ia
+   (indigo) e' o Tier 3 como diferencial do produto, --run (azul) e' "ainda
+   rodando". Sem a terceira, um scan em progresso pegava emprestada a cor de
+   severidade ou a da camada I.A e passava a significar coisa que nao e'.
+
+   As medidas (raios, paddings, tamanhos de fonte) saem do arquivo de design; os
+   hex dele viraram os tokens dos dois temas. */
+
+/* A tela e' mais estreita que o resto do dash de proposito: e' um documento,
+   lido em coluna. Com os 1440px do .page-wrap as linhas de texto do relatorio
+   ficavam longas demais e a faixa de indicadores esticava sem ganhar nada. */
+.rep-page{max-width:1040px;margin:0 auto;padding:28px 32px 56px;}
+.rep-card{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:14px;}
+.rep-mb{margin-bottom:16px;}
+
+/* Skeleton do primeiro paint. O brilho percorre 380px, que e' a largura do
+   gradiente — trocar um sem o outro faz a animacao "pular". */
+@keyframes skel{0%{background-position:-380px 0}100%{background-position:380px 0}}
+.skel{display:block;border-radius:6px;background:linear-gradient(90deg,var(--bg-surface) 0%,var(--bg-surface-raised) 50%,var(--bg-surface) 100%);background-size:380px 100%;animation:skel 1.5s linear infinite;}
+@media (prefers-reduced-motion:reduce){.skel{animation:none;background:var(--bg-surface-raised);}}
+
+/* Trilha de navegacao: substitui o botao "< Relatorios" solto. Ela diz de onde
+   se veio E onde se esta' (repo + commit), que o botao nao dizia. */
+.rep-crumb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;font-size:12.5px;color:var(--text-dim);min-width:0;}
+.rep-crumb a{color:var(--text-dim);text-decoration:none;}
+.rep-crumb a:hover{color:var(--text-primary);}
+.rep-crumb-sep{color:var(--border-strong);}
+.rep-crumb-sha{font-family:var(--font-mono);color:var(--text-secondary);}
+
+/* ── Card de cabecalho: risco + identidade + estado, e a faixa de indicadores
+      colada embaixo. Um card so' porque sao a mesma leitura. ── */
+.rep-hd{overflow:hidden;}
+.rep-hd-top{display:flex;align-items:center;gap:16px;padding:22px 24px;flex-wrap:wrap;}
+.rep-score{flex-shrink:0;text-align:center;min-width:52px;}
+.rep-score-n{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
+.rep-score-max{margin-top:4px;font-family:var(--font-mono);font-size:10px;color:var(--text-dim);}
+.rep-hd-div{flex-shrink:0;width:1px;height:44px;background:var(--border-default);}
+.rep-hd-body{flex:1;min-width:0;}
+.rep-hd-t1{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:5px;}
+.rep-hd-nm{font-size:17px;font-weight:700;color:var(--text-primary);letter-spacing:-.01em;}
+.rep-hd-sub{font-size:12.5px;line-height:1.5;color:var(--text-secondary);text-wrap:pretty;}
+.rep-hd-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.rep-hd-el{font-family:var(--font-mono);font-size:11px;color:var(--run);white-space:nowrap;}
+
+/* Pilula "ANALISE EM ANDAMENTO". */
+.rep-run{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:20px;background:var(--run-tint-hi);border:1px solid var(--run-line);color:var(--run);font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
+
+/* Faixa de indicadores. */
+.rep-kpi{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border-default);}
+.rep-kpi>div{padding:14px 20px;border-right:1px solid var(--border-default);min-width:0;}
+.rep-kpi>div:last-child{border-right:none;}
+@media (max-width:900px){
+  .rep-kpi{grid-template-columns:repeat(2,1fr);}
+  .rep-kpi>div:nth-child(2n){border-right:none;}
+  .rep-kpi>div:nth-child(n+3){border-top:1px solid var(--border-default);}
+}
+.rep-kpi-lb{font-size:11px;color:var(--text-secondary);margin-bottom:6px;}
+.rep-kpi-vl{display:flex;align-items:center;gap:7px;min-width:0;font-size:15px;font-weight:700;color:var(--text-primary);}
+.rep-kpi-vl .un{font-size:12.5px;font-weight:600;color:var(--text-dim);}
+/* "calculando..." / "nao calculado": o valor ainda nao existe, e a tela precisa
+   dizer isso em vez de um "—" que se confunde com zero. */
+.rep-kpi-vl[data-wait="true"]{font-size:13px;font-weight:700;color:var(--text-dim);}
+
+/* ── Veredito executivo. Tres estados, e eles dizem coisas diferentes:
+      `wait` = o Tier 3 esta' rodando; `none` = ninguem calculou (relatorio
+      antigo, analise degradada); `ready` = veio do pipeline. ── */
+.rep-verd{display:flex;align-items:flex-start;gap:11px;border-radius:12px;padding:18px 20px;margin-bottom:16px;}
+.rep-verd[data-s="wait"]{background:var(--run-tint);border:1px dashed var(--run-line);}
+.rep-verd[data-s="none"]{background:var(--bg-surface);border:1px dashed var(--border-default);}
+.rep-verd[data-s="ready"]{background:var(--bg-surface);border:1px solid var(--border-default);}
+.rep-verd-ico{flex-shrink:0;display:grid;place-items:center;}
+.rep-verd-b{min-width:0;flex:1;}
+.rep-verd-tl{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:13.5px;font-weight:700;color:var(--text-primary);}
+.rep-verd[data-s="wait"] .rep-verd-tl{color:var(--run);}
+.rep-verd-tx{margin-top:2px;font-size:12px;line-height:1.5;color:var(--text-secondary);text-wrap:pretty;}
+.rep-verd[data-s="wait"] .rep-verd-tx{color:var(--run-strong);opacity:.85;}
+/* A recomendacao e' enum, nao prosa: por isso pode virar cor. */
+.rep-rec{display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-family:var(--font-mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;}
+.rep-rec[data-r="bloquear"]{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#ef4444;}
+.rep-rec[data-r="corrigir"]{background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.4);color:#f5a524;}
+.rep-rec[data-r="monitorar"]{background:var(--run-tint-hi);border:1px solid var(--run-line);color:var(--run);}
+
+/* ── Card dos caminhos de ataque (Tier 3) ─────────────────────────────────
+   O Tier 3 e' o diferencial do produto, nao "mais um passo": ganha card
+   proprio, a cor da camada I.A e um trilho CENTRALIZADO — etapa a' esquerda,
+   desfecho a' direita —, que e' o desenho que separa este card do trilho
+   lateral da tela de Scans. */
+.apc{padding:22px 24px;}
+.apc-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.apc-ico{flex-shrink:0;width:24px;height:24px;border-radius:7px;background:var(--ia);display:grid;place-items:center;}
+.apc-nm{font-size:16px;font-weight:700;color:var(--text-primary);letter-spacing:-.01em;}
+.apc-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:20px;background:var(--ia-tint-hi);border:1px solid var(--ia-line);color:var(--ia-strong);font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
+.apc-tag[data-s="idle"]{background:transparent;border-style:dashed;color:var(--text-dim);}
+.apc-ct{margin-left:auto;flex-shrink:0;font-family:var(--font-mono);font-size:11px;color:var(--ia-strong);white-space:nowrap;}
+.apc-tx{font-size:12.5px;line-height:1.5;color:var(--text-secondary);margin-bottom:18px;text-wrap:pretty;}
+.apc-tx b{color:var(--text-primary);font-weight:700;}
+
+/* Barra: quantas ferramentas DA ETAPA rodaram. Nao e' progresso dentro da
+   chamada ao Claude — esse o pipeline nao expoe, e a barra seria encenacao. */
+.apc-prog{height:6px;border-radius:4px;background:var(--gauge-track);overflow:hidden;margin-bottom:20px;}
+.apc-prog>span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--ia),var(--ia-strong));transition:width .3s ease;}
+@media (prefers-reduced-motion:reduce){.apc-prog>span{transition:none;}}
+
+/* Um passo: etapa | no' | desfecho. O no' e o conector ficam na coluna do meio,
+   de largura fixa, para os dois lados alinharem pelo centro do trilho. */
+.apc-step{display:grid;grid-template-columns:1fr 30px 1fr;gap:14px;align-items:center;}
+.apc-step-l{text-align:right;min-width:0;}
+.apc-step-nm{font-size:12.5px;font-weight:700;color:var(--text-primary);}
+.apc-step-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--text-dim);}
+.apc-step-rail{display:flex;flex-direction:column;align-items:center;}
+/* O conector so' existe entre dois nos: no ultimo passo ele sobraria. */
+.apc-step-line{width:2px;height:26px;background:var(--ia-line);}
+.apc-step-r{min-width:0;}
+.apc-step-dt{margin-top:4px;font-size:11.5px;line-height:1.45;color:var(--ia-strong);text-wrap:pretty;}
+/* Passo que ainda nao rodou: apaga os dois lados, nao so' o badge. */
+.apc-step[data-s="queued"] .apc-step-nm,.apc-step[data-s="skipped"] .apc-step-nm{color:var(--text-dim);font-weight:600;}
+.apc-step[data-s="queued"] .apc-step-sub,.apc-step[data-s="skipped"] .apc-step-sub{color:var(--text-faint);}
+.apc-step[data-s="queued"] .apc-step-dt,.apc-step[data-s="skipped"] .apc-step-dt{color:var(--text-dim);}
+.apc-step[data-s="queued"] .apc-step-line,.apc-step[data-s="skipped"] .apc-step-line{background:var(--gauge-track);}
+
+/* No' do passo, um por estado. */
+.apc-node{flex-shrink:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;}
+.apc-node[data-s="done"]{background:var(--ia);color:var(--ia-on);}
+.apc-node[data-s="failed"]{background:#ef4444;color:#fff;}
+.apc-node[data-s="degraded"]{background:rgba(234,179,8,.18);border:1px solid #eab308;color:#eab308;font-size:11px;font-weight:800;}
+/* Na fila e pulada NAO podem ter o mesmo desenho: pontilhado e' "ainda vai",
+   tracejado com o traco e' "decidiu-se nao rodar". */
+.apc-node[data-s="queued"]{background:var(--bg-surface-raised);border:1.5px dotted var(--text-faint);}
+.apc-node[data-s="skipped"],.apc-node[data-s="blocked"]{background:var(--bg-surface-raised);border:1.5px dashed var(--text-faint);color:var(--text-faint);font-size:12px;}
+
+/* Badge do desfecho do passo. */
+.apc-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:8px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
+.apc-badge[data-s="done"]{background:var(--ia-tint-hi);border:1px solid var(--ia-line);color:var(--ia-strong);}
+.apc-badge[data-s="running"]{background:var(--ia);color:var(--ia-on);padding:3px 7px;}
+.apc-badge[data-s="queued"]{background:var(--bg-surface-raised);border:1px dashed var(--ia-line);color:var(--text-dim);}
+.apc-badge[data-s="skipped"],.apc-badge[data-s="blocked"]{background:var(--bg-surface-raised);border:1px dashed var(--border-strong);color:var(--text-dim);}
+.apc-badge[data-s="failed"]{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#ef4444;}
+.apc-badge[data-s="degraded"]{background:rgba(234,179,8,.14);border:1px solid rgba(234,179,8,.4);color:#eab308;}
+
+/* ── Cadeias de ataque ────────────────────────────────────────────────────
+   O que o Tier 3 produziu: uma cadeia por rota, os passos em ordem, no mesmo
+   trilho centralizado (etapa a' esquerda, no' no meio, desfecho a' direita).
+   A cor do no' e do badge sai do DESFECHO, e os quatro desfechos precisam
+   continuar distintos: `emulado` = o movimento passou, `bloqueado` = um controle
+   conteve (defesa que funcionou), `nao_emulado` = ninguem tentou, `projecao` =
+   inferencia do modelo. Achatar isso em "validado / nao validado" apagava a
+   diferenca entre "estamos expostos" e "nosso controle segurou". */
+.apc-legend{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--text-dim);}
+.apc-legend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.apc-legend i{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+
+.apc-chain+.apc-chain{margin-top:18px;padding-top:18px;border-top:1px solid var(--border-default);}
+.apc-chain-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.apc-chain-n{flex-shrink:0;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--sev-on,#fff);background:var(--sev-c);}
+.apc-chain-nm{font-size:14.5px;font-weight:700;color:var(--text-primary);text-wrap:pretty;}
+.apc-chain-ct{margin-left:auto;flex-shrink:0;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);white-space:nowrap;}
+/* Severidade da cadeia: mesmo mecanismo `--sev-c` da `.sevtag`. */
+.apc-chain{--sev-c:var(--text-dim);}
+.apc-chain[data-sev="critico"],.ia-path[data-sev="critico"]{--sev-c:var(--sev-critical);}
+.apc-chain[data-sev="alto"],.ia-path[data-sev="alto"]{--sev-c:var(--sev-high);}
+.apc-chain[data-sev="medio"],.ia-path[data-sev="medio"]{--sev-c:var(--sev-medium);}
+.apc-chain[data-sev="baixo"],.ia-path[data-sev="baixo"]{--sev-c:var(--sev-low);}
+
+/* Um passo da cadeia, na mesma grade dos passos de ferramenta. */
+.apc-cstep{display:grid;grid-template-columns:1fr 30px 1fr;gap:14px;align-items:center;}
+/* `phasePt` devolve a fase em minusculas ("acesso inicial"); `::first-letter`
+   sobe so a primeira. `capitalize` subiria toda palavra ("Acesso Inicial"),
+   que nao e como se escreve em portugues. */
+.apc-cstep-nm{font-size:12.5px;font-weight:700;color:var(--text-primary);}
+.apc-cstep-nm::first-letter{text-transform:uppercase;}
+.apc-cstep-mt{font-family:var(--font-mono);font-size:10.5px;color:var(--text-dim);}
+.apc-cstep-ev{margin-top:4px;font-size:11.5px;line-height:1.45;color:var(--text-secondary);text-wrap:pretty;}
+/* Passo que ninguem executou: os dois lados apagam, nao so' o badge. */
+.apc-cstep[data-o="nao_emulado"] .apc-cstep-nm,.apc-cstep[data-o="projecao"] .apc-cstep-nm{color:var(--text-dim);font-weight:600;}
+.apc-cstep[data-o="nao_emulado"] .apc-cstep-mt,.apc-cstep[data-o="projecao"] .apc-cstep-mt{color:var(--text-faint);}
+.apc-cstep[data-o="nao_emulado"] .apc-cstep-ev,.apc-cstep[data-o="projecao"] .apc-cstep-ev{color:var(--text-dim);}
+
+/* No' do passo, um desenho por desfecho. */
+.apc-cnode{flex-shrink:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;}
+.apc-cnode[data-o="emulado"]{background:#22c55e;color:#fff;}
+.apc-cnode[data-o="bloqueado"]{background:var(--sev-critical);color:#fff;}
+.apc-cnode[data-o="nao_emulado"],.apc-cnode[data-o="projecao"]{background:var(--bg-surface-raised);border:1.5px dotted var(--border-strong);color:var(--text-faint);}
+.apc-cline{width:2px;height:26px;background:var(--ia-line);}
+.apc-cstep[data-o="nao_emulado"] .apc-cline,.apc-cstep[data-o="projecao"] .apc-cline{background:var(--gauge-track);}
+
+/* Badge do desfecho. */
+.apc-cbadge{display:inline-flex;align-items:center;gap:5px;padding:2px 7px;border-radius:4px;font-family:var(--font-mono);font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
+.apc-cbadge[data-o="emulado"]{background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.4);color:#22c55e;}
+.apc-cbadge[data-o="bloqueado"]{background:color-mix(in srgb,var(--sev-critical) 14%,transparent);border:1px solid color-mix(in srgb,var(--sev-critical) 40%,transparent);color:var(--sev-critical);}
+.apc-cbadge[data-o="nao_emulado"],.apc-cbadge[data-o="projecao"]{background:var(--bg-surface-raised);border:1px dashed var(--border-strong);color:var(--text-dim);}
+
+/* Nota de rodape do card. */
+.apc-note{display:flex;align-items:flex-start;gap:9px;margin-top:18px;padding:11px 13px;background:var(--bg-surface-raised);border:1px solid var(--ia-line);border-radius:9px;font-size:12px;line-height:1.5;color:var(--ia-strong);}
+.apc-note b{color:var(--text-primary);font-weight:700;}
+.apc-note-dot{flex-shrink:0;width:7px;height:7px;border-radius:50%;background:var(--ia);margin-top:5px;animation:apc-pulse 1.6s ease-in-out infinite;}
+@keyframes apc-pulse{0%,100%{opacity:.55}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.apc-note-dot{animation:none;}}
+
+/* ── Estado inicial: scan disparado, nada concluido ───────────────────────
+   No lugar de retangulos cinza, o pipeline que VAI rodar, com o SLA e a
+   descricao de cada etapa. A espera fica compreensivel, que e' a unica coisa
+   que a tela tem para oferecer nesse momento. */
+.qc{padding:24px;}
+.qc-hd{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px;}
+.qc-hd-b{flex:1;min-width:0;}
+.qc-hd-t1{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.qc-hd-nm{font-size:16px;font-weight:700;color:var(--text-primary);}
+.qc-hd-sha{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);}
+.qc-hd-tx{margin-top:3px;font-size:12.5px;line-height:1.5;color:var(--text-secondary);}
+/* Rail de 26px + o card da etapa. */
+.qc-rail{display:grid;grid-template-columns:26px 1fr;gap:14px;}
+.qc-rail-c{display:flex;flex-direction:column;align-items:center;}
+.qc-rail-line{flex:1;width:2px;margin:4px 0;background:var(--border-default);}
+.qc-rail-line[data-on="true"]{background:var(--run-line);}
+.qc-node{flex-shrink:0;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;}
+.qc-node[data-s="queued"]{background:var(--bg-surface-raised);border:1.5px dotted var(--border-strong);}
+.qc-node.is-ia{width:24px;background:var(--ia-tint-hi);border:1.5px dotted var(--ia-line);}
+.qc-tier{border-radius:9px;padding:13px 15px;margin-bottom:12px;min-width:0;}
+.qc-tier[data-s="running"]{background:var(--run-tint);border:1px solid var(--run-line);}
+.qc-tier[data-s="queued"]{border:1px dashed var(--border-default);}
+.qc-tier.is-ia{border:1px dashed var(--ia-line);background:var(--ia-tint);border-radius:10px;padding:14px 15px;margin-bottom:0;}
+.qc-tier-t1{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:4px;}
+.qc-tier-ico{flex-shrink:0;width:20px;height:20px;border-radius:6px;background:var(--ia-tint-hi);display:grid;place-items:center;}
+.qc-tier-nm{font-size:13px;font-weight:700;color:var(--text-dim);}
+.qc-tier[data-s="running"] .qc-tier-nm{color:var(--text-primary);}
+.qc-tier.is-ia .qc-tier-nm{color:var(--ia-strong);}
+.qc-tier-meta{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);}
+.qc-tier[data-s="running"] .qc-tier-meta{color:var(--run-strong);}
+.qc-tier.is-ia .qc-tier-meta{color:var(--text-dim);}
+.qc-tier-tx{font-size:12px;line-height:1.5;color:var(--text-dim);text-wrap:pretty;}
+.qc-tier[data-s="running"] .qc-tier-tx{color:var(--run);}
+.qc-tier.is-ia .qc-tier-tx{color:var(--ia-strong);margin-left:29px;}
+
+/* ── Findings agrupados por etapa ─────────────────────────────────────────
+   Uma linha e' um PROBLEMA, nao uma ocorrencia: com DAST um alerta do ZAP
+   aparece uma vez por rota, e um scan viraria milhares de linhas que sao
+   dezenas de problemas. */
+.fb{padding:20px 22px;}
+.fb-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+.fb-hd-nm{font-size:15px;font-weight:700;color:var(--text-primary);}
+.fb-hd-ct{font-size:13px;color:var(--text-dim);}
+/* Tag de severidade — UMA forma para toda a tela.
+   Cabecalho (com contagem) e linha (so' o nome) usam a mesma classe: fundo
+   translucido, borda na mesma cor e texto colorido, tudo derivado de
+   `sevColor()` com os alfas da barra de filtros de Findings (.12 e .4).
+   O badge solido (`.sev-fx`) foi tentado nas linhas e no tema claro virava
+   pilula mostarda/oliva: o token e' saturado e o texto por cima e' escuro,
+   entao a cor da severidade morria no proprio fundo em vez de marcar a linha.
+   `.sevtag-w` da' largura minima nas linhas, para os titulos alinharem. */
+.sevtag{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:4px 9px;border-radius:5px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;
+  color:var(--sev-c);
+  background:color-mix(in srgb,var(--sev-c) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--sev-c) 40%,transparent);}
+/* A cor vem dos tokens `--sev-*`, que ACOMPANHAM O TEMA (no claro eles sao mais
+   escuros). As constantes de `SEV_COLORS` sao fixas de proposito para graficos e
+   gauges; usa-las aqui deixava o texto claro sobre fundo claro no tema light. */
+.sevtag[data-sev="critical"]{--sev-c:var(--sev-critical);}
+.sevtag[data-sev="high"]{--sev-c:var(--sev-high);}
+.sevtag[data-sev="medium"]{--sev-c:var(--sev-medium);}
+.sevtag[data-sev="low"]{--sev-c:var(--sev-low);}
+.sevtag[data-sev="info"]{--sev-c:var(--sev-info);}
+.sevtag-w{min-width:96px;}
+.fb-sevs{margin-left:auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.fb-tier{min-width:0;}
+.fb-tier+.fb-tier{margin-top:14px;}
+/* Banda da etapa: estado, nome, ferramentas do catalogo e a contagem. */
+/* A banda e' um botao: ela abre as linhas de ferramenta da etapa — as MESMAS
+   do trilho da tela de Scans. Sem isso o "relatorio completo" mostrava menos
+   sobre os Tiers 1 e 2 do que a tela de onde o usuario veio. */
+.fb-band{display:flex;align-items:center;gap:9px;width:100%;padding:10px 13px;border:1px solid var(--border-default);border-bottom:none;border-radius:9px 9px 0 0;flex-wrap:wrap;text-align:left;font:inherit;cursor:pointer;}
+.fb-band-chev{margin-left:2px;flex-shrink:0;transition:transform .15s ease;}
+.fb-band[aria-expanded="true"] .fb-band-chev{transform:rotate(90deg);}
+@media (prefers-reduced-motion:reduce){.fb-band-chev{transition:none;}}
+.fb-band-ico{flex-shrink:0;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;}
+.fb-band-nm{font-size:12.5px;font-weight:700;white-space:nowrap;}
+.fb-band-tools{font-family:var(--font-mono);font-size:11px;min-width:0;}
+.fb-band-ct{margin-left:auto;font-family:var(--font-mono);font-size:10px;font-weight:700;white-space:nowrap;}
+.fb-band[data-t="1"]{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.32);}
+.fb-band[data-t="1"] .fb-band-nm,.fb-band[data-t="1"] .fb-band-ct{color:#22c55e;}
+.fb-band[data-t="1"] .fb-band-tools{color:rgba(34,197,94,.75);}
+.fb-band[data-t="2"]{background:var(--run-tint);border-color:var(--run-line);}
+.fb-band[data-t="2"] .fb-band-nm,.fb-band[data-t="2"] .fb-band-ct{color:var(--run);}
+.fb-band[data-t="2"] .fb-band-tools{color:var(--run-strong);}
+.fb-band[data-t="3"]{background:var(--ia-tint-hi);border-color:var(--ia-line);}
+.fb-band[data-t="3"] .fb-band-nm,.fb-band[data-t="3"] .fb-band-ct{color:var(--ia-strong);}
+.fb-band[data-t="3"] .fb-band-tools{color:var(--ia-strong);opacity:.8;}
+/* O corpo da etapa: as linhas de ferramenta (quando aberta) e os problemas. Uma
+   caixa so', para a borda fechar a banda uma vez. */
+.fb-body{border:1px solid var(--border-default);border-top:none;border-radius:0 0 9px 9px;overflow:hidden;}
+/* Linhas de ferramenta: reusa as classes `.trow*` do pipeline, entao o desenho
+   e' identico ao da tela de Scans. */
+.fb-tools{padding:12px 14px;display:flex;flex-direction:column;gap:7px;background:var(--bg-surface-raised);border-bottom:1px solid var(--border-default);}
+.fb-tools .tools-skip{margin-top:2px;}
+.fb-row{display:flex;align-items:center;gap:13px;width:100%;padding:12px 14px;border-bottom:1px solid var(--border-default);background:none;text-align:left;cursor:pointer;transition:background .12s;}
+.fb-row:last-child{border-bottom:none;}
+.fb-row:hover{background:var(--bg-surface-raised);}
+/* Severidade alta tinge a linha inteira: e' o que o olho acha primeiro. */
+.fb-row[data-sev="critical"],.fb-row[data-sev="high"]{background:rgba(239,68,68,.04);}
+.fb-row[data-sev="critical"]:hover,.fb-row[data-sev="high"]:hover{background:rgba(239,68,68,.09);}
+.fb-row-tl{flex:1;min-width:0;font-size:13px;color:var(--text-primary);}
+.fb-row-oc{font-family:var(--font-mono);font-size:11.5px;color:var(--text-secondary);}
+.fb-row-mt{flex-shrink:0;font-family:var(--font-mono);font-size:11px;color:var(--run);white-space:nowrap;max-width:210px;overflow:hidden;text-overflow:ellipsis;}
+.fb-row-src{flex-shrink:0;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);white-space:nowrap;}
+.fb-row-more{display:flex;padding:12px 14px;font-size:12.5px;color:var(--text-dim);}
+/* Etapa que ainda esta' rodando: corpo tracejado com a frase de espera, nunca
+   linhas vazias — "vazio" e "ainda nao" nao podem ter o mesmo desenho. */
+/* A borda agora e' do `.fb-body`; aqui fica so' o fundo e a cor do texto. */
+.fb-wait{display:flex;align-items:center;gap:11px;padding:16px 14px;font-size:12.5px;line-height:1.5;color:var(--text-dim);}
+.fb-wait[data-t="2"]{background:var(--run-tint);color:var(--run);}
+.fb-wait[data-t="3"]{background:var(--ia-tint);color:var(--ia-strong);}
+
+/* ═══════════════ Impacto ao negocio ═══════════════════════════════════════
+   A traducao do risco tecnico para quem decide: o que os findings significam
+   para a operacao, os dados e os compromissos da empresa. Nada aqui e' derivado
+   na tela — o texto vem do `business_impact` do Tier 3, que o prompt manda
+   escrever SEM jargao. Onde o bloco nao existe, o card nao aparece.
+
+   A cor e' a da severidade (os tokens `--sev-*`), nao a da marca: e' impacto,
+   e a leitura e' "quao grave", nao "aperIA". */
+.imp{padding:22px 24px;}
+.imp-hd{display:flex;align-items:center;gap:11px;flex-wrap:wrap;}
+.imp-ico{flex-shrink:0;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--sev-critical) 16%,transparent);border:1px solid color-mix(in srgb,var(--sev-critical) 40%,transparent);}
+.imp-nm{font-size:17px;font-weight:700;color:var(--text-primary);letter-spacing:-.01em;}
+.imp-kicker{margin-left:auto;flex-shrink:0;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);white-space:nowrap;}
+.imp-sub{margin-top:6px;font-size:12.5px;line-height:1.5;color:var(--text-secondary);text-wrap:pretty;}
+
+/* A frase. Barra a' esquerda porque e' a unica linha da tela que um diretor le'
+   se ler uma so'. */
+.imp-one{margin-top:16px;padding:14px 18px;border-radius:8px;border-left:3px solid var(--sev-critical);background:color-mix(in srgb,var(--sev-critical) 7%,transparent);}
+.imp-one-lb{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sev-critical);}
+.imp-one-tx{margin-top:7px;font-size:14.5px;font-weight:700;line-height:1.5;color:var(--text-primary);text-wrap:pretty;}
+
+/* Um card por efeito de negocio. */
+.imp-areas{margin-top:16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;}
+@media (max-width:900px){.imp-areas{grid-template-columns:1fr;}}
+.imp-area{border:1px solid var(--border-default);border-radius:9px;padding:13px 15px;min-width:0;}
+.imp-area-hd{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.imp-area-tag{font-family:var(--font-mono);font-size:8.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 7px;border-radius:4px;white-space:nowrap;color:var(--sev-c);background:color-mix(in srgb,var(--sev-c) 14%,transparent);border:1px solid color-mix(in srgb,var(--sev-c) 38%,transparent);}
+.imp-area-sev{margin-left:auto;flex-shrink:0;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--sev-c);}
+.imp-area-nm{font-size:13.5px;font-weight:700;line-height:1.35;color:var(--text-primary);text-wrap:pretty;}
+.imp-area-tx{margin-top:6px;font-size:12px;line-height:1.55;color:var(--text-dim);text-wrap:pretty;}
+/* A cor do card sai da severidade do efeito; `--sev-c` e' o mesmo mecanismo da
+   `.sevtag`, entao os dois seguem o tema junto. */
+.imp-area[data-sev="critico"]{--sev-c:var(--sev-critical);}
+.imp-area[data-sev="alto"]{--sev-c:var(--sev-high);}
+.imp-area[data-sev="medio"]{--sev-c:var(--sev-medium);}
+.imp-area[data-sev="baixo"]{--sev-c:var(--sev-low);}
+/* Severidade que o modelo nao classificou: cinza, e nao a cor mais grave. */
+.imp-area{--sev-c:var(--text-dim);}
+
+/* Faixa de consequencias: corrigir agora, postergar, exposicao regulatoria. */
+.imp-notes{margin-top:16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--border-default);border-radius:9px;overflow:hidden;}
+@media (max-width:900px){.imp-notes{grid-template-columns:1fr;}}
+.imp-note{padding:13px 16px;border-right:1px solid var(--border-default);min-width:0;}
+.imp-note:last-child{border-right:none;}
+@media (max-width:900px){
+  .imp-note{border-right:none;border-bottom:1px solid var(--border-default);}
+  .imp-note:last-child{border-bottom:none;}
+}
+.imp-note-lb{font-size:11.5px;color:var(--text-dim);}
+.imp-note-vl{margin-top:5px;font-size:14px;font-weight:700;color:var(--text-primary);text-wrap:pretty;}
+.imp-note-tx{margin-top:4px;font-size:11.5px;line-height:1.45;color:var(--text-faint);text-wrap:pretty;}
+/* Corrigir agora e' o caminho barato (verde); postergar custa (ambar);
+   exposicao regulatoria e' obrigacao legal (vermelho). */
+.imp-note[data-k="now"] .imp-note-vl{color:#22c55e;}
+.imp-note[data-k="later"] .imp-note-vl{color:var(--sev-medium);}
+.imp-note[data-k="reg"] .imp-note-vl{color:var(--sev-critical);}
+
+/* Recomendacao do pipeline, no rodape do card. NAO e' um botao: nao existe rota
+   para bloquear merge nem para atribuir responsavel, e um botao que nao faz o
+   que diz e' pior que a ausencia dele. Quando existir, este e' o lugar. */
+.imp-ft{margin-top:18px;padding-top:14px;border-top:1px solid var(--border-default);display:flex;align-items:center;gap:11px;flex-wrap:wrap;}
+.imp-ft-lb{font-size:12.5px;color:var(--text-dim);}
+
+/* Historico de execucoes: fechado por padrao, no fim da tela. E' referencia, nao
+   a leitura principal — aberto por padrao empurrava o resto da pagina para baixo
+   com uma tabela que quase nunca e' o motivo da visita. */
+.hist-hd{display:flex;align-items:center;gap:12px;width:100%;padding:14px 20px;background:none;border:none;text-align:left;font:inherit;cursor:pointer;transition:background .12s;}
+.hist-hd:hover{background:var(--bg-surface-raised);}
+.hist-hd[aria-expanded="true"]{border-bottom:1px solid var(--border-default);}
+.hist-hd-b{flex:1;min-width:0;}
+.hist-hd-nm{display:block;font-size:15px;font-weight:700;color:var(--text-primary);}
+.hist-hd-ct{font-size:12px;font-weight:400;color:var(--text-dim);}
+.hist-hd-tx{display:block;margin-top:2px;font-size:12px;color:var(--text-dim);}
+.hist-hd-chev{flex-shrink:0;color:var(--text-dim);transition:transform .15s ease;}
+.hist-hd[aria-expanded="true"] .hist-hd-chev{transform:rotate(90deg);}
+@media (prefers-reduced-motion:reduce){.hist-hd,.hist-hd-chev{transition:none;}}

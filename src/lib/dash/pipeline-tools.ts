@@ -360,6 +360,218 @@ export type IaPath = {
   caldera_validated: boolean;
 };
 
+/**
+ * O desfecho de um passo da cadeia. As quatro opções dizem coisas DIFERENTES, e
+ * achatá-las é o erro que esta parte da tela tem que evitar:
+ *
+ * - `emulado`: o Caldera executou o movimento e ele funcionou.
+ * - `bloqueado`: o Caldera executou e um controle conteve — é uma **defesa que
+ *   funcionou**, e vale tanto quanto um passo que passou.
+ * - `nao_emulado`: o Caldera não teve como tentar (sem alvo de DAST, sem agente).
+ * - `projecao`: ninguém executou; a cadeia é inferência do modelo.
+ *
+ * O `caldera_validated` booleano de `paths` confundia os três últimos num único
+ * `false` — "não tentamos" lia igual a "não é possível".
+ */
+export type ChainOutcome = 'emulado' | 'bloqueado' | 'nao_emulado' | 'projecao';
+
+export const CHAIN_OUTCOME_LABEL: Record<ChainOutcome, string> = {
+  emulado: 'Caldera ✓',
+  bloqueado: 'bloqueado',
+  nao_emulado: 'não emulado',
+  projecao: 'projeção da IA',
+};
+
+/** Um passo de uma cadeia. Tudo opcional: o blob vem de um LLM. */
+export type ChainStep = {
+  phase: string | null;
+  /** Tática MITRE (`TAXXXX`) — o eixo da fase, não a técnica. */
+  tactic: string | null;
+  technique: string | null;
+  /** Onde o passo acontece: `/upload sem auth`, `container como root`. */
+  asset: string | null;
+  outcome: string | null;
+  /** O que se observou, ou por que não se observou. */
+  evidence: string | null;
+};
+
+export type IaChain = {
+  title: string | null;
+  severity: string | null;
+  steps: ChainStep[];
+};
+
+/**
+ * Quantos CAMINHOS a I.A encadeou — e quantos PASSOS eles têm.
+ *
+ * Os dois existem porque a tela os confundia: `ia.paths` é a lista de **passos**
+ * de um caminho (o `attack_path` do blob é UM caminho, e cada item tem
+ * `"step": <int>`), e quatro lugares contavam `paths.length` chamando de
+ * "caminhos". Um scan com 7 passos anunciava "7 caminhos de attack path" na tela
+ * de Scans enquanto o relatório, que agrupa por `attack_chains`, mostrava 2 —
+ * dois números para a mesma execução, em unidades diferentes.
+ *
+ * Sem `attack_chains` (relatório antigo), `attack_path` é **um** caminho: a
+ * contagem de caminhos é 1 quando há passo, 0 quando não há.
+ *
+ * ─── Por que os dois contam sobre `iaChains()` ──────────────────────────────
+ *
+ * `attack_path` e `attack_chains` são duas representações do MESMO blob e **não
+ * batem em contagem**: numa execução real a lista plana tinha 11 passos e os
+ * `steps` das 2 cadeias somavam 12. Não dá para reconciliar — o modelo produziu
+ * as duas.
+ *
+ * `iaChains()` é a normalização única, e é o que as telas desenham. Contar por
+ * fora dela é como o bug nasceu: o card de Scans dizia "2 caminhos" no cabeçalho
+ * e desenhava 11 itens numerados logo abaixo. Nenhuma tela pode desenhar uma
+ * representação e contar a outra.
+ */
+export function iaPathCount(ia: ScanIaSummary | null | undefined): number {
+  return iaChains(ia).length;
+}
+
+export function iaStepCount(ia: ScanIaSummary | null | undefined): number {
+  return iaChains(ia).reduce((soma, chain) => soma + (chain.steps ?? []).length, 0);
+}
+
+/** Desfechos que a UI sabe desenhar; qualquer outro cai em "projeção". */
+export const OUTCOMES: readonly ChainOutcome[] = [
+  'emulado',
+  'bloqueado',
+  'nao_emulado',
+  'projecao',
+];
+
+/**
+ * Normaliza o `outcome` de um passo.
+ *
+ * Mora aqui, e não no componente, porque as DUAS telas classificam desfecho — e
+ * "desconhecido vira projeção" é uma afirmação sobre o dado, não sobre o
+ * desenho: `projecao` é o único desfecho que não alega nada sobre execução.
+ */
+export function outcomeOf(value: string | null): ChainOutcome {
+  return (OUTCOMES as readonly string[]).includes(value ?? '')
+    ? (value as ChainOutcome)
+    : 'projecao';
+}
+
+/** `emulado` é o único desfecho em que o movimento de fato passou. */
+export function chainEmulated(chain: IaChain): { ok: number; total: number } {
+  const steps = chain.steps ?? [];
+  return {
+    ok: steps.filter((s) => s.outcome === 'emulado').length,
+    total: steps.length,
+  };
+}
+
+/**
+ * O nome de uma cadeia.
+ *
+ * O fallback precisa ser o MESMO nas duas telas: a cadeia sem título vira
+ * "Caminho 2" no card de Scans e tem de continuar "Caminho 2" no relatório,
+ * senão o usuário não reconhece a linha em que clicou.
+ */
+export function chainTitle(chain: IaChain, index: number): string {
+  return chain.title ?? `Caminho ${index + 1}`;
+}
+
+/**
+ * "1 de 3 emulados · restante teórico".
+ *
+ * A concordância é com o TOTAL, não com o contador. E a frase é decisão de
+ * produto, não formatação: o que não foi emulado não deixa de ser caminho, mas
+ * também não foi provado — por isso ela vive aqui e não dentro de uma tela.
+ */
+export function chainEmulatedPhrase(chain: IaChain): string {
+  const { ok, total } = chainEmulated(chain);
+  const teorico = total - ok;
+  return (
+    `${ok} de ${total} ${total === 1 ? 'emulado' : 'emulados'}` +
+    (teorico > 0 ? ' · restante teórico' : ' pelo Caldera')
+  );
+}
+
+/**
+ * Os números do attack path, TODOS derivados da mesma estrutura.
+ *
+ * Existe porque o card de Scans tirava `caminhos`/`passos` das cadeias e
+ * `fases`/`validados` da lista plana, na mesma frase. Com `chains` presente e
+ * `paths` vazio isso produzia "2 caminhos em 12 passos, atravessando 0 fases", e
+ * o `validados === passos` comparava valores de bases diferentes.
+ *
+ * Uma passada só: a tela de Scans é uma lista de cards e chama isto por card.
+ */
+export function iaChainStats(ia: ScanIaSummary | null | undefined): {
+  caminhos: number;
+  passos: number;
+  fases: number;
+  emulados: number;
+  outcomes: Record<ChainOutcome, number>;
+} {
+  const chains = iaChains(ia);
+  const fases = new Set<string>();
+  const outcomes: Record<ChainOutcome, number> = {
+    emulado: 0,
+    bloqueado: 0,
+    nao_emulado: 0,
+    projecao: 0,
+  };
+  let passos = 0;
+
+  for (const chain of chains) {
+    for (const step of chain.steps ?? []) {
+      passos += 1;
+      // `phase` é `string | null`: uma fase ausente não conta como fase, e `''`
+      // entraria no Set como se fosse uma.
+      if (step.phase) fases.add(step.phase);
+      outcomes[outcomeOf(step.outcome)] += 1;
+    }
+  }
+
+  return {
+    caminhos: chains.length,
+    passos,
+    fases: fases.size,
+    emulados: outcomes.emulado,
+    outcomes,
+  };
+}
+
+/**
+ * As cadeias a desenhar, com fallback para a lista plana.
+ *
+ * Relatório anterior ao `attack_chains` só tem `paths`: viram **uma** cadeia sem
+ * título, e um passo não validado pelo Caldera é `projecao` — que é a verdade
+ * disponível ali, já que o booleano não distingue "não tentamos" de "contido".
+ */
+export function iaChains(ia: ScanIaSummary | null | undefined): IaChain[] {
+  if (!ia) return [];
+  /*
+   * `?? []` mesmo com o tipo dizendo que existe: `ia` chega de um cast em
+   * `fetchScanTools`, não de validação campo a campo. Uma API mais antiga que o
+   * front (janela de deploy) não manda `chains`, e `undefined.length` derrubaria
+   * a seção inteira.
+   */
+  const chains = ia.chains ?? [];
+  if (chains.length > 0) return chains;
+  const paths = ia.paths ?? [];
+  if (paths.length === 0) return [];
+  return [
+    {
+      title: null,
+      severity: null,
+      steps: paths.map((path) => ({
+        phase: path.phase,
+        tactic: null,
+        technique: path.technique,
+        asset: null,
+        outcome: path.caldera_validated ? 'emulado' : 'projecao',
+        evidence: path.description,
+      })),
+    },
+  ];
+}
+
 export type ScanIaSummary = {
   degraded: boolean;
   reason: string | null;
@@ -367,6 +579,8 @@ export type ScanIaSummary = {
   risk_level: string | null;
   risk_score: number | null;
   paths: IaPath[];
+  /** As cadeias agrupadas. Vazio em relatório anterior a `attack_chains`. */
+  chains: IaChain[];
   cti: {
     status: string | null;
     known_exploited: boolean;
@@ -382,7 +596,52 @@ export type ScanIaSummary = {
     partial: boolean;
     ttps: string[];
   } | null;
+  /**
+   * A leitura executiva do Tier 3 — o que decidir sobre este commit.
+   *
+   * `recommendation` é um enum curto de propósito: a tela colore e prioriza por
+   * ele, em vez de procurar a decisão dentro da `headline`.
+   *
+   * Os três blocos abaixo chegaram depois do resto do resumo, então **`null` é o
+   * caso comum**: relatório gerado antes desta versão do prompt, ou execução
+   * degradada em que o Claude não respondeu. `null` significa "ninguém
+   * calculou" — e é isso que a tela diz, nunca um valor de fachada.
+   */
+  verdict: { recommendation: string | null; headline: string | null } | null;
+  /** Esforço de correção, derivado dos próprios findings (não de sprint). */
+  effort: { level: string | null; label: string | null } | null;
+  /** Prazo em dias corridos a partir da análise, com o texto já formatado. */
+  deadline: { days: number | null; label: string | null } | null;
+  /**
+   * A tradução do risco técnico para quem decide.
+   *
+   * O prompt do Tier 3 é instruído a escrever isto **sem jargão** — sem CVE, sem
+   * TTP, sem nome de ferramenta —, porque o público é quem aprova o merge, não
+   * quem lê o finding. `area` e `severity` são enums curtos para a tela colorir e
+   * ordenar; o resto é texto para o humano.
+   *
+   * `null` = ninguém traduziu (relatório anterior a esta versão do prompt, ou
+   * execução degradada). A tela some com o card em vez de inventar impacto.
+   */
+  impact: {
+    headline: string | null;
+    areas: {
+      /** `dados` | `propriedade_intelectual` | `entrega` | … — ou um id novo. */
+      area: string | null;
+      /** `critico` | `alto` | `medio` | `baixo`. */
+      severity: string | null;
+      title: string | null;
+      detail: string | null;
+    }[];
+    if_fixed_now: ImpactNote | null;
+    if_deferred: ImpactNote | null;
+    /** Só quando os dados envolvidos implicam obrigação legal de fato. */
+    regulatory: ImpactNote | null;
+  } | null;
 };
+
+/** Um par título/detalhe da faixa de consequências do impacto ao negócio. */
+export type ImpactNote = { headline: string | null; detail: string | null };
 
 /** Fases MITRE em português — o blob devolve o id em inglês e snake_case. */
 const PHASE_PT: Record<string, string> = {
@@ -483,8 +742,15 @@ export function toolDetail(run: ToolRun, ia?: ScanIaSummary | null): string {
     if (ttps.length > 0) partes.push(ttps.join(' → '));
   }
   if (tool.id === 'ia-tier3' && ia && !ia.degraded) {
-    const n = ia.paths.length;
-    partes.push(n === 0 ? 'nenhum caminho encadeado' : `${n} caminho${n === 1 ? '' : 's'} de ataque`);
+    // CAMINHOS, não passos: `paths.length` é a contagem de passos, e usá-la aqui
+    // dizia "7 caminhos de ataque" para um caminho de 7 passos.
+    const n = iaPathCount(ia);
+    const passos = iaStepCount(ia);
+    partes.push(
+      n === 0
+        ? 'nenhum caminho encadeado'
+        : `${n} caminho${n === 1 ? '' : 's'} de ataque em ${passos} passo${passos === 1 ? '' : 's'}`,
+    );
   }
 
   if (dur) partes.push(dur);

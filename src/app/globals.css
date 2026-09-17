@@ -144,6 +144,17 @@
   --ia-tint-hi: rgba(139, 140, 240, 0.14);
   --ia-on: #ffffff;
 
+  /* "Em andamento": o azul de execucao. Terceira familia de cor, e as tres
+     precisam continuar distintas — vermelho e' severidade, indigo (--ia) e' o
+     Tier 3 como diferencial do produto, e este azul e' so' "ainda rodando".
+     Sem ele, um scan em progresso pegava emprestada a cor de severidade ou a da
+     camada I.A, e passava a significar coisa que nao e'. */
+  --run: #79b8ff;
+  --run-strong: #58a6ff;
+  --run-line: rgba(88, 166, 255, 0.35);
+  --run-tint: rgba(88, 166, 255, 0.05);
+  --run-tint-hi: rgba(88, 166, 255, 0.14);
+
   --gauge-track: #26272a;
   --chart-track: #1a1a1a;
   --chart-grid: #1e1e1e;
@@ -185,16 +196,28 @@
 }
 
 [data-theme='light'] {
+  /* A FAMILIA NEUTRA DO TEMA CLARO E' QUENTE, nao cinza azulado.
+     A pagina e' o beige #f2f0e9, e por muito tempo tudo em cima dela era frio:
+     card em branco PURO, borda #e6e9f0, chip #f4f6fa, trilho de gauge #e8ecf2 —
+     azulados. Duas temperaturas empilhadas, e o branco puro "recortava" o card do
+     fundo em vez de assenta-lo. Isso ja' tinha sido resolvido uma vez, so' dentro
+     do card de scan (ver --scan-surface abaixo); agora vale para o dash inteiro,
+     que e' o unico jeito de nao recriar o problema na proxima tela.
+     Os tons saem do proprio beige, dessaturados: superficie #fdfcf9, painel
+     #f6f4ed, bordas na mesma familia. */
   --bg-page: #f2f0e9;
-  --bg-surface: #ffffff;
-  --bg-surface-raised: #ffffff;
+  --bg-surface: #fdfcf9;
+  /* Antes era #ffffff, IGUAL ao card — então todo `:hover` que usa esta variavel
+     (12 regras no dash.css: linhas de tabela, chips, itens de lista) nao mudava
+     nada em cima de um card. Agora ela e' um degrau abaixo, e o hover aparece. */
+  --bg-surface-raised: #f6f4ed;
   --bg-hover: #ede9df;
 
-  --border-subtle: #edf0f6;
-  --border-default: #e6e9f0;
-  --divider: #edf0f6;
-  --border-mid: #e6e9f0;
-  --border-strong: #d7dbe6;
+  --border-subtle: #efece1;
+  --border-default: #e4e0d3;
+  --divider: #efece1;
+  --border-mid: #e4e0d3;
+  --border-strong: #d2ccba;
 
   --text-primary: #0e1525;
   --text-hi: #2a3346;
@@ -203,9 +226,12 @@
   --text-dim: #6b7488;
   --text-faint: #98a1b3;
 
-  /* O branco puro sobre o beige da pagina (#f2f0e9) destoava: a pagina e' quente
-     e o card era neutro, com os paineis internos em cinza AZULADO (--chip-bg).
-     Tres temperaturas empilhadas. Estas duas ficam na mesma familia do fundo. */
+  /* Estes dois foram os PRIMEIROS a sair do branco puro, quando o problema
+     aparecia so' no card de scan (que empilha card > painel de tier > card da
+     I.A). Agora coincidem com --bg-surface/--bg-surface-raised no tema claro, o
+     que de quebra elimina o halo entre o no' do trilho e um `.stat-card` por
+     baixo. No escuro eles seguem distintos, que e' onde a pilha precisa do
+     degrade proprio. */
   --scan-surface: #fdfcf9;
   --scan-panel: #f6f4ed;
 
@@ -216,14 +242,20 @@
   --ia-tint-hi: rgba(91, 91, 214, 0.1);
   --ia-on: #ffffff;
 
-  --gauge-track: #e8ecf2;
-  --chart-track: #edf0f6;
-  --chart-grid: #edf0f6;
+  --run: #1f6feb;
+  --run-strong: #1a5fd0;
+  --run-line: rgba(31, 111, 235, 0.28);
+  --run-tint: rgba(31, 111, 235, 0.04);
+  --run-tint-hi: rgba(31, 111, 235, 0.1);
 
-  --card-inner: #ffffff;
-  --tb-card-bg: #ffffff;
-  --chip-bg: #f4f6fa;
-  --chip-hover: #ebeef4;
+  --gauge-track: #e8e3d5;
+  --chart-track: #efece1;
+  --chart-grid: #efece1;
+
+  --card-inner: #fdfcf9;
+  --tb-card-bg: #fdfcf9;
+  --chip-bg: #f6f4ed;
+  --chip-hover: #efece1;
   --card-dots: transparent;
   --th-bg: #f3dfd8;
 

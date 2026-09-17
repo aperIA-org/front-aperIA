@@ -105,6 +105,31 @@ export type ScanJob = {
   t1_dur: string | null;
   t2_dur: string | null;
   t3_dur: string | null;
+  /**
+   * Início de CADA tier (`tierN_started_at` da API), na ordem dos tiers.
+   *
+   * Opcional porque o dataset do protótipo não tem os campos — lá só existe a
+   * duração já formatada. É o que permite dizer "Tier 3 rodando há 12min" sem
+   * projetar um fim: não há ETA em lugar nenhum do pipeline.
+   */
+  tier_started_at?: (string | null)[];
+  /**
+   * `findings_summary` de `GET /scans/{id}`: contagem por severidade, por tier e
+   * total, agregada pela própria API.
+   *
+   * Opcional pelo mesmo motivo, e é o que dispensa buscar os findings só para
+   * exibir um número — a contagem vem na mesma resposta do scan.
+   */
+  findings_summary?: FindingsSummary;
+};
+
+/** Agregado de findings de uma execução, como a API o devolve. */
+export type FindingsSummary = {
+  /** Chave = severidade; ausente quando a severidade não ocorreu. */
+  by_severity: Record<string, number>;
+  /** Chave = número do tier em texto ("1", "2", "3"). */
+  by_tier: Record<string, number>;
+  total: number;
 };
 
 export type RemediationStatus = 'suggested' | 'approved' | 'rejected' | 'merged';

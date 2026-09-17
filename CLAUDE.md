@@ -429,11 +429,25 @@ deslocava o losango e não o círculo, então o desalinhamento aparecia só nos 
 lado **par** (10px) pelo mesmo motivo. E os dois usam `--scan-surface` de fundo — é assim que eles cobrem a
 linha vertical —, então **o card por baixo tem de ser `.scan-card`**, não `.stat-card`, ou aparece um halo.
 
-**Superfícies: `--scan-surface` / `--scan-panel`, não `--bg-surface` / `--chip-bg`.** O card de scan empilha
-três superfícies (card → painel de tier → card da I.A). No tema claro a página é o beige `#f2f0e9`, o
-`--bg-surface` é branco puro e o `--chip-bg` é cinza **azulado** — três temperaturas na mesma pilha, e a
-leitura era de peça de outro produto. Os dois tokens novos ficam na família quente do fundo. Eles são
-escopados ao pipeline: o resto do dash segue em `--bg-surface`.
+**Superfícies: `--scan-surface` / `--scan-panel`.** O card de scan empilha três superfícies (card → painel de
+tier → card da I.A), e foi onde o problema de temperatura do tema claro apareceu primeiro: a página é o beige
+`#f2f0e9` e tudo em cima dela era frio. Hoje o dash **inteiro** está na família quente (ver abaixo), então
+estes dois coincidem com `--bg-surface`/`--bg-surface-raised` no claro; no escuro seguem distintos, que é onde
+a pilha precisa do próprio degradê.
+
+**A família neutra do tema claro é QUENTE, não cinza azulado.** Isso é do dash todo, não de uma tela. A página
+é `#f2f0e9`; a superfície é `#fdfcf9`, o painel/hover `#f6f4ed`, as bordas `#e4e0d3`/`#d2ccba`, chip `#f6f4ed`,
+`--gauge-track` `#e8e3d5`. Antes eram branco **puro** no card e azulados na borda (`#e6e9f0`), no chip
+(`#f4f6fa`) e no trilho do gauge (`#e8ecf2`) — duas temperaturas empilhadas, e o branco puro *recortava* o
+card do fundo em vez de assentá-lo. Corrigir só na tela da vez recriaria o problema na seguinte, que é
+exatamente o que aconteceu quando a correção viveu apenas dentro do card de scan.
+
+De quebra, `--bg-surface-raised` **era `#ffffff`, igual ao card**: as 12 regras de `:hover` do `dash.css` que
+usam essa variável não mudavam nada em cima de um card. Agora ela é um degrau abaixo e o hover aparece.
+
+Se você acrescentar um token de superfície ou de borda ao tema claro, ele nasce nessa família. Branco puro só
+onde é *tinta* sobre cor — o botão do toggle no `RepoSelector`, o texto de um badge sólido —, nunca como
+superfície.
 
 **Minimizar é diferente de "Relatórios anteriores".** O `−`/`+` colapsa o card inteiro para uma linha
 (`ScanMiniRow`: estado + o que está acontecendo + `T1·T2·T3` + Expandir); "Relatórios anteriores" abre as
@@ -462,7 +476,7 @@ expandir caem para o piso do tier. O detalhe do relatório não tem esse problem
 ### Dados reais: Findings, Relatórios e Scans
 
 `src/lib/api/findings.ts` (`fetchFindings`) and `src/lib/api/scans.ts` (`fetchScans`, `fetchScan`,
-`fetchScanReports`) are server-only and map the API DTOs onto the existing local types, so the screens
+`fetchScanHistory`, `fetchScanTools`) are server-only and map the API DTOs onto the existing local types, so the screens
 barely changed shape. Each page picks its source: `?preview=1` or `connection.demo` → the prototype
 dataset; otherwise the API. Scans and the Relatórios list share `fetchScans()` — same executions, two
 presentations; Início pulls both and its KPIs now agree with the screens they link to.
@@ -517,12 +531,13 @@ Four things that are load-bearing:
   `/dash/relatorios/<uuid>`. The API route still *accepts* a sha (it resolves to that commit's **current**
   execution), but the front always sends the id. `pr_number` is `0` for manual scans (no PR), and the UI
   hides the `#0`.
-- **Findings go by commit; the report goes by execution.** `ReportDetailPage` calls `fetchScanReports(job.id)`
-  but `fetchFindings(job.commit_sha)` — findings are not execution-scoped (same commit, same code), so two
-  executions of one commit show the same finding list and differ in report, risk score and tier statuses.
-  Passing `job.id` to `fetchFindings` would silently return nothing. The caveat and its cost are written up in
+- **Findings go by commit; everything else goes by execution.** `ReportDetailPage` calls
+  `fetchScanTools(job.id)` / `fetchScanHistory(job.id)` but `fetchFindingGroups(job.commit_sha)` — findings are
+  not execution-scoped (same commit, same code), so two executions of one commit show the same finding list and
+  differ in tool outcomes, risk score and tier statuses. Passing `job.id` to the groups call would silently
+  return nothing. The caveat and its cost are written up in
   `../python-api/docs/pendencias.md` §6.1 — DAST is where it is actually false.
-- **`ReportDetail`'s history list means two different things.** In demo it is the repo's scans (the prototype
+- **`ReportHistory`'s list means two different things.** In demo it is the repo's scans (the prototype
   dataset has no repeated commit); with real data it is `GET /scans/{id}/history` — the executions of *this*
   commit. It renders only when there is more than one, so a first execution does not show a one-row table.
 - **`created_at` on a `ScanJob` is not when the scan ran.** Re-scanning a commit reuses the row: the API's
@@ -533,10 +548,161 @@ Four things that are load-bearing:
   Sorting uses it too, on both sides: `GET /scans` orders by `COALESCE(tier1_started_at, created_at) desc`,
   otherwise a re-scanned old commit would sink in the list *and* be cut by the pagination window.
 
-**The report itself is the pipeline's markdown** (`report_markdown`, one per tier), rendered by
-`src/components/dash/Markdown.tsx` with `react-markdown` + `remark-gfm`. Raw HTML is off and there is no
-`dangerouslySetInnerHTML`: the content comes from an LLM, so rendering its markup would be an XSS vector.
-Keep it that way.
+**O markdown do pipeline não é mais exibido.** `report_markdown` (um por tier) era o corpo da tela de
+relatório, renderizado por um `Markdown.tsx` com `react-markdown`. Ele saiu quando a leitura estruturada
+passou a cobrir a mesma coisa — veredito executivo, card de caminhos de ataque e findings por etapa —, e um
+bloco de prosa gerada por LLM abaixo dos três repetia o que eles já diziam. `GET /scans/{id}/report` continua
+existindo na API; o front só não a consome, e `fetchScanReports` foi removido com o card.
+
+Se ele voltar: o conteúdo vem de um LLM, então **HTML cru fica desligado** e não se usa
+`dangerouslySetInnerHTML` — renderizar a marcação do modelo é vetor de XSS. O componente antigo está no
+histórico do git, com essa regra já aplicada. As dependências `react-markdown` e `remark-gfm` seguem no
+`package.json` sem uso.
+
+### Os tres estados da tela de relatorio
+
+`/dash/relatorios/[id]` é a tela onde a espera é a regra, não a exceção: um scan leva de 3 a 60 minutos, então
+"em andamento" é o estado mais visto dela. Ela tem três estados, e a regra que os organiza é **nunca um
+spinner na página inteira** — o que já existe aparece de verdade, só o que falta fica em progresso.
+
+| Estado | Quando | Onde vive |
+|---|---|---|
+| **Skeleton** | primeiro paint, antes de qualquer dado | `[id]/loading.tsx` + `ReportSkeletons.tsx` |
+| **Parcial** | Tier 1/2 prontos, Tier 3 rodando | `ReportHeader`, `ReportVerdict`, `AttackPathCard`, `FindingsByTier` |
+| **Início** | scan recém-disparado, nada concluído | `ScanQueuedCard` (`nadaConcluido()` em `scan-state.ts`) |
+
+**A composição são cinco blocos, e o terceiro troca com o estado**: cabeçalho (risco + identidade + faixa de
+indicadores) → **impacto ao negócio** → `ScanQueuedCard` **ou** `AttackPathCard` → findings por etapa →
+execuções deste commit.
+
+**`ReportImpact` é a tradução do risco técnico para quem decide**, e é o bloco mais alto depois do cabeçalho.
+Vem de `business_impact` no `analysis_json` do Tier 3 (`ia.impact`): uma frase sem jargão, de 2 a 4 efeitos de
+negócio por área (`dados`, `propriedade_intelectual`, `entrega`, `financeiro`, `reputacao`, `regulatorio`,
+`operacao`) com severidade própria, e a faixa "se corrigir agora / se postergar / exposição regulatória".
+**O prompt proíbe jargão ali** — sem CVE, sem TTP, sem nome de ferramenta —, então a tela reproduz o texto
+como veio: reescrevê-lo em termos técnicos desfaria a tradução. Área que o catálogo do front não conhece
+aparece com o id cru, pela mesma razão das ferramentas: sumir com o efeito é pior que um rótulo feio.
+`regulatory` é `null` quando os dados envolvidos não implicam obrigação legal.
+
+**Os três botões do desenho de origem ("Bloquear merge", "Atribuir responsável", "Exportar resumo") não
+existem.** Não há rota para nenhum deles, e um botão que não faz o que diz é pior que a ausência dele — mesma
+decisão do "Cancelar scan". A recomendação do pipeline (`bloquear`/`corrigir`/`monitorar`) aparece como
+**texto** no rodapé do card; quando as rotas existirem, é ali que os botões entram.
+
+**As execuções deste commit ficam no fim e fechadas.** São referência, não a leitura principal: quem abre o
+relatório quer o impacto, o Tier 3 e os findings *desta* execução. Aberta por padrão, a tabela empurrava o
+resto da página para baixo. O contador fica no cabeçalho, então fechada ela ainda diz quantas são.
+`ReportHistory` é cliente por causa disso — e é por isso que ele recebe `remCounts` como **mapa, não
+callback**: o `ReportDetail` que o renderiza em demonstração é server component, e função não atravessa essa
+fronteira (o Next lança e a seção inteira desaparece da tela — foi bug real).
+
+**O `AttackPathCard` mostra as CADEIAS, não o catálogo de ferramentas.** Uma cadeia por rota de ataque, com
+título "origem → destino", severidade própria e os passos em ordem no trilho centralizado: fase à esquerda
+(`phasePt` + tática `TAXXXX` + onde), nó no meio, desfecho à direita. Vem de `attack_chains` no
+`analysis_json` (`ia.chains`); relatório anterior a essa chave cai em `iaChains()`, que monta **uma** cadeia
+sem título a partir da lista plana `paths`.
+
+**`ia.paths` é uma lista de PASSOS, não de caminhos** — o `attack_path` do blob é **um** caminho, e cada item
+tem `"step": <int>`. Quatro lugares contavam `paths.length` chamando de "caminhos", então um scan de 7 passos
+anunciava "7 caminhos de attack path" na tela de Scans enquanto o relatório, que agrupa por `attack_chains`,
+mostrava 2 — dois números para a mesma execução, em unidades diferentes. Use **`iaPathCount()`** (caminhos) e
+**`iaStepCount()`** (passos), de `pipeline-tools.ts`. Sem `attack_chains`, `attack_path` é um caminho só: a
+contagem de caminhos é 1 quando há passo, 0 quando não há.
+
+**Os quatro desfechos por passo (`outcome`) dizem coisas diferentes, e achatá-los apaga o produto:**
+`emulado` = o Caldera executou e o movimento passou · `bloqueado` = executou e um controle **conteve** (é uma
+defesa que funcionou, e vale tanto quanto um passo que passou) · `nao_emulado` = o Caldera não teve como
+tentar (sem alvo de DAST, sem agente) · `projecao` = ninguém executou, é inferência do modelo. O
+`caldera_validated` booleano de `paths` confundia os três últimos num único `false` — "não tentamos" lia igual
+a "não é possível". O prompt também proíbe marcar `emulado`/`bloqueado` quando não houve emulação nenhuma.
+A legenda do card lista **só** os desfechos presentes naquela execução; e "1 de 3 emulados · restante teórico"
+é a frase honesta — o que não foi emulado não deixa de ser caminho, mas também não foi provado.
+
+**Em execução o card troca de assunto**: mostra a barra e as quatro ferramentas do tier (onde a análise está),
+porque cadeia ainda não existe. Com as cadeias prontas o checklist sai — ele já vive na banda expansível do
+card de findings, e aqui o assunto passa a ser o caminho.
+
+**O `ScanPipeline` (trilho lateral) NÃO entra nesta tela**, e isso é do desenho, não descuido. O estado por
+etapa vive nas bandas do card de findings (nome, ferramentas do catálogo, "3 findings · 1 pulada") e o Tier 3
+tem card próprio — `AttackPathCard`, com o trilho **centralizado** (`1fr 30px 1fr`: etapa à esquerda, nó no
+meio, desfecho à direita). O trilho lateral segue sendo o desenho da tela de **Scans**. Os quatro passos do
+card são as quatro ferramentas de `TIER_TOOLS[2]`, com o estado real de cada uma — o pipeline não expõe
+sub-etapas dentro da chamada ao Claude, então checklist inventado ou barra interna seriam encenação.
+
+**A página é mais estreita que o resto do dash**: `.rep-page` (1040px), não `.page-wrap` (1440px). É um
+documento, lido em coluna — com 1440px as linhas do relatório ficavam longas demais e a faixa de indicadores
+esticava sem ganhar nada. Os cards usam `.rep-card` (raio 14px), não `.stat-card` (raio 4px).
+
+**Só `GET /scans/{id}` é aguardado na página.** Ele traz repositório, commit, status por tier, risco **e**
+`findings_summary` (contagem por severidade e por tier, agregada pela API) — que é o cabeçalho inteiro. Todo o
+resto (`relatório`, `ferramentas`, `histórico`, `grupos de findings`) entra por `<Suspense>` em seções `async`
+próprias. `fetchScanTools` aparece em quatro delas e é `cache()`-ado: uma requisição, não quatro.
+
+**O skeleton e os fallbacks por seção são o mesmo módulo** (`ReportSkeletons.tsx`), de propósito: a razão de
+existir de um skeleton é não haver salto de layout quando o conteúdo entra, e duas cópias divergem na
+primeira alteração.
+
+**A lista de findings é agrupada, e escopada ao commit.** Era `fetchFindings(commit_sha)`, que paginava de 200
+em 200 até o teto de 1000 — até **cinco requisições sequenciais** para exibir 30 linhas —, e o número exibido
+era o coletado, não o total: num commit de DAST (~12 mil findings) já saía errado. Agora é
+`fetchFindingGroups(commit_sha)`: uma requisição, sem teto, uma linha por problema. As ocorrências de um grupo
+vão por `findingsByTitleRoute()`, que **precisa** de `de=all` — sem isso vale a janela padrão de 90 dias e o
+relatório de um commit antigo linkaria para uma lista vazia sem dizer por quê.
+
+**O estado da execução sai de `pipeStatus()` (`src/lib/dash/scan-state.ts`), nas DUAS telas.** Ele mora fora
+dos componentes porque a lista de Scans e o detalhe do relatório mostram a mesma execução e precisam
+concordar. `[t1,t2,t3].includes('running')` **não** serve: entre o fim de um tier e o início do seguinte
+nenhum deles está `running`, e na execução recém-enfileirada os três são `null` — mas o pipeline está
+andando. Com a versão ingênua, o relatório caía no ramo de concluído no meio do scan (nível de risco "não
+calculado", "sem veredito executivo", cabeçalho de finalizado) **e** desligava o polling justamente nessa
+janela; como só um refresh o religaria, a tela congelava. Foi bug nas duas telas, em momentos diferentes.
+
+**`ReportLive`** faz `router.refresh()` a cada 5s enquanto `isJobRunning(job)`. É o que promove Início →
+Parcial → final sem ninguém recarregar. Não existe em demonstração nem em `?preview=1`.
+
+**As duas telas do fluxo se espelham de propósito** — o usuário vê os scans e segue para o relatório para ver
+o mesmo, mais completo:
+
+- **Mesmo léxico de estado**: o cabeçalho do relatório usa os mesmos selos `.sev st-*` de Scans
+  (`em execução` / `concluído` / `falhou` / `gate1 bloqueado` / `tier 3 dispensado`), não uma pílula própria.
+- **Mesmas linhas de ferramenta**: a banda de cada tier no card de findings expande e mostra
+  `ToolRowLine` — o MESMO componente do trilho de Scans, exportado de `ScanPipeline.tsx`. Sem isso o
+  "relatório completo" mostrava menos sobre os Tiers 1 e 2 do que a tela de origem.
+- **Mesmo agregado**: o rodapé do card de findings é o `ScanPipelineFooter` de Scans ("8 de 10 ferramentas
+  rodaram · 2m 4s somados").
+- **Mesmo número de findings**: `GET /scans` passou a devolver `findings_total` por execução, de UMA query
+  agregada (`count_by_commits`) e não um `count` por card. É o mesmo número que `GET /scans/{id}` devolve em
+  `findings_summary.total`, porque as duas contam findings do **commit** — se divergissem, a contagem mudaria
+  ao clicar em "ver relatório".
+- **A volta segue a origem**: `reportDetailRoute(id, 'scans')` põe `?de=scans`, e a trilha do relatório volta
+  para Scans em vez de despejar o usuário na lista de Relatórios, que é uma terceira tela. `ReportHistory`
+  preserva o parâmetro ao trocar de execução.
+- **Nomes que não se confundem**: em Scans o botão diz "Execuções anteriores do repositório" (era
+  "Relatórios anteriores"), porque no relatório "Execuções deste commit" é outro conjunto.
+
+**Ausência tem quatro leituras diferentes, e a tela não pode confundi-las:**
+
+- `ia === null` **em execução** → "sai com o Tier 3" / "Impacto ao negócio em preparação".
+- `ia === null` **parado** → "não calculado" / "ninguém traduziu": relatório antigo ou análise degradada.
+  Nunca "sem risco". A distinção usa `isJobRunning`, não o status do Tier 3, senão a janela entre dois tiers
+  já anuncia ausência.
+- `findings_summary.total === 0` **em execução** → "nenhum ainda". O mesmo zero no fim do scan é resultado.
+- `final_risk_score === null` → `—`, nunca `0`, que leria como "risco nenhum".
+
+**Sem ETA.** O pipeline não persiste estimativa de conclusão, então a tela mostra o **tempo decorrido**
+(`elapsedSince`, que devolve segundos — `timeAgo` arredonda para minutos e diria "há 0m" para um scan de 4s) e
+o SLA da etapa (`TIER_META[i].sla`), que é característica do produto. "~28min restantes" seria número
+inventado.
+
+**Três famílias de cor, e elas não se misturam**: vermelho é severidade, `--ia` (indigo) é o Tier 3 como
+diferencial, e `--run` (azul) é "ainda rodando". Sem o terceiro, um scan em progresso pegava emprestada a cor
+de severidade ou a da camada I.A e passava a significar coisa que não é.
+
+**Veredito, esforço e prazo vêm do pipeline** (`executive_verdict` / `remediation_effort` /
+`recommended_deadline` no `analysis_json` do Tier 3, compactados em `ia`). São **estruturados**, não prosa: a
+`recommendation` é um enum (`bloquear`|`corrigir`|`monitorar`) exatamente para a UI colorir por ela em vez de
+procurar a decisão dentro da frase. Não houve migration — `analysis_json` é blob JSON, e o worker grava o dict
+do LLM verbatim. Relatório gerado antes disso devolve `None` nos três, e `None` é "ninguém calculou".
 
 ### URL as state
 
