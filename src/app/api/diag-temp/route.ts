@@ -1,4 +1,6 @@
 // TEMPORARIO — diagnostico do repasse de IP. Remover apos o ajuste.
+// Nao usar prefixo "_" no diretorio: no App Router ele marca pasta privada
+// e a rota simplesmente nao existe (404 do Next, sem erro no build).
 // Nao expoe valores: so quais variaveis existem em runtime e os cabecalhos
 // de rede (cookie e authorization ficam de fora).
 import 'server-only';
