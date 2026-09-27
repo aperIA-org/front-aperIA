@@ -234,7 +234,7 @@ export function ReportDetail({
         <div className="rep-card rep-mb" style={{ padding: 24, textAlign: 'center' }}>
           <span className="text-[13px] text-fg-dim">
             {asset?.type === 'cloud'
-              ? 'Asset cloud: varreduras contínuas via Prowler, sem histórico de PR.'
+              ? 'Asset cloud: varreduras contínuas de postura, sem histórico de PR.'
               : 'Nenhum scan executado neste repositório ainda.'}
           </span>
         </div>

@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import { SCREEN_ROUTES } from '@/lib/dash/dash-routes';
-import { sevColor } from '@/lib/dash/format';
+import { sevColor, sourceLabel } from '@/lib/dash/format';
 import { FINDINGS } from '@/lib/dash/mock-data';
 import type { AttackStep } from '@/lib/dash/types';
 import { SevBadge } from './SevBadge';
@@ -262,7 +262,7 @@ function ChainStep({
           </span>
           {step.caldera_validated && (
             <span
-              title="Confirmado por emulação Caldera em sandbox"
+              title="Confirmado por emulação de adversário em sandbox"
               className="cursor-help text-[10px]"
               style={{
                 padding: '2px 8px',
@@ -284,7 +284,7 @@ function ChainStep({
             <SevBadge severity={finding.severity} />
             <span className="text-[12px] text-fg-mute">{finding.title}</span>
             <span className="mono text-[10px] text-fg-dim">
-              {finding.source} · {finding.file_path}:{finding.line_number}
+              {sourceLabel(finding.source)} · {finding.file_path}:{finding.line_number}
               {finding.cve_id ? ` · ${finding.cve_id}` : ''}
             </span>
             <svg

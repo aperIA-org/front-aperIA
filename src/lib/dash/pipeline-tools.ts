@@ -18,11 +18,17 @@ import type { ScanJob, TierStatus } from './types';
  * Nunca o contrário: uma linha real jamais é sobrescrita pela dedução do tier.
  *
  * Os ids em `TIER_TOOLS` são o contrato com a API e precisam bater com
- * `../python-api/app/domain/scan/tool_catalog.py`. O Semgrep aparece duas vezes
- * porque roda em dois tiers com escopos diferentes, e são duas ferramentas do
- * ponto de vista de quem lê o pipeline. Uma ferramenta que a API reporte e o
- * catálogo daqui não conheça ainda aparece na tela, com o id cru como nome —
- * some é pior que feio.
+ * `../python-api/app/domain/scan/tool_catalog.py`. A análise estática aparece
+ * duas vezes porque roda em dois tiers com escopos diferentes, e são duas
+ * etapas do ponto de vista de quem lê o pipeline.
+ *
+ * **O `name` NUNCA é o nome do produto por trás da etapa.** A plataforma não
+ * expõe qual scanner roda em cada etapa — o id (que é o contrato com a API)
+ * fica só no código, e a tela diz o que a etapa FAZ ("Varredura de
+ * credenciais"), não com o quê. Por isso uma ferramenta que a API reporte e o
+ * catálogo daqui não conheça vira "Verificação adicional" em vez do id cru:
+ * mostrar o id devolveria o nome do produto para a tela, que é exatamente o que
+ * esta camada existe para evitar. O id continua na chave do React e nos dados.
  *
  * A ordem das listas espelha a ordem real do canvas do Celery
  * (`../python-api/docs/explicacao-pipeline.md` §2).
@@ -46,34 +52,34 @@ export const TIER_TOOLS: readonly (readonly PipelineTool[])[] = [
   [
     {
       id: 'trufflehog',
-      name: 'TruffleHog',
-      role: 'secrets verificados no diff do commit',
+      name: 'Varredura de credenciais',
+      role: 'procura segredos e chaves expostas no diff do commit',
       kind: 'scanner',
     },
     {
       id: 'semgrep-changed',
-      name: 'Semgrep changed',
-      role: 'SAST restrito aos arquivos alterados',
+      name: 'Análise do código alterado',
+      role: 'análise estática restrita aos arquivos do commit',
       kind: 'scanner',
     },
   ],
   [
     {
       id: 'trivy',
-      name: 'Trivy',
-      role: 'SCA, CVEs em dependências e containers',
+      name: 'Análise de dependências',
+      role: 'CVEs conhecidas em dependências e containers',
       kind: 'scanner',
     },
     {
       id: 'semgrep-full',
-      name: 'Semgrep full',
-      role: 'SAST na árvore inteira do repositório',
+      name: 'Análise do código completo',
+      role: 'análise estática na árvore inteira do repositório',
       kind: 'scanner',
     },
     {
       id: 'prowler',
-      name: 'Prowler',
-      role: 'postura de cloud a partir do IaC',
+      name: 'Postura de nuvem',
+      role: 'configuração de nuvem a partir do IaC',
       kind: 'scanner',
       conditional: 'só roda quando o commit altera arquivos de IaC',
     },
@@ -87,21 +93,21 @@ export const TIER_TOOLS: readonly (readonly PipelineTool[])[] = [
   [
     {
       id: 'zap',
-      name: 'OWASP ZAP',
-      role: 'DAST ativo contra a aplicação publicada',
+      name: 'Teste dinâmico da aplicação',
+      role: 'requisições ativas contra a aplicação publicada',
       kind: 'scanner',
       conditional: 'precisa de um alvo de DAST no repositório',
     },
     {
       id: 'threat-intel',
-      name: 'CISA KEV + EPSS',
-      role: 'threat intel por CVE: exploração conhecida e probabilidade',
+      name: 'Inteligência de ameaças',
+      role: 'por CVE: exploração conhecida e probabilidade de ataque',
       kind: 'scanner',
     },
     {
       id: 'caldera',
-      name: 'Caldera',
-      role: 'emulação de adversário sobre as técnicas MITRE ATT&CK',
+      name: 'Emulação de adversário',
+      role: 'executa as técnicas MITRE ATT&CK contra o alvo',
       kind: 'scanner',
     },
     {
@@ -321,14 +327,20 @@ export function tierToolRuns(
     return { tool, state: base };
   });
 
-  // Ferramenta que a API reportou e o catálogo daqui não conhece: entra com o
-  // id cru como nome. Sumir seria pior — o pipeline rodou alguma coisa e a tela
-  // ficaria mentindo por omissão.
+  // Ferramenta que a API reportou e o catálogo daqui não conhece: entra com um
+  // rótulo genérico. Sumir seria pior — o pipeline rodou alguma coisa e a tela
+  // ficaria mentindo por omissão —, mas o id cru é o nome do produto, e a tela
+  // não expõe isso (ver o cabeçalho deste módulo).
   const conhecidas = new Set(TIER_TOOLS[tierIndex].map((tool) => tool.id));
   const extras = (runs ?? [])
     .filter((run) => run.tier === tierIndex + 1 && !conhecidas.has(run.tool))
     .map((run): ToolRun => ({
-      tool: { id: run.tool, name: run.tool, role: 'ferramenta nova do pipeline', kind: 'scanner' },
+      tool: {
+        id: run.tool,
+        name: 'Verificação adicional',
+        role: 'etapa nova do pipeline',
+        kind: 'scanner',
+      },
       state: toToolState(run.status) ?? 'queued',
       reason: reasonPt(run.reason),
       findingsCount: run.findings_count ?? undefined,
@@ -364,10 +376,10 @@ export type IaPath = {
  * O desfecho de um passo da cadeia. As quatro opções dizem coisas DIFERENTES, e
  * achatá-las é o erro que esta parte da tela tem que evitar:
  *
- * - `emulado`: o Caldera executou o movimento e ele funcionou.
- * - `bloqueado`: o Caldera executou e um controle conteve — é uma **defesa que
+ * - `emulado`: a emulação executou o movimento e ele funcionou.
+ * - `bloqueado`: a emulação executou e um controle conteve — é uma **defesa que
  *   funcionou**, e vale tanto quanto um passo que passou.
- * - `nao_emulado`: o Caldera não teve como tentar (sem alvo de DAST, sem agente).
+ * - `nao_emulado`: a emulação não teve como tentar (sem alvo de DAST, sem agente).
  * - `projecao`: ninguém executou; a cadeia é inferência do modelo.
  *
  * O `caldera_validated` booleano de `paths` confundia os três últimos num único
@@ -376,7 +388,7 @@ export type IaPath = {
 export type ChainOutcome = 'emulado' | 'bloqueado' | 'nao_emulado' | 'projecao';
 
 export const CHAIN_OUTCOME_LABEL: Record<ChainOutcome, string> = {
-  emulado: 'Caldera ✓',
+  emulado: 'emulado ✓',
   bloqueado: 'bloqueado',
   nao_emulado: 'não emulado',
   projecao: 'projeção da IA',
@@ -487,7 +499,7 @@ export function chainEmulatedPhrase(chain: IaChain): string {
   const teorico = total - ok;
   return (
     `${ok} de ${total} ${total === 1 ? 'emulado' : 'emulados'}` +
-    (teorico > 0 ? ' · restante teórico' : ' pelo Caldera')
+    (teorico > 0 ? ' · restante teórico' : ' na emulação')
   );
 }
 
@@ -733,8 +745,13 @@ export function toolDetail(run: ToolRun, ia?: ScanIaSummary | null): string {
 
   // Enriquecimento por ferramenta, só com o que o `analysis_json` traz.
   if (tool.id === 'threat-intel' && ia?.cti) {
-    partes.push(ia.cti.known_exploited ? 'CVE no catálogo KEV' : 'nenhum CVE no KEV');
-    if (ia.cti.epss_score != null) partes.push(`EPSS ${ia.cti.epss_score}`);
+    partes.push(
+      ia.cti.known_exploited
+        ? 'CVE com exploração conhecida'
+        : 'nenhum CVE com exploração conhecida',
+    );
+    if (ia.cti.epss_score != null)
+      partes.push(`probabilidade de exploração ${ia.cti.epss_score}`);
   }
   if (tool.id === 'caldera' && ia?.caldera) {
     const { techniques_executed: exec, techniques_successful: ok, ttps } = ia.caldera;

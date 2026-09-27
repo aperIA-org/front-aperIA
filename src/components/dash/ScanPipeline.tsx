@@ -333,7 +333,7 @@ function IaProse({ ia }: { ia: ScanIaSummary }) {
       {fases === 1 ? '' : 's'} do MITRE ATT&amp;CK
       {emulados > 0 ? (
         <>
-          , {emulados} <b>emulado{emulados === 1 ? '' : 's'} pelo Caldera</b>
+          , {emulados} <b>emulado{emulados === 1 ? '' : 's'} de verdade</b>
         </>
       ) : null}
       .{' '}
@@ -658,7 +658,7 @@ export function ScanMiniRow({
     tierToolRuns(job, index, { targetUrl, runs }),
   );
   // Sem linha real, o estado de CADA ferramenta é o do tier inteiro: dizer
-  // "Trivy, Semgrep e Prowler em execução" ou "10 de 10 rodaram" seria a
+  // "Dependências, código e nuvem em execução" ou "10 de 10 rodaram" seria a
   // dedução vendida como fato. Mesma guarda do rodapé.
   const real = !!runs && runs.length > 0;
   const rodando = real ? byTier.flat().filter((r) => r.state === 'running') : [];

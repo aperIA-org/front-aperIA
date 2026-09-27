@@ -23,7 +23,7 @@ function Tile({ tile, duplicate }: { tile: EcosystemTile; duplicate: boolean }) 
 }
 
 /**
- * Faixa "CONSTRUÍDO SOBRE O ECOSSISTEMA QUE VOCÊ JÁ CONFIA".
+ * Faixa "COBERTURA DO CÓDIGO À NUVEM, EM TODAS AS CAMADAS".
  *
  * No HTML original este bloco ficava dentro da seção de Pull Request e um patch
  * script o movia para o fim da hero em runtime. Aqui ele já é renderizado no
@@ -37,7 +37,7 @@ export function EcosystemMarquee() {
   return (
     <div className="mx-auto mt-1 flex max-w-[1240px] flex-col items-center gap-7 bg-transparent px-8 pb-1.5 pt-[22px]">
       <p className="text-center text-[11.5px] tracking-[0.2em] text-ink-strong">
-        CONSTRUÍDO SOBRE O ECOSSISTEMA QUE VOCÊ JÁ CONFIA
+        COBERTURA DO CÓDIGO À NUVEM, EM TODAS AS CAMADAS
       </p>
 
       <div className="mq-wrap">

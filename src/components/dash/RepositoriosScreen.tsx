@@ -3,7 +3,6 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { MONITORED_REPOS_ANCHOR } from '@/lib/dash/dash-routes';
-import { fmtAbs, STATUS_PT, timeAgo } from '@/lib/dash/format';
 import {
   accountLabel,
   repoOwner,
@@ -11,20 +10,9 @@ import {
   type GithubAccount,
   type GitHubConnection,
 } from '@/lib/dash/github';
-import { INTEGRATIONS } from '@/lib/dash/mock-data';
-import type { Integration } from '@/lib/dash/types';
-import { DemoDataBadge } from './DemoDataBadge';
 import { GitHubAccountsCard } from './GitHubAccountsCard';
 import { RepoSelector } from './RepoSelector';
 import { TargetUrlList } from './TargetUrlList';
-
-/** Sem conexão nada roda — o status de execução é neutralizado para "idle". */
-const STATUS_CLASS: Record<string, string> = {
-  operational: 'st-done',
-  degraded: 'st-queued',
-  offline: 'st-failed',
-  idle: 'st-skipped',
-};
 
 function IconWarning({ size = 14 }: { size?: number }) {
   return (
@@ -42,84 +30,6 @@ function IconWarning({ size = 14 }: { size?: number }) {
       <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
       <path d="M12 9v4M12 17h.01" />
     </svg>
-  );
-}
-
-function IntegrationCard({
-  integration,
-  connected,
-}: {
-  integration: Integration;
-  connected: boolean;
-}) {
-  const statusKey = connected ? integration.status : 'idle';
-  const statusClass = STATUS_CLASS[statusKey] ?? 'st-skipped';
-  const statusLabel = connected
-    ? (STATUS_PT[integration.status] ?? integration.status)
-    : 'Inativo';
-  const showImpact =
-    connected && integration.status !== 'operational' && !!integration.impact;
-
-  return (
-    <div className="stat-card relative">
-      <div className="mb-3 flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[15px] font-semibold">{integration.name}</span>
-            <span
-              className="mono rounded-xs border px-1.5 py-0.5 text-[9px]"
-              style={{
-                color: 'var(--text-dim)',
-                borderColor: 'var(--gauge-track)',
-                background: 'var(--bg-surface-raised)',
-              }}
-            >
-              {integration.tier}
-            </span>
-          </div>
-          <p className="mt-1 text-[12.5px] text-fg-dim">{integration.desc}</p>
-          {showImpact && (
-            <div
-              className="mt-2 flex items-start gap-1.5 text-[12px] leading-[1.45]"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              <IconWarning />
-              <span>
-                {integration.impact} · {timeAgo(integration.last_run)}
-              </span>
-            </div>
-          )}
-        </div>
-        <span className={`sev ${statusClass}`}>{statusLabel}</span>
-      </div>
-
-      <div className="mt-3 flex items-center gap-4 border-t border-line pt-3 text-[12px] text-fg-dim">
-        <span className="mono">v{integration.version}</span>
-        {connected ? (
-          <>
-            <span title={fmtAbs(integration.last_run)} className="cursor-help">
-              última execução: {timeAgo(integration.last_run)}
-            </span>
-            {integration.findings_total !== null ? (
-              integration.findings_total > 0 ? (
-                <span style={{ color: '#f97316' }}>
-                  {integration.findings_total} findings
-                </span>
-              ) : (
-                <span>0 findings</span>
-              )
-            ) : (
-              <span>Engine de IA</span>
-            )}
-          </>
-        ) : (
-          <>
-            <span>última execução: —</span>
-            <span>— findings</span>
-          </>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -234,9 +144,11 @@ function CallbackNotice({
  * seletor — a âncora `#repositorios-monitorados` cobre os links que apontavam
  * para lá.
  *
- * Os cards de scanners/engines continuam vindo do dataset do protótipo: a API
- * não expõe estado por scanner. Por isso o badge de demonstração fica no rótulo
- * daquela seção, e não no título da página — o resto da tela é real.
+ * A seção "Scanners e engines" saiu: ela era a única tela que nomeava as
+ * ferramentas do pipeline (e suas versões), e a plataforma não expõe qual
+ * produto roda em cada etapa — ver o cabeçalho de `pipeline-tools.ts`. Além
+ * disso ela vinha inteira do dataset do protótipo; a API não tem estado por
+ * ferramenta fora de `scan_tool_runs`, que já alimenta o pipeline do scan.
  */
 export function RepositoriosScreen({
   connection,
@@ -395,27 +307,6 @@ export function RepositoriosScreen({
           </p>
         </div>
       )}
-
-      <div style={{ height: 1, background: 'var(--border-default)', margin: '24px 0' }} />
-
-      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-fg-mute">
-          Scanners e engines
-        </span>
-        <DemoDataBadge className="flex-shrink-0" />
-      </div>
-      <div
-        className="grid gap-4"
-        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}
-      >
-        {INTEGRATIONS.map((integration) => (
-          <IntegrationCard
-            key={integration.id}
-            integration={integration}
-            connected={connected}
-          />
-        ))}
-      </div>
     </div>
   );
 }

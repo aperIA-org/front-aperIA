@@ -27,7 +27,7 @@ import {
   groupKey,
   sortGroups,
 } from '@/lib/dash/findings-groups';
-import { fmtAbs, fmtInt, hexA, sevColor, timeAgo } from '@/lib/dash/format';
+import { fmtAbs, fmtInt, hexA, sevColor, sourceLabel, timeAgo } from '@/lib/dash/format';
 import { DAY } from '@/lib/dash/mock-data';
 import type { Finding, FindingGroup } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
@@ -307,7 +307,7 @@ export function FindingsScreen({
     repositorios: 'REPO',
     categorias: 'CATEGORIA',
     severidades: 'SEV',
-    scanners: 'SCANNER',
+    scanners: 'ORIGEM',
     tiers: 'TIER',
     faixaAging: 'AGING',
   };
@@ -315,7 +315,7 @@ export function FindingsScreen({
     for (const value of filters[dim] as (string | number)[]) {
       const label =
         dim === 'scanners'
-          ? String(value).toUpperCase()
+          ? sourceLabel(String(value)).toUpperCase()
           : dim === 'tiers'
             ? `Tier ${value}`
             : dim === 'faixaAging'
@@ -439,7 +439,7 @@ export function FindingsScreen({
               : 'Vulnerabilidades encontradas nos scans, das mais críticas para as menos.'}
           </p>
           {/* Os dois tetos existem, mas são de natureza diferente: 1000
-              findings na lista plana (comum, o ZAP passa disso sozinho) e 500
+              findings na lista plana (comum, o teste dinâmico passa disso sozinho) e 500
               GRUPOS no agrupado (uma trava de segurança que na prática não é
               atingida — hoje são 14). Quando é, a contagem de ocorrências
               também subestima, e isso precisa aparecer. */}
@@ -566,7 +566,7 @@ export function FindingsScreen({
                 toggleDim('scanners', scanner, event.ctrlKey || event.metaKey)
               }
             >
-              {scanner}
+              {sourceLabel(scanner)}
               {on && <span className="chip-x">×</span>}
             </button>
           );
@@ -614,7 +614,7 @@ export function FindingsScreen({
                   </span>
                 </th>
                 <th className="cl">Tipo de vulnerabilidade / Repositório</th>
-                <th>Scanner</th>
+                <th>Origem</th>
                 <th>CVE / CWE</th>
                 <th className="sort-h" onClick={() => setSort('tier')}>
                   <span className="dtbl-h">
@@ -688,7 +688,7 @@ export function FindingsScreen({
                         </td>
                         <td>
                           <span className="mono block truncate text-[10px] text-fg-mute">
-                            {group.source}
+                            {sourceLabel(group.source)}
                           </span>
                         </td>
                         <td>
@@ -752,7 +752,7 @@ export function FindingsScreen({
                               <ul className="grid gap-1">
                                 {group.amostra.map((caminho, indice) => (
                                   <li
-                                    // O caminho pode repetir (o ZAP reporta a
+                                    // O caminho pode repetir (o teste dinâmico reporta a
                                     // mesma URL em ocorrências diferentes), então
                                     // o índice entra na chave.
                                     key={`${caminho}-${indice}`}
@@ -804,7 +804,7 @@ export function FindingsScreen({
                 </span>
               </th>
               <th className="cl">Título / Repositório · Arquivo</th>
-              <th>Scanner</th>
+              <th>Origem</th>
               <th>CVE / CWE</th>
               <th className="sort-h" onClick={() => setSort('tier')}>
                 <span className="dtbl-h">
@@ -878,16 +878,17 @@ export function FindingsScreen({
                       {finding.asset && (
                         <span className="text-fg-mute">{finding.asset} · </span>
                       )}
-                      {/* Nem todo detector reporta linha (TruffleHog em modo
-                          filesystem, por exemplo). `arquivo:?` sugeria dado
-                          faltando; sem o sufixo, o caminho fica só correto. */}
+                      {/* Nem todo detector reporta linha (a varredura de
+                          credenciais em modo filesystem, por exemplo).
+                          `arquivo:?` sugeria dado faltando; sem o sufixo, o
+                          caminho fica só correto. */}
                       {finding.file_path || '—'}
                       {finding.line_number ? `:${finding.line_number}` : ''}
                     </div>
                   </td>
                   <td>
                     <span className="mono block truncate text-[10px] text-fg-mute">
-                      {finding.source}
+                      {sourceLabel(finding.source)}
                     </span>
                   </td>
                   <td>

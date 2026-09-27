@@ -39,7 +39,7 @@ export function SiteFooter() {
           <p className={`${COLUMN_HEADING_CLASS} text-ink`}>TECNOLOGIA</p>
           <div className={LINK_STACK_CLASS}>
             <span>Reasoning Engine</span>
-            <span>MITRE Caldera</span>
+            <span>Emulação de adversário</span>
           </div>
         </div>
 

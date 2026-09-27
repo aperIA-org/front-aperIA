@@ -13,6 +13,10 @@ no `tailwind.config.js`). Path alias `@/*` → `src/*`. Fonts via `next/font` (s
 
 **All UI copy and commit messages are pt-BR.** Code comments are Portuguese too.
 
+**No screen names the scanner behind a step** — the UI says what a step does, never which tool does
+it. This is a hard rule and it applies to every surface; see
+[Never name the tool behind a step](#never-name-the-tool-behind-a-step).
+
 The project was migrated from a hand-maintained static site, which is preserved in `legacy/` as the visual
 and behavioural reference. See [legacy/](#legacy--the-pre-migration-site) below.
 
@@ -64,6 +68,59 @@ scroll-reveal `@supports` blocks and the Attack Path `calc()` machinery. `src/ap
 dashboard's component-class design system (`.stat-card`, `.sev-*`, `.dtbl`, `.btn-*`, `.chip`, `.ov-tile`,
 `.sb-item`, clip-paths, keyframes) — extracted verbatim from the prototype and imported only by the dash
 layout, so it doesn't load on the landing.
+
+## Never name the tool behind a step
+
+**Hard rule, whole project — dashboard, landing, metadata, alt text, tooltips, empty states, error
+messages.** The platform does not disclose which scanner runs in each step. A screen says what a step
+*does*, never what it is.
+
+Never write, in anything a user can read: TruffleHog · Semgrep · Trivy · Prowler · OWASP ZAP · Caldera ·
+CISA KEV · EPSS — nor a version of any of them, nor a logo, nor a name embedded in a check name
+(`secret-scan / trufflehog`), nor a raw id that happens to be one (`zap`). This holds for new copy too:
+when a tool is added to the pipeline, its anonymous name is written in the same commit as its id.
+
+The ids stay — they are the contract with the API (filters, grouping, deep links, `scan_tool_runs`), they
+just never reach the screen. **There are exactly two translation points**, and all UI goes through one of
+them:
+
+| id | `TIER_TOOLS[].name` (pipeline step) | `sourceLabel()` (a finding's `source`) |
+|---|---|---|
+| `trufflehog` | Varredura de credenciais | credenciais |
+| `semgrep-changed` / `semgrep-full` | Análise do código alterado / completo | código |
+| `trivy` | Análise de dependências | dependências |
+| `prowler` | Postura de nuvem | nuvem |
+| `zap` | Teste dinâmico da aplicação | aplicação |
+| `threat-intel` | Inteligência de ameaças | — |
+| `caldera` | Emulação de adversário | emulação |
+
+`TIER_TOOLS` lives in `src/lib/dash/pipeline-tools.ts` (it also carries `role`, the one-line "what this
+step does" used in tooltips and checklists); `sourceLabel()` lives in `src/lib/dash/format.ts` and covers
+the "Origem" column, the filter chips, the grouped view and the attack chain. Rendering `run.tool.id`,
+`finding.source` or `group.source` raw is the bug this rule exists to prevent.
+
+**An unknown id does NOT fall back to the raw id.** A tool the API reports and this catalogue does not know
+renders as `Verificação adicional` (pipeline) or `outra verificação` (finding). This deliberately *inverts*
+the older "showing less is worse than showing an ugly label" rule: the raw id **is** the product name, so
+the fallback would leak it in exactly the new case nobody would review afterwards.
+
+Phrasing that follows from the same rule: "CVE com exploração conhecida" / "probabilidade de exploração
+0.97" (not KEV/EPSS), "emulado ✓" and "emulado de verdade" (not "Caldera ✓" / "pelo Caldera"), "varreduras
+contínuas de postura" (not "via Prowler").
+
+**MITRE ATT&CK is the exception, and so are CVE / CWE / CVSS.** They are public taxonomies the product
+quotes in its own output — the `Txxxx` techniques and `TAxxxx` tactics appear in the attack chain — not
+tools in the pipeline. The MITRE ATT&CK logo is the one that survives in the landing marquee.
+
+What already came out, so it does not come back: the **"Scanners e engines"** section of
+`/dash/repositorios` (the only screen with versions — `v3.67.2` and friends; `INTEGRATIONS` and the
+`Integration` type went with it), the vendor logos in the landing marquee (now capability text tiles under
+"COBERTURA DO CÓDIGO À NUVEM, EM TODAS AS CAMADAS"), "MITRE Caldera" in the footer, and the PR mock's check
+names (`secret-scan / aperIA`). The logo PNGs stay in `public/assets/` only because `legacy/assets`
+symlinks there and the old site references them — do not reintroduce them into `src/`.
+
+Internal code comments may still name a tool where it explains the id mapping or a back-end behaviour;
+they are not user-visible. Nothing that renders may.
 
 ## Traps that have already caused bugs here
 
@@ -271,7 +328,7 @@ routes to `/login`.
 
 **Início, Findings, Relatórios and Scans read the API** — see
 [Dados reais](#dados-reais-findings-relatórios-e-scans) below. The screens that are *still* mock
-(Remediações, AI Emulation, Time, and the scanners section of Repositórios) carry `<DemoDataBadge />` next
+(Remediações, AI Emulation and Time) carry `<DemoDataBadge />` next
 to their `<h1>` whenever the connection is real
 (`showDemoBadge`). In demo mode the whole app is a prototype and the badge stays hidden. Remove the badge
 from a screen the moment it starts reading the API.
@@ -764,3 +821,6 @@ ported and validated, the whole folder can go — git history preserves it.
   comma-separated multi-animations, and per-element dynamic values.
 - Server components by default; `'use client'` only where there is genuinely state, an effect, or a handler.
 - New dashboard UI uses the `dash.css` component classes and the CSS custom properties — not raw hex.
+- **No user-visible string names a scanner.** Every step and every finding `source` goes through
+  `TIER_TOOLS[].name` or `sourceLabel()` — see
+  [Never name the tool behind a step](#never-name-the-tool-behind-a-step).

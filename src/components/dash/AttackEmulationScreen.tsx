@@ -440,7 +440,7 @@ export function AttackEmulationScreen() {
             <h2 className="text-[16px] font-bold">Análise Profunda em Execução</h2>
           </div>
           <p className="text-[13px] leading-relaxed text-fg-mute">
-            O Tier 3 (I.A + emulação Caldera) está processando esta execução. A attack path
+            O Tier 3 (I.A + emulação de adversário) está processando esta execução. A attack path
             e o risk score ajustado aparecerão aqui assim que a análise concluir.
           </p>
         </div>
@@ -542,8 +542,11 @@ export function AttackEmulationScreen() {
             borderTop: '1px solid var(--border-default)',
           }}
         >
-          <EngineBadge label="Threat Intel" title="CISA KEV + EPSS · inteligência de ameaças" />
-          <EngineBadge label="Emulation" title="Caldera · emulação de adversário" />
+          <EngineBadge
+            label="Threat Intel"
+            title="Exploração conhecida e probabilidade de ataque por CVE"
+          />
+          <EngineBadge label="Emulation" title="Emulação de adversário sobre o alvo" />
         </div>
       </div>
 

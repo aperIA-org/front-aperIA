@@ -7,7 +7,7 @@ import type { Repository } from '@/lib/dash/github';
 /**
  * Alvo de DAST por repositório — a URL da aplicação publicada.
  *
- * É o que destrava o ZAP no Tier 3: sem ela o tier registra
+ * É o que destrava o teste dinâmico no Tier 3: sem ela o tier registra
  * `reason="no_target_url"` e o DAST não roda. Fica separado do seletor de
  * repositórios de propósito — lá as linhas são botões de liga/desliga, e um
  * `<input>` dentro de um `<button>` é HTML inválido.

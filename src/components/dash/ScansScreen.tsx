@@ -346,7 +346,7 @@ export function ScansScreen({
   );
 
   /**
-   * Alvo de DAST por repositório — é o que diz se o ZAP tinha o que escanear no
+   * Alvo de DAST por repositório — é o que diz se o teste dinâmico tinha o que escanear no
    * Tier 3. Ausente do mapa (repositório não monitorado, ou demonstração)
    * significa "não sabemos", e a faixa de ferramentas não afirma nada.
    */

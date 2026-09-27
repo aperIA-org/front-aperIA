@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { findingsByTitleRoute } from '@/lib/dash/dash-routes';
-import { TIER_META, fmtInt, severityCounts } from '@/lib/dash/format';
+import { TIER_META, fmtInt, severityCounts, sourceLabel } from '@/lib/dash/format';
 import {
   SKIP_REASON_LONG,
   TIER_TOOLS,
@@ -25,7 +25,7 @@ import {
  * Os findings de um commit, agrupados por tipo e organizados por etapa.
  *
  * **Uma linha é um problema, não uma ocorrência.** Com DAST ligado, um único
- * alerta do ZAP ("Cross-Domain Misconfiguration") aparece uma vez por rota e um
+ * alerta do teste dinâmico ("Cross-Domain Misconfiguration") aparece uma vez por rota e um
  * scan vira milhares de linhas que são umas dezenas de problemas. A agregação vem
  * de `GET /findings/groups?commit_sha=…`, que não tem teto — a resposta inteira
  * cabe numa tela. As ocorrências de um grupo ficam a um clique, recortadas no
@@ -115,7 +115,7 @@ function GroupRow({ group }: { group: FindingGroup }) {
       ) : (
         <span className="fb-row-mt">{group.cwe_id ?? ''}</span>
       )}
-      <span className="fb-row-src">{group.source.toUpperCase()}</span>
+      <span className="fb-row-src">{sourceLabel(group.source).toUpperCase()}</span>
       <IconArrow />
     </button>
   );

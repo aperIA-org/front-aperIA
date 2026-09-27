@@ -159,25 +159,50 @@ export function sourceIcon(src: string): string {
   return SOURCE_ICONS[src] ?? '🔧';
 }
 
+/**
+ * O `source` de um finding, como a tela o mostra.
+ *
+ * A API devolve o id da ferramenta que achou (`trufflehog`, `semgrep`, `zap`, …)
+ * e isso é o contrato — filtro, agrupamento e deep link continuam usando o id.
+ * A **tela** não mostra o produto: mostra o tipo de verificação que o produziu,
+ * pelo mesmo motivo de `TIER_TOOLS` em `pipeline-tools.ts`.
+ *
+ * Um id desconhecido cai em "outra verificação" em vez de vazar o nome: mostrar
+ * o id cru desfaria a anonimização justamente no caso novo, que é o que ninguém
+ * revisaria depois.
+ */
+const SOURCE_LABELS: Record<string, string> = {
+  trufflehog: 'credenciais',
+  semgrep: 'código',
+  trivy: 'dependências',
+  prowler: 'nuvem',
+  zap: 'aplicação',
+  caldera: 'emulação',
+};
+
+export function sourceLabel(src: string): string {
+  return SOURCE_LABELS[src] ?? 'outra verificação';
+}
+
 /** Metadados dos 3 tiers de varredura. */
 export const TIER_META = [
   {
     name: 'Tier 1',
     desc: 'Fast Feedback',
     sla: '≤3min',
-    scanners: 'TruffleHog · Semgrep changed-files',
+    scanners: 'Credenciais · código alterado',
   },
   {
     name: 'Tier 2',
     desc: 'Standard Analysis',
     sla: '≤10min',
-    scanners: 'Semgrep full · Trivy SCA · Prowler',
+    scanners: 'Código completo · dependências · nuvem',
   },
   {
     name: 'Tier 3',
     desc: 'Deep Heuristic',
     sla: '30-60min',
-    scanners: 'ZAP DAST · I.A attack-path',
+    scanners: 'Teste dinâmico · emulação · I.A attack-path',
   },
 ] as const;
 

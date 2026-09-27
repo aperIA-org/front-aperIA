@@ -40,15 +40,18 @@ import { IconCheck, IconSpin } from './ScanPipeline';
  * o estado real de cada uma em `scan_tool_runs`. O pipeline não expõe sub-etapas
  * dentro da chamada ao Claude, então um checklist inventado ou uma barra de
  * progresso interna seriam encenação. A barra do topo conta ferramentas da
- * etapa, e `tierProgress` não põe pulada no numerador: "3 de 4" com o ZAP pulado
+ * etapa, e `tierProgress` não põe pulada no numerador: "3 de 4" com o teste dinâmico pulado
  * diz a verdade, "4 de 4" diria que tudo rodou.
  */
 
 /** O que cada ferramenta do Tier 3 faz, na frase curta do trilho. */
 const PASSO: Record<string, { nm: string; sub: string }> = {
-  zap: { nm: 'Mapear superfície exposta', sub: 'DAST ativo · rotas e entrypoints' },
-  'threat-intel': { nm: 'Correlacionar CVEs', sub: 'CISA KEV + EPSS' },
-  caldera: { nm: 'Emulação adversária', sub: 'Caldera · MITRE ATT&CK' },
+  zap: { nm: 'Mapear superfície exposta', sub: 'teste dinâmico · rotas e entrypoints' },
+  'threat-intel': {
+    nm: 'Correlacionar CVEs',
+    sub: 'exploração conhecida e probabilidade de ataque',
+  },
+  caldera: { nm: 'Emulação adversária', sub: 'técnicas MITRE ATT&CK' },
   'ia-tier3': { nm: 'Gerar e ranquear caminhos', sub: 'I.A attack path' },
 };
 
@@ -176,8 +179,8 @@ function ChainStepRow({ step, last }: { step: ChainStep; last: boolean }) {
 }
 
 /**
- * Uma cadeia: cabeçalho com número, título, severidade e quantos passos o
- * Caldera de fato emulou.
+ * Uma cadeia: cabeçalho com número, título, severidade e quantos passos a
+ * emulação de adversário de fato executou.
  *
  * "1 de 3 emulados · restante teórico" é a frase honesta: o que não foi emulado
  * não deixa de ser um caminho, mas também não foi provado.
@@ -294,7 +297,7 @@ export function AttackPathCard({
           : degraded
             ? 'heurística'
             : chains.length > 0
-              ? 'simulação por IA + Caldera'
+              ? 'simulação por IA + emulação'
               : 'sem caminho';
 
   return (
@@ -357,8 +360,8 @@ export function AttackPathCard({
           </>
         ) : (
           <>
-            A IA projetou as cadeias a partir das CVEs do catálogo KEV e da superfície
-            exposta; o Caldera executou os movimentos reais.{' '}
+            A IA projetou as cadeias a partir das CVEs com exploração conhecida e da
+            superfície exposta; a emulação de adversário executou os movimentos reais.{' '}
             {ia?.kill_chain_complete ? (
               <>
                 A cadeia está <b>completa</b> — há rota do acesso inicial até o impacto.
