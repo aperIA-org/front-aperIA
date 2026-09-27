@@ -1,7 +1,7 @@
 import 'server-only';
 
 import axios from 'axios';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, INTERNAL_PROXY_TOKEN } from './config';
 
 /** Timeout para não deixar a rota do Next pendurada se a API estiver fora. */
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -70,14 +70,13 @@ export async function callApi(
  * podem ser forjados.
  */
 function cabecalhosDeOrigem(request?: Request): Record<string, string> | undefined {
-  const segredo = process.env.INTERNAL_PROXY_TOKEN;
-  if (!request || !segredo) return undefined;
+  if (!request || !INTERNAL_PROXY_TOKEN) return undefined;
 
   const encaminhado = request.headers.get('x-forwarded-for');
   const ip = encaminhado?.split(',').pop()?.trim();
   if (!ip) return undefined;
 
-  return { 'X-Aperia-Client-Ip': ip, 'X-Aperia-Proxy-Token': segredo };
+  return { 'X-Aperia-Client-Ip': ip, 'X-Aperia-Proxy-Token': INTERNAL_PROXY_TOKEN };
 }
 
 /** `Authorization: Bearer` só quando há token — a API aceita rotas públicas sem ele. */

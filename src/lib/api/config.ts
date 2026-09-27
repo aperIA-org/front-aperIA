@@ -20,6 +20,17 @@ export const API_BASE_URL = process.env.APERIA_API_URL ?? '';
 
 export const IS_API_CONFIGURED = API_BASE_URL !== '';
 
+/**
+ * Segredo que autoriza o reenvio do IP do usuário para a API (ver `client.ts`).
+ *
+ * Lido aqui no topo, como `API_BASE_URL`, e não dentro da função que usa: o
+ * Amplify entrega estas variáveis no build, via `.env.production`, e não no
+ * ambiente do servidor que atende as requisições. Lido em runtime, vem sempre
+ * vazio — o cabeçalho deixa de ser enviado e o limite de tentativas volta a
+ * contar todos os visitantes num contador só, sem nenhum erro aparente.
+ */
+export const INTERNAL_PROXY_TOKEN = process.env.INTERNAL_PROXY_TOKEN ?? '';
+
 // Reexportadas de ./shared para que o BFF continue importando de um só lugar.
 export {
   ACCESS_TOKEN_MAX_AGE,
