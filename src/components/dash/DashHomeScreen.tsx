@@ -10,7 +10,7 @@ import {
 import { useDashState } from '@/lib/dash/dash-state';
 import { riskMax, scanRanAt, shortSha, timeAgo, TIER_STATUS_LABEL } from '@/lib/dash/format';
 import { REMEDIATIONS } from '@/lib/dash/mock-data';
-import type { Finding, ScanJob } from '@/lib/dash/types';
+import type { ScanJob } from '@/lib/dash/types';
 import { CountUp } from './CountUp';
 import { EmptyState } from './EmptyState';
 import { OnboardingFlow } from './OnboardingFlow';
@@ -26,18 +26,26 @@ function TierPill({ status }: { status: string | null }) {
 /**
  * Tela Início — KPIs, último scan, distribuição por severidade e scans recentes.
  *
- * Os dados chegam por prop: `GET /findings` + `GET /scans` no server component,
- * ou o dataset do protótipo em demonstração.
+ * Os números chegam prontos por prop: o server component soma as ocorrências de
+ * `GET /findings/groups` (sem teto) e busca `GET /scans`, ou usa o dataset do
+ * protótipo em demonstração. Contar aqui uma lista paginada travaria os KPIs no
+ * teto dela.
  */
 export function DashHomeScreen({
-  findings,
+  counts,
+  total,
+  truncated,
   jobs,
   findingsOk,
   scansOk,
   demo,
   now,
 }: {
-  findings: Finding[];
+  counts: SevCounts;
+  /** Soma das ocorrências, sem o teto da listagem plana. */
+  total: number;
+  /** Teto de tipos atingido: a soma considera só os tipos devolvidos. */
+  truncated: boolean;
   jobs: ScanJob[];
   findingsOk: boolean;
   scansOk: boolean;
@@ -79,14 +87,6 @@ export function DashHomeScreen({
     );
   }
 
-  const counts: SevCounts = {
-    critical: findings.filter((f) => f.severity === 'critical').length,
-    high: findings.filter((f) => f.severity === 'high').length,
-    medium: findings.filter((f) => f.severity === 'medium').length,
-    low: findings.filter((f) => f.severity === 'low').length,
-    info: findings.filter((f) => f.severity === 'info').length,
-  };
-  const total = findings.length;
   const lastJob: ScanJob | undefined = jobs[0];
 
   /**
@@ -170,6 +170,23 @@ export function DashHomeScreen({
         >
           Não foi possível carregar os findings — os números abaixo estão zerados por falta
           de dados, não porque não há findings.
+        </div>
+      )}
+
+      {findingsOk && truncated && (
+        <div
+          role="alert"
+          className="mb-4 text-[12.5px] leading-[1.55]"
+          style={{
+            padding: '10px 14px',
+            borderRadius: 8,
+            color: '#eab308',
+            background: 'rgba(234,179,8,.08)',
+            border: '1px solid rgba(234,179,8,.22)',
+          }}
+        >
+          Limite de tipos atingido — os números abaixo somam apenas os tipos considerados,
+          então o total real é maior.
         </div>
       )}
 

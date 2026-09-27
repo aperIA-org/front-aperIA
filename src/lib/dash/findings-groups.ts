@@ -7,6 +7,7 @@ import {
 import { SEV_ORDER } from './format';
 import { cweClass } from './mock-data';
 import type { Finding, FindingGroup } from './types';
+import type { SevCounts } from '@/components/dash/SevDonut';
 
 /**
  * Agrupamento de findings por TIPO de vulnerabilidade — o mesmo que
@@ -225,4 +226,20 @@ export function sortGroups(
     }
     return (av - bv) * dir || b.ocorrencias - a.ocorrencias;
   });
+}
+
+/**
+ * Contagem por severidade somando as OCORRÊNCIAS de cada grupo.
+ *
+ * A home contava `findings.length`, e `fetchFindings` para em 1000 — com DAST
+ * ligado um único scan grava ~12 mil findings, então os KPIs travavam em 1000 e
+ * a escada de severidade ficava com a proporção errada. Aqui não há teto: cada
+ * grupo já traz quantas vezes o problema aparece.
+ */
+export function contarSeveridades(groups: FindingGroup[]): SevCounts {
+  const counts: SevCounts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+  for (const g of groups) {
+    if (g.severity in counts) counts[g.severity as keyof SevCounts] += g.ocorrencias;
+  }
+  return counts;
 }
