@@ -65,15 +65,11 @@ export async function callApi(
  * cabeçalho seria só um jeito cômodo de forjar identidade. Sem o segredo
  * configurado, nada é enviado e a API usa o IP da conexão.
  *
- * Cada proxy acrescenta ao `x-forwarded-for` o IP de quem conectou nele, então
- * o último item é o que o CloudFront escreveu; os anteriores vêm do cliente e
- * podem ser forjados.
  */
 function cabecalhosDeOrigem(request?: Request): Record<string, string> | undefined {
   if (!request || !INTERNAL_PROXY_TOKEN) return undefined;
 
-  const encaminhado = request.headers.get('x-forwarded-for');
-  const ip = encaminhado?.split(',').pop()?.trim();
+  const ip = ipDoVisitante(request);
   if (!ip) return undefined;
 
   return { 'X-Aperia-Client-Ip': ip, 'X-Aperia-Proxy-Token': INTERNAL_PROXY_TOKEN };
@@ -123,4 +119,23 @@ export async function deleteApi(
 ): Promise<{ status: number; data: unknown }> {
   const response = await apiClient.delete(path, { headers: authHeaders(accessToken) });
   return { status: response.status, data: response.data };
+}
+
+/**
+ * IP do visitante, segundo o CloudFront.
+ *
+ * `cloudfront-viewer-address` (formato `ip:porta`) é preenchido e sobrescrito
+ * pelo CloudFront, então o cliente não consegue forjá-lo. O `x-forwarded-for`
+ * daqui chega como `<visitante>, <edge do CloudFront>` — a ordem é o oposto da
+ * que vale na API, onde o Caddy é o proxy imediato e escreve por último. Ler o
+ * último item aqui repassava o IP do edge, e todos os visitantes voltavam a
+ * cair num contador só, sem nenhum erro aparente.
+ */
+function ipDoVisitante(request: Request): string | undefined {
+  const cloudfront = request.headers.get('cloudfront-viewer-address');
+  // A porta vem junto; o corte é pelo último `:` para não quebrar IPv6.
+  if (cloudfront) return cloudfront.replace(/:\d+$/, '').trim() || undefined;
+
+  // Fora do CloudFront (dev local, atrás de um proxy só).
+  return request.headers.get('x-forwarded-for')?.split(',').pop()?.trim();
 }
