@@ -46,9 +46,38 @@ const apiClient = axios.create({
 export async function callApi(
   path: string,
   body: unknown,
+  request?: Request,
 ): Promise<{ status: number; data: unknown }> {
-  const response = await apiClient.post(path, body);
+  const response = await apiClient.post(path, body, {
+    headers: cabecalhosDeOrigem(request),
+  });
   return { status: response.status, data: response.data };
+}
+
+/**
+ * Reenvia o IP de quem realmente fez a requisição.
+ *
+ * Este código roda no servidor, então a API vê o IP do Amplify e não o do
+ * visitante. O limite de tentativas por IP contaria todo mundo junto, e um
+ * atacante sozinho trancaria o login de todos — por isso o IP viaja aqui.
+ *
+ * Vai acompanhado do segredo combinado: a API é pública, e sem prova o
+ * cabeçalho seria só um jeito cômodo de forjar identidade. Sem o segredo
+ * configurado, nada é enviado e a API usa o IP da conexão.
+ *
+ * Cada proxy acrescenta ao `x-forwarded-for` o IP de quem conectou nele, então
+ * o último item é o que o CloudFront escreveu; os anteriores vêm do cliente e
+ * podem ser forjados.
+ */
+function cabecalhosDeOrigem(request?: Request): Record<string, string> | undefined {
+  const segredo = process.env.INTERNAL_PROXY_TOKEN;
+  if (!request || !segredo) return undefined;
+
+  const encaminhado = request.headers.get('x-forwarded-for');
+  const ip = encaminhado?.split(',').pop()?.trim();
+  if (!ip) return undefined;
+
+  return { 'X-Aperia-Client-Ip': ip, 'X-Aperia-Proxy-Token': segredo };
 }
 
 /** `Authorization: Bearer` só quando há token — a API aceita rotas públicas sem ele. */

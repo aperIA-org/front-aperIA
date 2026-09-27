@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   let result;
   try {
-    result = await callApi(API_ROUTES.login, { email, password });
+    result = await callApi(API_ROUTES.login, { email, password }, request);
   } catch {
     return NextResponse.json<AuthResult>(
       { ok: false, message: 'Não foi possível falar com o servidor. Tente novamente.' },

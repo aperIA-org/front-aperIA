@@ -68,7 +68,7 @@ export async function POST(request: Request) {
   let created;
   try {
     // `extra="forbid"` no schema: só username, password e email.
-    created = await callApi(API_ROUTES.createUser, { username, password, email });
+    created = await callApi(API_ROUTES.createUser, { username, password, email }, request);
   } catch {
     return NextResponse.json<AuthResult>(
       { ok: false, message: 'Não foi possível falar com o servidor. Tente novamente.' },
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
   // ── 2. autentica logo em seguida ──
   let logged;
   try {
-    logged = await callApi(API_ROUTES.login, { email, password });
+    logged = await callApi(API_ROUTES.login, { email, password }, request);
   } catch {
     return NextResponse.json<AuthResult>(
       { ok: false, message: 'Conta criada! Faça login para continuar.' },
