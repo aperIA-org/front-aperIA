@@ -126,6 +126,7 @@ export function ReportHeader({
   now,
   origem = 'reports',
   iaTiles,
+  acoes,
 }: {
   job: ScanJob;
   findings: FindingsHeadline;
@@ -135,6 +136,8 @@ export function ReportHeader({
   origem?: ReportOrigin;
   /** Os tiles de esforço e prazo — vêm de `ia`, então podem chegar depois. */
   iaTiles: React.ReactNode;
+  /** Ações sobre a execução inteira. Depende de `ia`, então chega por Suspense. */
+  acoes?: React.ReactNode;
 }) {
   const max = riskMax(demo);
   const tiers = [job.tier1_status, job.tier2_status, job.tier3_status];
@@ -171,7 +174,10 @@ export function ReportHeader({
 
   return (
     <>
-      <Crumb job={job} origem={origem} />
+      <div className="rep-topbar">
+        <Crumb job={job} origem={origem} />
+        {acoes ? <div className="rep-topbar-acoes">{acoes}</div> : null}
+      </div>
 
       <div className="rep-card rep-hd rep-mb">
         <div className="rep-hd-top">

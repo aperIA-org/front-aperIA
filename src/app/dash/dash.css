@@ -663,7 +663,9 @@ svg:hover .evo-pt{opacity:1;}
 
 /* Trilha de navegacao: substitui o botao "< Relatorios" solto. Ela diz de onde
    se veio E onde se esta' (repo + commit), que o botao nao dizia. */
-.rep-crumb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;font-size:12.5px;color:var(--text-dim);min-width:0;}
+.rep-topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.rep-topbar-acoes{display:flex;align-items:center;gap:8px;flex:none;}
+.rep-crumb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--text-dim);min-width:0;}
 .rep-crumb a{color:var(--text-dim);text-decoration:none;}
 .rep-crumb a:hover{color:var(--text-primary);}
 .rep-crumb-sep{color:var(--border-strong);}

@@ -12,6 +12,7 @@ import {
   FindingsSkeleton,
   ReportImpactSkeleton,
 } from '@/components/dash/ReportSkeletons';
+import { ExportarParaIa } from '@/components/dash/ExportarParaIa';
 import { ReportIaTiles, ReportImpact } from '@/components/dash/ReportImpact';
 import { ScanQueuedCard } from '@/components/dash/ScanQueuedCard';
 import { fetchFindingGroups } from '@/lib/api/findings';
@@ -21,6 +22,7 @@ import {
   fetchScanHistory,
   fetchScanTools,
 } from '@/lib/api/scans';
+import { montarRelatorioIa, nomeArquivoIa } from '@/lib/dash/export-ia';
 import { monitoredRepos } from '@/lib/dash/github';
 import { isJobRunning, nadaConcluido } from '@/lib/dash/scan-state';
 import { reportOrigin, type ReportOrigin } from '@/lib/dash/dash-routes';
@@ -139,6 +141,11 @@ export default async function ReportDetailPage({
           demo={false}
           now={now}
           origem={origem}
+          acoes={
+            <Suspense fallback={null}>
+              <ExportSection job={job} targetUrl={dastTarget} />
+            </Suspense>
+          }
           iaTiles={
             <Suspense
               fallback={
@@ -183,6 +190,43 @@ export default async function ReportDetailPage({
 }
 
 /* ═══════════════════════ seções assíncronas ═══════════════════════ */
+
+/**
+ * O botão de exportar.
+ *
+ * Fica numa seção própria porque o arquivo depende de `ia`, das etapas e dos
+ * findings — e segurar o cabeçalho inteiro esperando por eles desfaria a razão
+ * de a página ser montada em pedaços. Sem o `fallback`, o botão simplesmente
+ * aparece quando o conteúdo existe.
+ *
+ * O markdown é montado AQUI, no servidor: os dados já estão resolvidos, e
+ * remontá-lo no browser significaria serializar tudo de novo para o cliente.
+ */
+async function ExportSection({
+  job,
+  targetUrl,
+}: {
+  job: ScanJob;
+  targetUrl?: string | null;
+}) {
+  const [{ tools, ia }, grupos] = await Promise.all([
+    fetchScanTools(job.id),
+    fetchFindingGroups(job.commit_sha),
+  ]);
+
+  const conteudo = montarRelatorioIa({
+    job,
+    ia,
+    runs: tools,
+    grupos: grupos.groups,
+    // O total da API, não a soma dos grupos: com o teto de tipos atingido, a
+    // soma subestima e o modelo concluiria sobre um conjunto menor do que o real.
+    totalFindings: job.findings_summary?.total ?? grupos.totalFindings,
+    targetUrl,
+  });
+
+  return <ExportarParaIa conteudo={conteudo} nomeArquivo={nomeArquivoIa(job)} />;
+}
 
 async function IaTilesSection({ job }: { job: ScanJob }) {
   const { ia } = await fetchScanTools(job.id);
