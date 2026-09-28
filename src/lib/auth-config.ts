@@ -20,8 +20,6 @@ export const AUTH_CONFIG = {
   SIGNUP_ENDPOINT: '/api/auth/signup',
   LOGIN_ENDPOINT: '/api/auth/login',
   LOGOUT_ENDPOINT: '/api/auth/logout',
-  GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '',
-  GOOGLE_REDIRECT_PATH: '/auth/google/callback',
   DASHBOARD_URL: '/dash',
 } as const;
 
@@ -52,8 +50,6 @@ export function authCopy(mode: AuthMode) {
     altPrefix: login ? 'Ainda não tem conta?' : 'Já tem uma conta?',
     altLabel: login ? 'Criar conta' : 'Entrar',
     altHref: login ? '/cadastro' : '/login',
-    googleLabel: login ? 'Entrar com Google' : 'Continuar com Google',
-    dividerText: login ? 'ou entre com e-mail' : 'ou cadastre-se com e-mail',
     submitLabel: login ? 'Entrar' : 'Criar conta',
   };
 }

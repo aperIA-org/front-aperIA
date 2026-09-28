@@ -15,7 +15,6 @@ import {
   type NoticeKind,
 } from '@/lib/auth-config';
 import { clearSessionState } from '@/lib/storage';
-import { GoogleIcon } from './GoogleIcon';
 
 type Notice = { text: string; kind: NoticeKind } | null;
 
@@ -117,25 +116,6 @@ export function AuthForm({
     }
   }
 
-  function handleGoogle() {
-    if (!AUTH_CONFIG.GOOGLE_CLIENT_ID) {
-      setNotice({
-        text: 'Login com Google pronto na interface — configure GOOGLE_CLIENT_ID para ativar.',
-        kind: 'info',
-      });
-      return;
-    }
-    const params = new URLSearchParams({
-      client_id: AUTH_CONFIG.GOOGLE_CLIENT_ID,
-      redirect_uri: window.location.origin + AUTH_CONFIG.GOOGLE_REDIRECT_PATH,
-      response_type: 'code',
-      scope: 'openid email profile',
-      access_type: 'offline',
-      prompt: 'select_account',
-    });
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-  }
-
   return (
     <div className="mx-0 my-auto w-full max-w-[440px]">
       <Link
@@ -154,23 +134,6 @@ export function AuthForm({
           {copy.altLabel}
         </Link>
       </p>
-
-      <button
-        type="button"
-        onClick={handleGoogle}
-        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-field-line bg-panel px-[18px] py-[15px] text-[15px] font-bold text-ink transition-[background-color,border-color] duration-150 hover:border-[#c8c6bd] hover:bg-[#f7f6f2]"
-      >
-        <GoogleIcon />
-        {copy.googleLabel}
-      </button>
-
-      <div className="my-6 flex items-center gap-4">
-        <span className="h-px flex-1 bg-field-line" />
-        <span className="whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.2em] text-brand">
-          {copy.dividerText}
-        </span>
-        <span className="h-px flex-1 bg-field-line" />
-      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
         {!copy.login && (

@@ -6,9 +6,9 @@ import type { AuthMode } from '@/lib/auth-config';
  * Layout compartilhado por /cadastro e /login.
  *
  * As duas telas são ~80% iguais — todo o painel esquerdo (carrossel do
- * dashboard), botão do Google, divisor, e-mail, senha, avisos e submit. A
- * diferença fica em `authCopy()` e em dois campos condicionais dentro do
- * `AuthForm` (nome e aceite dos termos).
+ * dashboard), e-mail, senha, avisos e submit. A diferença fica em
+ * `authCopy()` e em dois campos condicionais dentro do `AuthForm` (nome e
+ * aceite dos termos).
  */
 export function AuthPage({
   mode,
