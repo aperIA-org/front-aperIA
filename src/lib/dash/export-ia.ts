@@ -34,6 +34,13 @@ import type { FindingGroup, ScanJob } from './types';
 
 /** Teto de tipos de finding no arquivo. Acima disso, o resto vira uma contagem. */
 const MAX_GRUPOS = 40;
+/**
+ * Caminhos listados por tipo. A API já devolve até 8 na amostra do grupo, e
+ * mostrar todos multiplicaria o arquivo por pouco: quem precisa da lista
+ * completa abre a tela. O que importa para o modelo é reconhecer ONDE o
+ * problema vive, e a contagem de caminhos restantes vai declarada.
+ */
+const MAX_CAMINHOS = 5;
 
 const SEV_ORDEM = ['critical', 'high', 'medium', 'low', 'info'];
 
@@ -213,16 +220,31 @@ export function montarRelatorioIa({
     add(
       `${ordenados.length} tipos distintos, ${totalFindings} ocorrências no total.`,
       'Agrupados por tipo: um mesmo problema costuma se repetir em muitos arquivos ou rotas.',
+      'Os caminhos são uma amostra — o número de caminhos distintos vem declarado em cada item.',
       '',
-      '| Severidade | Problema | Ocorrências | Origem | Identificador |',
-      '| --- | --- | --- | --- | --- |',
     );
     for (const g of exibidos) {
-      const ident = [g.cve_id, g.cwe_id].filter(Boolean).join(' / ') || '—';
-      const titulo = (g.title ?? '').replace(/\|/g, '\\|');
+      const ident = [g.cve_id, g.cwe_id].filter(Boolean).join(' / ');
+      add(`### ${g.severity} · ${g.title}`, '');
       add(
-        `| ${g.severity} | ${titulo} | ${g.ocorrencias} | ${sourceLabel(g.source)} | ${ident} |`,
+        `- Origem: ${sourceLabel(g.source)} · etapa ${g.tier}${ident ? ` · ${ident}` : ''}`,
+        `- ${g.ocorrencias} ${g.ocorrencias === 1 ? 'ocorrência' : 'ocorrências'}` +
+          ` em ${g.caminhos} ${g.caminhos === 1 ? 'caminho distinto' : 'caminhos distintos'}`,
       );
+      if (g.asset) add(`- Ativo: ${g.asset}`);
+      if (g.algum_secret_verificado) {
+        add('- **Credencial confirmada como válida** — trate como exposta e rotacione');
+      }
+      const caminhos = (g.amostra ?? []).slice(0, MAX_CAMINHOS);
+      if (caminhos.length) {
+        add('- Onde:');
+        for (const caminho of caminhos) add(`  - \`${caminho}\``);
+        const restantes = g.caminhos - caminhos.length;
+        if (restantes > 0) {
+          add(`  - (mais ${restantes} ${restantes === 1 ? 'caminho' : 'caminhos'})`);
+        }
+      }
+      add('');
     }
     if (cortados > 0) {
       add(
