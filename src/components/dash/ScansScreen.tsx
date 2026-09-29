@@ -12,9 +12,18 @@ import {
   pipeTierReached,
   type PipeStatus,
 } from '@/lib/dash/scan-state';
-import { fmtAbs, riskColor, riskMax, scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
+import {
+  fmtAbs,
+  riskColor,
+  riskMax,
+  scanRanAt,
+  shortSha,
+  TIER_META,
+  timeAgo,
+} from '@/lib/dash/format';
 import {
   SKIP_REASON_LONG,
+  tierDoCancelamento,
   tierSkipReason,
   type ScanIaSummary,
   type ToolRunDto,
@@ -26,6 +35,7 @@ import {
   REMEDIATIONS,
 } from '@/lib/dash/mock-data';
 import type { ScanJob } from '@/lib/dash/types';
+import { CancelarScan } from './CancelarScan';
 import { EmptyState } from './EmptyState';
 import { ScanMiniRow, ScanPipeline, ScanPipelineFooter } from './ScanPipeline';
 import { MiniGauge } from './RiskGauge';
@@ -659,6 +669,8 @@ function ScanExecution({
     : 0;
   // Tier 3 pulado pelo Gate 2 é um desfecho, não uma pendência.
   const noEscalation = tierSkipReason(job, 2) === 'gate2-sem-escalada';
+  // Só a etapa que chegou a rodar tem início gravado — ver `tierDoCancelamento`.
+  const tierCancelado = tierDoCancelamento(job);
   const href = demo
     ? `${SCREEN_ROUTES.remediations}?scan=${job.id}`
     // `'scans'`: é o que faz o "voltar" do relatório trazer de volta para cá.
@@ -698,9 +710,14 @@ function ScanExecution({
         ) : status === 'failed' ? (
           <span className="sev st-failed">falhou</span>
         ) : status === 'cancelled' ? (
-          /* O mesmo selo do relatório: as duas telas mostram a mesma execução
-             e precisam usar a mesma palavra. */
-          <span className="sev st-skipped">cancelado</span>
+          /* O mesmo selo e a mesma frase do relatório: as duas telas mostram a
+             mesma execução, e quem clica aqui para abrir o relatório tem de
+             reconhecer o estado que acabou de ler. */
+          <span className="sev st-skipped">
+            {tierCancelado === null
+              ? 'cancelado na fila'
+              : `cancelado no ${TIER_META[tierCancelado].name}`}
+          </span>
         ) : null}
         {gate1Blocked && <span className="sev st-blocked">gate1 bloqueado</span>}
         {noEscalation && (
@@ -727,6 +744,9 @@ function ScanExecution({
 
       <div className="exec-ft">
         <ScanPipelineFooter job={job} runs={toolRuns} ia={ia} targetUrl={targetUrl} />
+        {/* Só enquanto há o que interromper, e nunca em demonstração: ali o
+            card é do dataset do protótipo e não existe execução para parar. */}
+        {running && !demo && <CancelarScan scanId={job.id} />}
         <Link href={href} className="btn btn-md btn-primary">
           {demo ? 'Ver remediações' : 'Ver relatório completo'}
           <span aria-hidden="true">→</span>
