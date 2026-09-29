@@ -1,4 +1,3 @@
-import { EcosystemMarquee } from './EcosystemMarquee';
 import { GradientText } from './GradientText';
 import { MascotArt } from './MascotArt';
 
@@ -45,9 +44,6 @@ export function HeroSection() {
           <MascotArt />
         </div>
       </div>
-
-      {/* Movido para cá de propósito — ver comentário em EcosystemMarquee. */}
-      <EcosystemMarquee />
     </section>
   );
 }

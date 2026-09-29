@@ -16,9 +16,10 @@ import { SiteHeader } from '@/components/landing/SiteHeader';
  * A ordem abaixo é a ordem EFETIVA do site estático, não a do documento
  * original: das 9 `<section>` daquele arquivo, 4 estavam vazias
  * (`Plataforma`, `O problema`, `Ecossistema`, `Diferenciais`) e foram
- * descartadas, e o bloco do ecossistema — que no HTML vivia dentro da seção
- * de Pull Request e era movido para a hero por um script em runtime — agora é
- * renderizado direto dentro de `<HeroSection>`.
+ * descartadas. A faixa do ecossistema — que no HTML vivia dentro da seção de
+ * Pull Request e era movida para a hero por um script em runtime — também
+ * saiu: depois que os logos de fornecedor foram trocados por texto de
+ * capacidade, ela repetia o que as seções seguintes já dizem.
  */
 export default function LandingPage() {
   return (
