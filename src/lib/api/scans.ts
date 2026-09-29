@@ -24,7 +24,11 @@ import { COOKIE_NAMES, IS_API_CONFIGURED } from './config';
  * commit —, mas o front sempre usa o id: é ele que endereça o histórico.
  */
 
-const TIER_STATUSES = ['done', 'running', 'failed', 'skipped'] as const;
+// Estado desconhecido vira `null`, e um Tier 3 nulo faz `pipeStatus` cair no
+// fallback `running` — foi assim que um scan cancelado continuou aparecendo
+// "em execução" depois de recarregar. Todo estado novo do domínio entra AQUI
+// primeiro: é a fronteira por onde o valor da API passa.
+const TIER_STATUSES = ['done', 'running', 'failed', 'skipped', 'cancelled'] as const;
 const RISK_LEVELS = ['critical', 'high', 'medium', 'low', 'blocked'] as const;
 
 type ApiScanJob = {

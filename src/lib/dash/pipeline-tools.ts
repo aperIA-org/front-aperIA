@@ -156,6 +156,9 @@ const API_STATES: readonly string[] = [
   'degraded',
   'skipped',
   'queued',
+  // A ferramenta que estava em voo quando alguém parou o scan. Fora daqui ela
+  // cairia no piso do tier e voltaria a aparecer "em execução".
+  'cancelled',
 ];
 
 /** Mesma coisa no feminino/masculino do tier — "etapa" é feminina. */
