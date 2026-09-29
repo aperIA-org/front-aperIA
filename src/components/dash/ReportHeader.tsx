@@ -9,11 +9,16 @@ import {
   scanRanAt,
   severityCounts,
   shortSha,
+  TIER_META,
   tierStartedAt,
   timeAgo,
 } from '@/lib/dash/format';
 import { SCREEN_ROUTES, type ReportOrigin } from '@/lib/dash/dash-routes';
-import { SKIP_REASON_LONG, tierSkipReason } from '@/lib/dash/pipeline-tools';
+import {
+  SKIP_REASON_LONG,
+  tierDoCancelamento,
+  tierSkipReason,
+} from '@/lib/dash/pipeline-tools';
 import { pipeStatus } from '@/lib/dash/scan-state';
 import type { ScanJob } from '@/lib/dash/types';
 import { IconSpin } from './ScanPipeline';
@@ -155,6 +160,8 @@ export function ReportHeader({
   const gate1Blocked = job.final_risk_level === 'blocked';
   // Tier 3 pulado pelo Gate 2 é um desfecho, não uma pendência.
   const noEscalation = tierSkipReason(job, 2) === 'gate2-sem-escalada';
+  // Só a etapa que chegou a rodar tem início gravado — ver `tierDoCancelamento`.
+  const tierCancelado = tierDoCancelamento(job);
 
   const shortName = job.repo_full_name.split('/')[1] ?? job.repo_full_name;
   const severidades = severityCounts(findings.bySeverity);
@@ -219,8 +226,24 @@ export function ReportHeader({
               ) : status === 'cancelled' ? (
                 /* Reusa o selo de "pulado": cinza, não vermelho. Cancelar é uma
                    decisão, não um defeito — e o vermelho desta interface
-                   significa severidade. */
-                <span className="sev st-skipped">cancelado</span>
+                   significa severidade.
+
+                   O selo nomeia a ETAPA em que o cancelamento pegou o
+                   pipeline: "cancelado" sozinho não diz se parou no começo ou
+                   quase no fim, e é essa diferença que decide se vale
+                   reexecutar ou aproveitar o que já saiu. */
+                <span
+                  className="sev st-skipped"
+                  title={
+                    tierCancelado === null
+                      ? 'A execução foi cancelada antes de qualquer etapa começar'
+                      : `As etapas seguintes não chegaram a rodar`
+                  }
+                >
+                  {tierCancelado === null
+                    ? 'cancelado na fila'
+                    : `cancelado no ${TIER_META[tierCancelado].name}`}
+                </span>
               ) : null}
               {gate1Blocked && <span className="sev st-blocked">gate1 bloqueado</span>}
               {noEscalation && (

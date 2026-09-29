@@ -7,6 +7,7 @@ import { TIER_META, fmtInt, severityCounts, sourceLabel } from '@/lib/dash/forma
 import {
   SKIP_REASON_LONG,
   TIER_TOOLS,
+  tierDoCancelamento,
   tierSkipReason,
   tierState,
   tierToolRuns,
@@ -181,6 +182,8 @@ export function FindingsByTier({
    * tela dentro de um iframe com `?preview=1` e não pode poluir estado real.
    */
   const [abertas, setAbertas] = useState<ReadonlySet<number>>(new Set());
+  // Onde o cancelamento pegou o pipeline; `null` quando nada havia começado.
+  const tierCancelado = tierDoCancelamento(job);
   const alternar = (tier: number) =>
     setAbertas((prev) => {
       const proxima = new Set(prev);
@@ -277,13 +280,20 @@ export function FindingsByTier({
                     ? 'em execução'
                     : state === 'queued'
                       ? 'na fila'
-                      : state === 'skipped' || state === 'failed'
-                        ? state === 'failed'
-                          ? 'falhou'
-                          : 'não executado'
-                        : ocorrencias === 0
-                          ? 'nada encontrado'
-                          : `${fmtInt(ocorrencias)} ${ocorrencias === 1 ? 'finding' : 'findings'}`}
+                      : state === 'cancelled'
+                        ? /* Distingue as duas faces do cancelamento: a etapa
+                             que estava aberta e as que nem chegaram a abrir.
+                             `tierDoCancelamento` separa pelo início gravado. */
+                          index === tierCancelado
+                          ? 'cancelado aqui'
+                          : 'não chegou a rodar'
+                        : state === 'skipped' || state === 'failed'
+                          ? state === 'failed'
+                            ? 'falhou'
+                            : 'não executado'
+                          : ocorrencias === 0
+                            ? 'nada encontrado'
+                            : `${fmtInt(ocorrencias)} ${ocorrencias === 1 ? 'finding' : 'findings'}`}
                   {/* "3 findings · 1 pulada": a ferramenta que não rodou é parte
                       do resultado, não um detalhe a esconder. */}
                   {pulados > 0 && state !== 'skipped'

@@ -134,6 +134,7 @@ export type ToolState =
   | 'degraded'
   | 'skipped'
   | 'blocked'
+  | 'cancelled'
   | 'queued';
 
 export const TOOL_STATE_LABEL: Record<ToolState, string> = {
@@ -143,6 +144,7 @@ export const TOOL_STATE_LABEL: Record<ToolState, string> = {
   degraded: 'modo degradado',
   skipped: 'não executada',
   blocked: 'interrompida',
+  cancelled: 'cancelada',
   queued: 'na fila',
 };
 
@@ -164,6 +166,7 @@ export const TIER_STATE_LABEL: Record<ToolState, string> = {
   degraded: 'modo degradado',
   skipped: 'não executado',
   blocked: 'interrompido',
+  cancelled: 'cancelado',
   queued: 'na fila',
 };
 
@@ -174,6 +177,7 @@ export function tierState(job: ScanJob, tierIndex: number): ToolState {
   if (status === 'running') return 'running';
   if (status === 'failed') return 'failed';
   if (status === 'skipped') return 'skipped';
+  if (status === 'cancelled') return 'cancelled';
 
   // `null`: ou o tier ainda não começou, ou nunca vai começar porque um gate
   // anterior parou a chain. `blocked_at_tier` é o número do GATE (1 = entre
@@ -772,4 +776,26 @@ export function toolDetail(run: ToolRun, ia?: ScanIaSummary | null): string {
 
   if (dur) partes.push(dur);
   return partes.join(' · ');
+}
+
+/**
+ * Em que etapa o cancelamento pegou o pipeline.
+ *
+ * Ao cancelar, TODAS as etapas pendentes viram `cancelled` de uma vez — a que
+ * estava rodando e as que nem tinham começado. O que as separa é o início:
+ * `tierN_started_at` só é gravado quando a etapa entra em execução, então a
+ * etapa cancelada COM início é onde o trabalho foi interrompido, e as sem
+ * início nunca chegaram a abrir.
+ *
+ * É o que permite a tela dizer "cancelado durante a análise de dependências"
+ * em vez de só "cancelado" — sem precisar de uma coluna para guardar isso.
+ *
+ * `null` quando nada havia começado: cancelado ainda na fila.
+ */
+export function tierDoCancelamento(job: ScanJob): number | null {
+  const inicios = job.tier_started_at ?? [];
+  for (let i = 2; i >= 0; i -= 1) {
+    if (tierStatusAt(job, i) === 'cancelled' && inicios[i]) return i;
+  }
+  return null;
 }
