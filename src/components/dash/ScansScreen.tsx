@@ -697,6 +697,10 @@ function ScanExecution({
           <span className="sev st-done">concluído</span>
         ) : status === 'failed' ? (
           <span className="sev st-failed">falhou</span>
+        ) : status === 'cancelled' ? (
+          /* O mesmo selo do relatório: as duas telas mostram a mesma execução
+             e precisam usar a mesma palavra. */
+          <span className="sev st-skipped">cancelado</span>
         ) : null}
         {gate1Blocked && <span className="sev st-blocked">gate1 bloqueado</span>}
         {noEscalation && (

@@ -216,6 +216,11 @@ export function ReportHeader({
                 <span className="sev st-done">concluído</span>
               ) : status === 'failed' ? (
                 <span className="sev st-failed">falhou</span>
+              ) : status === 'cancelled' ? (
+                /* Reusa o selo de "pulado": cinza, não vermelho. Cancelar é uma
+                   decisão, não um defeito — e o vermelho desta interface
+                   significa severidade. */
+                <span className="sev st-skipped">cancelado</span>
               ) : null}
               {gate1Blocked && <span className="sev st-blocked">gate1 bloqueado</span>}
               {noEscalation && (

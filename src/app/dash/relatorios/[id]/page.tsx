@@ -12,6 +12,7 @@ import {
   FindingsSkeleton,
   ReportImpactSkeleton,
 } from '@/components/dash/ReportSkeletons';
+import { CancelarScan } from '@/components/dash/CancelarScan';
 import { ExportarParaIa } from '@/components/dash/ExportarParaIa';
 import { ReportIaTiles, ReportImpact } from '@/components/dash/ReportImpact';
 import { ScanQueuedCard } from '@/components/dash/ScanQueuedCard';
@@ -142,9 +143,14 @@ export default async function ReportDetailPage({
           now={now}
           origem={origem}
           acoes={
-            <Suspense fallback={null}>
-              <ExportSection job={job} targetUrl={dastTarget} />
-            </Suspense>
+            <>
+              {/* Só enquanto há o que interromper. Some sozinho quando o
+                  polling do `ReportLive` trouxer a execução encerrada. */}
+              {running && <CancelarScan scanId={job.id} />}
+              <Suspense fallback={null}>
+                <ExportSection job={job} targetUrl={dastTarget} />
+              </Suspense>
+            </>
           }
           iaTiles={
             <Suspense

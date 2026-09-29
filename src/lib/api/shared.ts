@@ -30,6 +30,7 @@ export const API_ROUTES = {
   repositories: '/repositories',
   repository: (repositoryId: string) => `/repositories/${repositoryId}`,
   repositoryScan: (repositoryId: string) => `/repositories/${repositoryId}/scan`,
+  cancelScan: (scanId: string) => `/scans/${scanId}/cancel`,
 } as const;
 
 /**

@@ -649,7 +649,7 @@ export function ScanMiniRow({
   targetUrl,
 }: {
   job: ScanJob;
-  status: 'running' | 'done' | 'failed' | 'blocked';
+  status: 'running' | 'done' | 'failed' | 'blocked' | 'cancelled';
   runs?: ToolRunDto[];
   ia?: ScanIaSummary | null;
   targetUrl?: string | null;
@@ -671,6 +671,10 @@ export function ScanMiniRow({
       rodando.length === 1 && rodando[0].tool.id === 'ia-tier3'
         ? 'Simulação de attack path por I.A em andamento'
         : `${nomes} em execução`;
+  } else if (status === 'cancelled') {
+    // Quem parou foi o usuário. Dizer "falhou" culparia o produto por uma
+    // decisão dele, e "concluído" esconderia que faltou etapa.
+    resumo = 'Interrompido antes de concluir — os achados encontrados permanecem';
   } else if (status === 'blocked') {
     resumo = 'Gate 1 interrompeu o pipeline — secret verificado no commit';
   } else if (status === 'running') {

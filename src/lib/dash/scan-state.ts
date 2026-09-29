@@ -7,10 +7,17 @@ import type { ScanJob } from './types';
  * execuções precisam concordar**: a lista de Scans e o detalhe do relatório. Ter
  * uma cópia em cada uma foi um bug real — ver `pipeStatus` abaixo.
  */
-export type PipeStatus = 'blocked' | 'failed' | 'running' | 'done';
+export type PipeStatus = 'blocked' | 'failed' | 'cancelled' | 'running' | 'done';
 
-/** Estados a partir dos quais um tier não muda mais. */
-const TIER_TERMINAL = ['done', 'failed', 'skipped'];
+/**
+ * Estados a partir dos quais um tier não muda mais.
+ *
+ * `cancelled` entra aqui por um motivo concreto: `pipeStatus` cai em `running`
+ * quando não reconhece o estado do Tier 3, então um scan interrompido ficaria
+ * "em execução" para sempre — com o polling batendo sem parar numa execução
+ * que nunca mais vai mudar.
+ */
+const TIER_TERMINAL = ['done', 'failed', 'skipped', 'cancelled'];
 
 /**
  * `blocked` | `failed` | `running` | `done`.
@@ -34,6 +41,16 @@ const TIER_TERMINAL = ['done', 'failed', 'skipped'];
  */
 export function pipeStatus(job: ScanJob): PipeStatus {
   if (job.blocked_at_tier === 1 || job.final_risk_level === 'blocked') return 'blocked';
+  /*
+   * Cancelado antes de `failed` e de `running`: quando alguém interrompe, os
+   * tiers pendentes viram `cancelled` de uma vez só, e o que já havia falhado
+   * continua `failed`. A ordem aqui decide o que a tela ANUNCIA, e "falhou"
+   * sobre um scan que a pessoa parou culparia o produto por uma decisão dela.
+   */
+  const cancelado = [job.tier1_status, job.tier2_status, job.tier3_status].includes(
+    'cancelled',
+  );
+  if (cancelado) return 'cancelled';
   if (job.tier2_status === 'failed' || job.tier3_status === 'failed') return 'failed';
   if (
     job.tier1_status === 'running' ||
@@ -71,6 +88,10 @@ export function pipeTierReached(job: ScanJob): number {
 export function nadaConcluido(job: ScanJob): boolean {
   const tiers = [job.tier1_status, job.tier2_status, job.tier3_status];
   return !tiers.some(
-    (status) => status === 'done' || status === 'failed' || status === 'skipped',
+    (status) =>
+      status === 'done' ||
+      status === 'failed' ||
+      status === 'skipped' ||
+      status === 'cancelled',
   );
 }

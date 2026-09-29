@@ -74,7 +74,9 @@ export type FindingGroup = {
   amostra: string[];
 };
 
-export type TierStatus = 'done' | 'running' | 'failed' | 'skipped' | null;
+/** `cancelled`: interrompido por quem disparou. Terminal, e distinto de
+ *  `failed` — nada quebrou, alguém parou. */
+export type TierStatus = 'done' | 'running' | 'failed' | 'skipped' | 'cancelled' | null;
 
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'blocked' | null;
 

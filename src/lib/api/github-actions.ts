@@ -335,3 +335,49 @@ export async function requestManualScan(
     return { ok: false, message: MSG_REDE };
   }
 }
+
+
+/**
+ * Cancela uma execução em andamento.
+ *
+ * A API revoga o canvas do Celery antes de fechar os tiers no banco — sem essa
+ * ordem, as tarefas já enfileiradas reescreveriam o status e o scan pareceria
+ * voltar a andar sozinho.
+ *
+ * Os findings já gravados permanecem: o código foi analisado de verdade nas
+ * etapas que concluíram. Cancelar interrompe o que falta.
+ */
+export async function cancelScan(scanId: string): Promise<ActionResult> {
+  if (!IS_API_CONFIGURED) return { ok: false, message: MSG_SEM_API };
+
+  const token = await accessToken();
+  if (!token) return { ok: false, message: MSG_SEM_SESSAO };
+
+  try {
+    const { status, data } = await postApi(API_ROUTES.cancelScan(scanId), {}, token);
+
+    if (status === 401) return { ok: false, message: MSG_SEM_SESSAO };
+    if (status === 404) return { ok: false, message: 'Execução não encontrada.' };
+    if (status === 409) {
+      // Dois casos, e a API distingue no `detail`: já terminou, ou foi
+      // disparada antes de o cancelamento existir. A segunda não é erro do
+      // usuário, e a mensagem da API é a única que sabe qual é.
+      return { ok: false, message: apiDetail(data) ?? 'Esta execução já terminou.' };
+    }
+    if (status < 200 || status >= 300) {
+      return {
+        ok: false,
+        message:
+          apiDetail(data) ??
+          `Não foi possível cancelar (erro ${status}). O scan pode continuar rodando.`,
+      };
+    }
+  } catch {
+    return { ok: false, message: MSG_REDE };
+  }
+
+  // A tela do relatório e a lista de Scans mostram a mesma execução.
+  revalidatePath('/dash/relatorios', 'layout');
+  revalidatePath('/dash/scans');
+  return { ok: true, message: 'Scan cancelado.' };
+}
