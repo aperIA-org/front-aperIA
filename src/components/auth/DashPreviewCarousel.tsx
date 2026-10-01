@@ -20,7 +20,6 @@ const STEPS: Step[] = [
   { intro: 'Bem-vindo ao aperIA' },
   { screen: 'home', label: 'Postura de Segurança' },
   { screen: 'findings', label: 'Findings' },
-  { screen: 'attack', label: 'AI Insights' },
   { screen: 'remediations', label: 'Remediações' },
 ];
 

@@ -182,29 +182,10 @@ export type RemediationDestino =
 /** Uma remediação junto do seu contexto — o que a tela de fato renderiza. */
 export type RemediationItem = Remediation & RemediationContext;
 
-export type AttackStep = {
-  step: number;
-  phase: string;
-  technique: string;
-  description: string;
-  finding_ids: string[];
-  caldera_validated: boolean;
-};
-
 export type PrioritizedAction = {
   priority: number;
   action: string;
   rationale: string;
-};
-
-export type Insight = {
-  attack_path?: AttackStep[];
-  kill_chain_complete?: boolean;
-  prioritized_actions?: PrioritizedAction[];
-  kill_chain_complete_note?: string;
-  cti_status?: string;
-  caldera_status?: string;
-  tier2_summary?: string;
 };
 
 export type Asset = {

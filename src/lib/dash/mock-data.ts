@@ -16,7 +16,6 @@
 import type {
   Asset,
   Finding,
-  Insight,
   InstallationRepo,
   Remediation,
   ScanJob,
@@ -75,29 +74,6 @@ export const REMEDIATIONS: Remediation[] = [
   {id:'r4',finding_id:'f4',scan_job_id:'s2',status:'suggested',explanation:'Sanitizar filename com os.path.basename() e validar contra allowlist de extensões antes de usar no sistema de arquivos.',patch_diff:'-    filepath = os.path.join(UPLOAD_DIR, filename)\n+    safe_name = os.path.basename(filename)\n+    if not safe_name.endswith(ALLOWED_EXTENSIONS):\n+        raise ValueError("Extensão não permitida")\n+    filepath = os.path.join(UPLOAD_DIR, safe_name)',requires_secret_rotation:false,rotation_instructions:null,approved_by:null,created_at:'2024-06-28T10:30:00Z'},
   {id:'r5',finding_id:'f9',scan_job_id:'s5',status:'rejected',explanation:'Migrar para bcrypt com work factor ≥ 12. Usar passlib para abstração. Inclui migration script para re-hash de senhas existentes no próximo login.',patch_diff:'-import hashlib\n-hashed = hashlib.md5(password.encode()).hexdigest()\n+from passlib.hash import bcrypt\n+hashed = bcrypt.hash(password, rounds=12)',requires_secret_rotation:false,rotation_instructions:null,approved_by:'carlos.melo@acme.io',created_at:'2024-06-26T12:00:00Z'},
 ];
-
-export const INSIGHTS: Record<string, Insight> = {
-  s1: {
-    attack_path:[
-      {step:1,phase:'initial_access',technique:'T1190',description:'SQL injection em GET /api/users?email= permite UNION-based extraction da tabela users (emails + password_hashes)',finding_ids:['f2'],caldera_validated:false},
-      {step:2,phase:'credential_access',technique:'T1552.001',description:'AWS Access Key com AdministratorAccess exposta no config.py permite assumir identidade de produção via STS AssumeRole',finding_ids:['f1'],caldera_validated:true},
-      {step:3,phase:'lateral_movement',technique:'T1210',description:'Log4Shell (CVE-2021-44228) no container payments-service permite RCE via JNDI LDAP lookup',finding_ids:['f3'],caldera_validated:true},
-      {step:4,phase:'collection',technique:'T1530',description:'Bucket S3 público contém dumps de dados de clientes acessíveis a partir do ambiente comprometido',finding_ids:['f6'],caldera_validated:false},
-      {step:5,phase:'exfiltration',technique:'T1567',description:'Dados de cartão e dados pessoais de ~40k usuários exfiltráveis para infraestrutura externa sem detecção',finding_ids:['f6'],caldera_validated:false},
-    ],
-    kill_chain_complete:true,
-    prioritized_actions:[
-      {priority:1,action:'Rotacionar imediatamente a AWS Access Key exposta em config.py',rationale:'Credencial verificada com AdministratorAccess, acesso direto ao ambiente de produção'},
-      {priority:2,action:'Parametrizar a query de /api/users (SQLAlchemy bound parameters)',rationale:'Ponto de entrada da cadeia, elimina o acesso inicial'},
-      {priority:3,action:'Atualizar log4j-core para 2.17+ no container payments-service',rationale:'RCE validado por emulação, pivô do movimento lateral'},
-      {priority:4,action:'Bloquear acesso público ao bucket S3 de dumps',rationale:'Alvo final da exfiltração, dados de ~40k clientes'},
-    ],
-    kill_chain_complete_note:'',
-    cti_status:'available',caldera_status:'available',
-  },
-  s3: {tier2_summary:'Análise Tier 2 concluída: 2 findings de severidade média (logging de dados de cartão, OpenSSL DoS). Nenhum atinge o limiar high/critical do Gate 2.'},
-  s5: {tier2_summary:'Análise Tier 2 concluída: 1 finding de severidade baixa (hash MD5 sem salt). Abaixo do limiar do Gate 2.'},
-};
 
 export const ASSETS: Asset[] = [
   {id:'a1',name:'payments-api',type:'repository',repo_url:'https://github.com/OCR-aperIA/payments-api',criticality:'high',last_scan:'2024-06-29',risk_score:847,scanners:['trufflehog','semgrep','trivy','prowler','zap']},
@@ -236,26 +212,4 @@ export const FINDINGS: Finding[] = buildFindings();
 export function openFindings(): Finding[] {
   return FINDINGS.filter((f) => f.status !== 'resolved');
 }
-
-/** Membros do workspace. */
-export type TeamMember = {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'engineer' | 'viewer';
-  avatar: string;
-  last_seen: string;
-};
-
-export const TEAM: TeamMember[] = [
-  {id:'u1',name:'Marina Alves',email:'marina.alves@acme.io',role:'admin',avatar:'MA',last_seen:'2024-06-29T14:00:00Z'},
-  {id:'u2',name:'Carlos Melo',email:'carlos.melo@acme.io',role:'engineer',avatar:'CM',last_seen:'2024-06-28T10:00:00Z'},
-  {id:'u3',name:'Julia Pires',email:'julia.pires@acme.io',role:'viewer',avatar:'JP',last_seen:'2024-06-27T09:00:00Z'},
-];
-
-export const ROLE_LABELS: Record<TeamMember['role'], string> = {
-  admin: 'Admin',
-  engineer: 'Engenheiro',
-  viewer: 'Visualizador',
-};
 
