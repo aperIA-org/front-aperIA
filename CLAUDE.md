@@ -148,6 +148,22 @@ A random value also differs between server and client and breaks hydration — t
 gradient ids with `Math.random()`, and those are `useId()` here. Where the prototype needed pseudo-random
 data (`runScanRepo`), the port uses an FNV-1a hash of a stable key.
 
+**`next/font/google` baixa as fontes no build, e isso derruba o deploy do Amplify na metade das vezes.**
+`src/lib/fonts.ts` declara cinco famílias; cada `next build` busca as cinco em `fonts.googleapis.com`. Quando
+uma falha, o loader não casa o regex e o build morre com
+`TypeError: Cannot read properties of null (reading '1')` apontando `fonts.ts` — mensagem que não diz
+"rede". Já aconteceu nos jobs 24 (`index 4`) e 26 (`index 0`): **a família que quebra muda a cada vez**, o
+que descarta defeito em uma delas. Localmente passa, porque a rede daqui responde. O desbloqueio é
+redisparar o job (`RETRY` no console, ou `amplify StartJob`); o conserto durável é migrar para
+`next/font/local` com os `.woff2` versionados — hoje cada deploy é cara ou coroa.
+
+**A animação da 404 é servida por nós, não por CDN** — `public/404-cat.json`, lido por `not-found.tsx`. O
+componente original buscava em `lottie.host` em runtime: uma página de erro que depende de terceiro para
+renderizar falha justamente quando mais se precisa dela. `lottie-web` entra por import dinâmico (~250 KB
+que só servem ali). E o layout raiz **não aplica tema**, então a 404 cai no `:root`, que é o escuro — por
+isso o par corpo/olho do gato inverte conforme `document.documentElement.dataset.theme`, lido uma vez na
+montagem.
+
 **`mounted` guards mean no SSR content — and that is why the connection moved to the server.** Screens
 gated on `localStorage` render `null` until the first effect runs, so their server-rendered HTML is empty.
 The GitHub connection used to be one of them; it is now resolved in `src/app/dash/layout.tsx` and the data
@@ -316,7 +332,7 @@ under the `#repositorios-monitorados` anchor (`monitoredReposRoute`).
 
 **Onboarding gate.** `connected` means "≥1 GitHub App installation linked", derived from the API — see
 [Conexão GitHub](#conexão-github-github--repositories) below. It locks the data screens (`findings`,
-`pipelines`, `reports`, `reportDetail`, `attack`, `remediations`); wrap those in `<DataScreenGate>`.
+`pipelines`, `reports`, `reportDetail`, `remediations`); wrap those in `<DataScreenGate>`.
 
 **Preview mode** (`?preview=1`) forces the mock connection and must suppress *every* `localStorage` write —
 the cadastro carousel drives the real dashboard in an iframe and cannot pollute real state, nor call the
@@ -542,10 +558,11 @@ barely changed shape. Each page picks its source: `?preview=1` or `connection.de
 dataset; otherwise the API. Scans and the Relatórios list share `fetchScans()` — same executions, two
 presentations; Início pulls both and its KPIs now agree with the screens they link to.
 
-**The sidebar's Findings badge uses `fetchFindingsCount()`, not `fetchFindings()`.** It is resolved in the
-layout, which runs on *every* dash route — pulling up to 1000 findings there just to render a number would
-be absurd, so the count comes from `GET /findings?limit=1` and its `total`. `null` (could not count) hides
-the badge rather than showing a zero.
+**O badge de contagem na aba Findings foi removido**, e com ele `fetchFindingsCount()`, a prop
+`findingsCount` (layout → `DashShell` → `DashSidebar`) e a classe `.sb-bdg`. Ele era resolvido no layout,
+que roda em **toda** rota do dash: a sidebar custava um `GET /findings?limit=1` em cada navegação para
+renderizar um número. Se voltar, o caminho é o mesmo — `total` de uma página de tamanho 1, nunca
+`fetchFindings()` —, mas pense antes se o número paga a requisição.
 
 **Scans keeps client state only in demo mode.** The fabricated job from "Iniciar scan" and the polling that
 finishes `s2`'s Tier 3 are prototype theatre and are gated on `demo`; with real data the list *is* the
@@ -625,9 +642,9 @@ histórico do git, com essa regra já aplicada. As dependências `react-markdown
 
 ### Remediações (dados reais)
 
-`src/lib/api/remediations.ts` (`fetchRemediations`) reads `GET /remediations`; the approve/reject
-Server Action lives in `src/lib/api/remediation-actions.ts`. The screen was already complete — this was
-a wiring job, plus the back-end work that had to come first.
+`src/lib/api/remediations.ts` (`fetchRemediations`) reads `GET /remediations`. There is **no mutation
+module** — see the approve/reject note below. The screen was already complete — this was a wiring job,
+plus the back-end work that had to come first.
 
 - **The back-end generated nothing.** `SuggestPatchUseCase` existed, fully tested, and **no worker called
   it**; the `remediations` table had never received a row. A read route alone would have returned an empty
@@ -643,12 +660,17 @@ a wiring job, plus the back-end work that had to come first.
 - **`?scan=` is resolved on the server now.** It goes to the API as `scan_job_id` rather than filtering an
   already-downloaded list. The context banner still needs *when* the scan ran, which is not embedded in a
   remediation, so the page also calls `fetchScan(scanId)` — but only when there is a scope.
-- **Approve/reject is optimistic, then real.** The card flips immediately, `decideRemediation` writes, and
-  a rejection from the API undoes the local entry and shows the reason on the card. The API answers 409 if
-  the remediation was already decided — approving is a signed act, not a toggle — and 404 (never 403) when
-  it belongs to someone else, so existence does not leak.
-- **Approving here applies nothing.** The product premise is that every patch ships as a GitHub code
-  suggestion and only a human applies it, on GitHub. The endpoint records who decided and when.
+- **There is no approve/reject, and that is deliberate.** It existed — a `PATCH /remediations/{id}/status`
+  with an optimistic card and a `remediation-actions.ts` Server Action. All of it was removed because it
+  was a second decision surface that never talked to the first: approving in the dashboard recorded a
+  decision that moved nothing, while a real "Apply suggestion" on GitHub left the card saying "sugerido"
+  forever. GitHub is the only place a patch is approved and applied. The screen is the **inventory**.
+- **The card's footer says where each patch lives** (`RemediationDestino`): a deep link to the exact review
+  comment when it became a suggestion, or why it did not — `sem-pr` (branch scan) or `fora-do-diff`. The
+  discriminator is `github_comment_id`; `pr_number` separates the two negative cases.
+- **`merged` is unreachable.** The enum still carries it, nothing ever writes it: only GitHub knows an
+  "Apply suggestion" happened, and that needs a `pull_request_review_comment` webhook the pipeline does not
+  have. `approved_by`/`approved_at` stay in the table, always null.
 - A manual scan has no PR, so nothing is posted — the remediation is persisted with
   `github_comment_id: null` and the dashboard is the surface that remains. The `pr_number` link on the card
   simply disappears.
