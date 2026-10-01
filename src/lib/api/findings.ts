@@ -2,7 +2,7 @@ import 'server-only';
 
 import { cookies } from 'next/headers';
 import { cache } from 'react';
-import { repoShortName } from '@/lib/dash/github';
+import { repoShortName, repoWebUrl } from '@/lib/dash/github';
 import type { Criticality, Finding, FindingGroup, Severity } from '@/lib/dash/types';
 import { getApi } from './client';
 import { COOKIE_NAMES, IS_API_CONFIGURED } from './config';
@@ -87,8 +87,12 @@ function toCriticality(value: string | null): Criticality {
  * o que a tela usa como chave de agrupamento.
  */
 function toFinding(dto: ApiFinding): Finding {
+  // `repoWebUrl` tira o `.git`: sem ele o nome do asset saía "python-api.git",
+  // e o agrupamento tratava o mesmo repositório como dois.
   const asset =
-    dto.asset ?? repoShortName(dto.repo_url.replace(/^https?:\/\/[^/]+\//, '')) ?? '';
+    dto.asset ??
+    repoShortName(repoWebUrl(dto.repo_url).replace(/^https?:\/\/[^/]+\//, '')) ??
+    '';
 
   return {
     id: dto.id,
