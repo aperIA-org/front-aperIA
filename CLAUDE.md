@@ -616,8 +616,9 @@ Four things that are load-bearing:
   `fetchScanTools(job.id)` / `fetchScanHistory(job.id)` but `fetchFindingGroups(job.commit_sha)` — findings are
   not execution-scoped (same commit, same code), so two executions of one commit show the same finding list and
   differ in tool outcomes, risk score and tier statuses. Passing `job.id` to the groups call would silently
-  return nothing. The caveat and its cost are written up in
-  `../python-api/docs/pendencias.md` §6.1 — DAST is where it is actually false.
+  return nothing. The caveat: with DAST on, the same commit scanned twice can legitimately differ, because
+  the deployed target may have changed between runs — so "same commit, same findings" is an approximation
+  that only holds for the static tiers.
 - **`ReportHistory`'s list means two different things.** In demo it is the repo's scans (the prototype
   dataset has no repeated commit); with real data it is `GET /scans/{id}/history` — the executions of *this*
   commit. It renders only when there is more than one, so a first execution does not show a one-row table.

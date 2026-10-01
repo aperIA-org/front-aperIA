@@ -30,8 +30,8 @@ import type { ScanJob, TierStatus } from './types';
  * mostrar o id devolveria o nome do produto para a tela, que é exatamente o que
  * esta camada existe para evitar. O id continua na chave do React e nos dados.
  *
- * A ordem das listas espelha a ordem real do canvas do Celery
- * (`../python-api/docs/explicacao-pipeline.md` §2).
+ * A ordem das listas espelha a ordem real do canvas do Celery no back-end:
+ * cada tier roda seus scanners e só então a etapa de I.A daquele tier.
  */
 
 /** `analise` = etapa de I.A/enriquecimento; `scanner` = varredura propriamente. */
