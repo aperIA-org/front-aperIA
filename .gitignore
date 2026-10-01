@@ -24,8 +24,15 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files
-.env
-.env*.local
+# `.env*` pega tudo, inclusive `.env.production` — que e' exatamente o arquivo
+# que o Amplify consome no build, com INTERNAL_PROXY_TOKEN dentro. A regra
+# anterior (`.env` + `.env*.local`) deixava ele de fora.
+.env*
+!.env.example
+
+# Permissoes locais do agente. Ate aqui so o gitignore global da maquina
+# protegia este arquivo; num clone em outro lugar, nao protegia.
+.claude/settings.local.json
 
 # typescript
 *.tsbuildinfo
