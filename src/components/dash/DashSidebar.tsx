@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useDashState } from '@/lib/dash/dash-state';
-import { openFindings } from '@/lib/dash/mock-data';
 import {
   DATA_SCREENS,
   SCREEN_ROUTES,
@@ -25,35 +24,27 @@ type NavItem = {
   screen: DashScreen;
   label: string;
   icon: React.ReactNode;
-  badge?: number;
 };
 
 /** `null` = divisória. A ordem segue o fluxo: scan → relatório → finding → remediação → emulação. */
-function navItems(findingsCount: number): (NavItem | null)[] {
+function navItems(): (NavItem | null)[] {
   return [
     { screen: 'home', label: 'Início', icon: <IconHome /> },
     null,
     { screen: 'pipelines', label: 'Scans', icon: <IconScans /> },
     { screen: 'reports', label: 'Relatórios', icon: <IconReports /> },
-    {
-      screen: 'findings',
-      label: 'Findings',
-      icon: <IconFindings />,
-      badge: findingsCount,
-    },
+    { screen: 'findings', label: 'Findings', icon: <IconFindings /> },
     { screen: 'remediations', label: 'Remediações', icon: <IconRemediations /> },
     null,
     { screen: 'integrations', label: 'Repositórios', icon: <IconRepos /> },
   ];
 }
 
-export function DashSidebar({ findingsCount }: { findingsCount: number | null }) {
+export function DashSidebar() {
   const pathname = usePathname();
-  const { connected, connection, sidebarCollapsed, toggleSidebar } = useDashState();
+  const { connected, sidebarCollapsed, toggleSidebar } = useDashState();
   const active = screenFromPathname(pathname);
-  // Em demonstração (e no preview do cadastro) o badge conta o dataset do
-  // protótipo; com sessão real vem de `GET /findings?limit=1`.
-  const items = navItems(connection.demo ? openFindings().length : (findingsCount ?? 0));
+  const items = navItems();
 
   return (
     <aside
@@ -172,9 +163,6 @@ export function DashSidebar({ findingsCount }: { findingsCount: number | null })
             >
               <span className="sb-ico">{item.icon}</span>
               <span className="sb-lbl">{item.label}</span>
-              {item.badge !== undefined && !locked && (
-                <span className="sb-bdg">{item.badge}</span>
-              )}
             </Link>
           );
         })}

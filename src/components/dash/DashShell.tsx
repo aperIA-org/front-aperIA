@@ -20,12 +20,10 @@ const SIDEBAR_WIDTH_COLLAPSED = 64;
  */
 export function DashShell({
   user,
-  findingsCount,
   children,
 }: {
   user: CurrentUser | null;
   /** Total de findings da API; `null` quando não foi possível contar. */
-  findingsCount: number | null;
   children: React.ReactNode;
 }) {
   const { sidebarCollapsed } = useDashState();
@@ -46,7 +44,7 @@ export function DashShell({
         transition: 'grid-template-columns .25s cubic-bezier(.22,.61,.36,1)',
       }}
     >
-      <DashSidebar findingsCount={findingsCount} />
+      <DashSidebar />
 
       <div
         className="flex flex-col"

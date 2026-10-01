@@ -133,29 +133,6 @@ async function accessToken(): Promise<string | undefined> {
 }
 
 /**
- * Só a contagem de findings, para o badge da sidebar.
- *
- * `limit=1` porque a API devolve `total` na página: uma requisição mínima em
- * vez de varrer o conjunto inteiro num layout que roda em TODA rota do dash.
- * `null` quando não deu para contar — o badge some em vez de mostrar zero.
- */
-export const fetchFindingsCount = cache(async (): Promise<number | null> => {
-  if (!IS_API_CONFIGURED) return null;
-
-  const token = await accessToken();
-  if (!token) return null;
-
-  try {
-    const { status, data } = await getApi('/findings?limit=1&offset=0', token);
-    if (status !== 200 || !data || typeof data !== 'object') return null;
-    const total = (data as { total?: unknown }).total;
-    return typeof total === 'number' ? total : null;
-  } catch {
-    return null;
-  }
-});
-
-/**
  * Busca findings do usuário, paginando até o teto.
  *
  * `commitSha` escopa a um commit (usado pelo detalhe de relatório). Sem ele, é

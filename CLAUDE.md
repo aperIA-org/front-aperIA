@@ -558,10 +558,11 @@ barely changed shape. Each page picks its source: `?preview=1` or `connection.de
 dataset; otherwise the API. Scans and the Relatórios list share `fetchScans()` — same executions, two
 presentations; Início pulls both and its KPIs now agree with the screens they link to.
 
-**The sidebar's Findings badge uses `fetchFindingsCount()`, not `fetchFindings()`.** It is resolved in the
-layout, which runs on *every* dash route — pulling up to 1000 findings there just to render a number would
-be absurd, so the count comes from `GET /findings?limit=1` and its `total`. `null` (could not count) hides
-the badge rather than showing a zero.
+**O badge de contagem na aba Findings foi removido**, e com ele `fetchFindingsCount()`, a prop
+`findingsCount` (layout → `DashShell` → `DashSidebar`) e a classe `.sb-bdg`. Ele era resolvido no layout,
+que roda em **toda** rota do dash: a sidebar custava um `GET /findings?limit=1` em cada navegação para
+renderizar um número. Se voltar, o caminho é o mesmo — `total` de uma página de tamanho 1, nunca
+`fetchFindings()` —, mas pense antes se o número paga a requisição.
 
 **Scans keeps client state only in demo mode.** The fabricated job from "Iniciar scan" and the polling that
 finishes `s2`'s Tier 3 are prototype theatre and are gated on `demo`; with real data the list *is* the

@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { DashShell } from '@/components/dash/DashShell';
 import { PreviewNavigationBridge } from '@/components/dash/PreviewNavigationBridge';
-import { fetchFindingsCount } from '@/lib/api/findings';
 import { resolveGitHubConnection } from '@/lib/api/github';
 import { getCurrentUser } from '@/lib/api/user';
 import { DashStateProvider } from '@/lib/dash/dash-state';
@@ -38,10 +37,9 @@ export default async function DashLayout({ children }: { children: React.ReactNo
   // Resolver a conexão AQUI é o que devolve conteúdo no SSR às telas de dados:
   // enquanto `connected` vivia em localStorage, elas renderizavam `null` até o
   // primeiro efeito.
-  const [user, connection, findingsCount] = await Promise.all([
+  const [user, connection] = await Promise.all([
     getCurrentUser(),
     resolveGitHubConnection(),
-    fetchFindingsCount(),
   ]);
 
   return (
@@ -52,7 +50,7 @@ export default async function DashLayout({ children }: { children: React.ReactNo
       <Suspense fallback={null}>
         <DashStateProvider initialConnection={connection}>
           <PreviewNavigationBridge />
-          <DashShell user={user} findingsCount={findingsCount}>{children}</DashShell>
+          <DashShell user={user}>{children}</DashShell>
         </DashStateProvider>
       </Suspense>
     </>
