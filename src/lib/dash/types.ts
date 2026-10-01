@@ -149,6 +149,39 @@ export type Remediation = {
   created_at: string;
 };
 
+/**
+ * O que o card mostra ao redor da remediação: severidade e título do finding
+ * de origem, o arquivo, e o PR onde a sugestão foi postada.
+ *
+ * Vem embutido em `GET /remediations`, do mesmo join que prova a posse. A
+ * alternativa — resolver contra a lista de findings no cliente — obrigaria a
+ * tela a varrer o conjunto inteiro do usuário para exibir algumas dezenas de
+ * patches. No dataset do protótipo o contexto é montado a partir de
+ * `FINDINGS` / `SCAN_JOBS`, que é de onde ele saía antes.
+ */
+export type RemediationContext = {
+  finding?: Pick<Finding, 'id' | 'title' | 'severity' | 'file_path' | 'repo_url'>;
+  job?: Pick<ScanJob, 'pr_number'>;
+  /**
+   * Onde o patch vive. A tela é o inventário de tudo que o pipeline gerou, e
+   * só parte disso vira comentário no PR: scan manual não tem PR, e o GitHub
+   * recusa comentário inline em arquivo fora do diff. Sem este campo os dois
+   * casos ficavam indistinguíveis de um patch postado.
+   */
+  destino: RemediationDestino;
+};
+
+export type RemediationDestino =
+  /** Virou code suggestion; `commentUrl` abre o comentário exato. */
+  | { tipo: 'suggestion'; commentUrl: string }
+  /** Gerado num scan de branch — não havia PR onde comentar. */
+  | { tipo: 'sem-pr' }
+  /** O arquivo não está no diff do PR; o GitHub recusaria o comentário. */
+  | { tipo: 'fora-do-diff' };
+
+/** Uma remediação junto do seu contexto — o que a tela de fato renderiza. */
+export type RemediationItem = Remediation & RemediationContext;
+
 export type AttackStep = {
   step: number;
   phase: string;

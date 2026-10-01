@@ -664,6 +664,9 @@ function ScanExecution({
   const running = status === 'running';
   const findingsTotal = job.findings_summary?.total;
   const gate1Blocked = job.final_risk_level === 'blocked';
+  // A contagem só existe em demonstração: com dado real ela custaria uma
+  // requisição por card, e `GET /remediations` não devolve agregado por scan.
+  // Zero esconde o selo, que é melhor do que mostrar um número inventado.
   const remCount = demo
     ? REMEDIATIONS.filter((rem) => rem.scan_job_id === job.id).length
     : 0;
@@ -671,6 +674,9 @@ function ScanExecution({
   const noEscalation = tierSkipReason(job, 2) === 'gate2-sem-escalada';
   // Só a etapa que chegou a rodar tem início gravado — ver `tierDoCancelamento`.
   const tierCancelado = tierDoCancelamento(job);
+  // Em demonstração o card abre as remediações daquele scan; com dado real ele
+  // abre o relatório, que é o desfecho completo da execução. As remediações
+  // continuam a um clique, pelo menu — e `?scan=` já as escopa de verdade.
   const href = demo
     ? `${SCREEN_ROUTES.remediations}?scan=${job.id}`
     // `'scans'`: é o que faz o "voltar" do relatório trazer de volta para cá.

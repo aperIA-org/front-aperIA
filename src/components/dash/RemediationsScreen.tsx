@@ -5,16 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SCREEN_ROUTES } from '@/lib/dash/dash-routes';
 import { scanRanAt, shortSha, timeAgo } from '@/lib/dash/format';
-import { FINDINGS, REMEDIATIONS, SCAN_JOBS } from '@/lib/dash/mock-data';
-import type { RemediationStatus } from '@/lib/dash/types';
-import { DemoDataBadge } from './DemoDataBadge';
+import type { RemediationItem, ScanJob } from '@/lib/dash/types';
 import { EmptyState } from './EmptyState';
 import { RemediationCard } from './RemediationCard';
-
-/** Revisor simulado — o protótipo assinava toda aprovação com este e-mail. */
-const REVIEWER = 'marina.alves@acme.io';
-
-type Decision = { status: RemediationStatus; approvedBy: string };
 
 function ScanContextIcon() {
   return (
@@ -37,21 +30,27 @@ function ScanContextIcon() {
   );
 }
 
-export function RemediationsScreen() {
+export function RemediationsScreen({
+  remediations,
+  scopeJob,
+  ok,
+  now,
+}: {
+  remediations: RemediationItem[];
+  /** Execução do `?scan=`, quando há escopo — alimenta a faixa de contexto. */
+  scopeJob: ScanJob | null;
+  /** `false` quando a API não respondeu — estado neutro, não "zero patches". */
+  ok: boolean;
+  now: number;
+}) {
   const searchParams = useSearchParams();
-  // `remScanContext` era estado de módulo no protótipo; aqui o escopo do scan
-  // vive na URL (`?scan=s1`), então o link continua compartilhável.
+  // O escopo do scan vive na URL (`?scan=s1`), então o link é compartilhável.
+  // Quem resolve é o servidor: com dado real ele vira `scan_job_id` na API.
   const scanId = searchParams.get('scan');
-  // `?rem=r1` substitui o `window.highlightRem` — quem vem de um finding pede
-  // o destaque pela URL.
+  // `?rem=r1` substitui o `window.highlightRem` do protótipo — quem vem de um
+  // finding pede o destaque pela URL.
   const highlightParam = searchParams.get('rem');
 
-  /**
-   * Aprovar/rejeitar NÃO muta `REMEDIATIONS`: o array é módulo compartilhado e
-   * mutá-lo (como o protótipo fazia) deixaria a decisão gravada para todas as
-   * telas até o próximo reload. As decisões desta sessão ficam aqui, por id.
-   */
-  const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [highlighted, setHighlighted] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,33 +63,24 @@ export function RemediationsScreen() {
     return () => clearTimeout(timer);
   }, [highlightParam]);
 
-  const decide = (id: string, status: RemediationStatus) => {
-    setDecisions((prev) => ({ ...prev, [id]: { status, approvedBy: REVIEWER } }));
-  };
-
-  const ctxJob = scanId ? SCAN_JOBS.find((j) => j.id === scanId) : undefined;
-  const remList = ctxJob
-    ? REMEDIATIONS.filter((r) => r.scan_job_id === ctxJob.id)
-    : REMEDIATIONS;
-
-  const ctxRunning = ctxJob
-    ? [ctxJob.tier1_status, ctxJob.tier2_status, ctxJob.tier3_status].includes('running')
+  const ctxRunning = scopeJob
+    ? [scopeJob.tier1_status, scopeJob.tier2_status, scopeJob.tier3_status].includes(
+        'running',
+      )
     : false;
 
   return (
     <div className="page-wrap">
       <div className="mb-6">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <h1 className="text-[24px] font-bold tracking-tight">Remediações</h1>
-          <DemoDataBadge className="flex-shrink-0" />
-        </div>
+        <h1 className="text-[24px] font-bold tracking-tight">Remediações</h1>
         <p className="mt-1 text-[13px] text-fg-dim">
-          Patches sugeridos, aguardando aprovação humana antes de aplicar
+          Todo patch que o pipeline propôs. Quem aprova e aplica é você, no
+          GitHub — aqui estão inclusive os que não couberam num pull request.
         </p>
       </div>
 
       {/* faixa de contexto quando veio do clique num scan */}
-      {ctxJob && (
+      {scopeJob && (
         <div
           className="stat-card mb-5 flex items-center gap-3"
           style={{ padding: '12px 16px' }}
@@ -98,10 +88,15 @@ export function RemediationsScreen() {
           <ScanContextIcon />
           <span className="text-[13px]" style={{ color: 'var(--text-secondary)' }}>
             Exibindo remediações do scan{' '}
-            <b style={{ color: 'var(--text-primary)' }}>{ctxJob.repo_full_name}</b> ·{' '}
-            <span className="mono">PR #{ctxJob.pr_number}</span> ·{' '}
-            <span className="mono">{shortSha(ctxJob.commit_sha)}</span> ·{' '}
-            {timeAgo(scanRanAt(ctxJob))}
+            <b style={{ color: 'var(--text-primary)' }}>{scopeJob.repo_full_name}</b>
+            {scopeJob.pr_number ? (
+              <>
+                {' · '}
+                <span className="mono">PR #{scopeJob.pr_number}</span>
+              </>
+            ) : null}{' '}
+            · <span className="mono">{shortSha(scopeJob.commit_sha)}</span> ·{' '}
+            {timeAgo(scanRanAt(scopeJob), now)}
           </span>
           <Link
             href={SCREEN_ROUTES.remediations}
@@ -113,38 +108,49 @@ export function RemediationsScreen() {
         </div>
       )}
 
-      {remList.map((rem) => {
-        const decision = decisions[rem.id];
-        return (
-          <RemediationCard
-            key={rem.id}
-            remediation={rem}
-            status={decision?.status ?? rem.status}
-            approvedBy={decision?.approvedBy ?? rem.approved_by}
-            finding={FINDINGS.find((f) => f.id === rem.finding_id)}
-            job={SCAN_JOBS.find((j) => j.id === rem.scan_job_id)}
-            highlighted={highlighted === rem.id}
-            onApprove={() => decide(rem.id, 'approved')}
-            onReject={() => decide(rem.id, 'rejected')}
-          />
-        );
-      })}
+      {remediations.map((rem) => (
+        <RemediationCard
+          key={rem.id}
+          remediation={rem}
+          destino={rem.destino}
+          finding={rem.finding}
+          job={rem.job}
+          highlighted={highlighted === rem.id}
+        />
+      ))}
 
-      {ctxJob && remList.length === 0 && (
+      {remediations.length === 0 && (
         <div className="stat-card">
-          <EmptyState
-            title="Nenhuma remediação para este scan"
-            body={
-              ctxRunning
-                ? 'Este scan ainda está em execução. As remediações aparecem aqui assim que a análise terminar.'
-                : 'Este scan não gerou patches de remediação. Isso acontece quando nenhum finding acionável foi encontrado ou o scan foi bloqueado antes da análise.'
-            }
-            action={
-              <Link href={SCREEN_ROUTES.remediations} className="btn btn-md btn-primary">
-                Ver todas as remediações
-              </Link>
-            }
-          />
+          {!ok ? (
+            <EmptyState
+              title="Não foi possível carregar as remediações"
+              body="O servidor não respondeu. Recarregue a página em instantes — nenhum patch foi perdido."
+            />
+          ) : scanId ? (
+            <EmptyState
+              title="Nenhuma remediação para este scan"
+              body={
+                ctxRunning
+                  ? 'Este scan ainda está em execução. As remediações aparecem aqui assim que a análise terminar.'
+                  : 'Este scan não gerou patches de remediação. Isso acontece quando nenhum finding acionável foi encontrado ou o scan foi bloqueado antes da análise.'
+              }
+              action={
+                <Link href={SCREEN_ROUTES.remediations} className="btn btn-md btn-primary">
+                  Ver todas as remediações
+                </Link>
+              }
+            />
+          ) : (
+            <EmptyState
+              title="Nenhuma remediação ainda"
+              body="Os patches aparecem aqui depois que um scan encontra um problema de código com arquivo e linha. Vulnerabilidades encontradas na aplicação em execução não geram patch."
+              action={
+                <Link href={SCREEN_ROUTES.pipelines} className="btn btn-md btn-primary">
+                  Ver scans
+                </Link>
+              }
+            />
+          )}
         </div>
       )}
     </div>
