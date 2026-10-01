@@ -251,9 +251,10 @@ lifetimes mirror `ACCESS_TOKEN_EXPIRE_MINUTES=15` / `REFRESH_TOKEN_EXPIRE_DAYS=7
 The current user comes from `src/lib/api/user.ts`: the API has no `/users/me`, so it reads the `sub` claim
 from the access token (decode only — the API is the authority on verification) and calls `GET /users/{id}`.
 The dash layout resolves it server-side and passes it to `DashTopBar`. Without a session the header shows a
-neutral state rather than inventing a name; in demo mode it shows `DEMO_USER` (Marina Alves, matching the
-`approved_by` in the mock remediations). The org line ("Acme · Pessoal") is still static — the API exposes
-no organization endpoint.
+neutral state rather than inventing a name; in demo mode it shows `DEMO_USER` (Marina Alves). There is **no
+org line and no search box** in the header: the org was a static "Acme · Pessoal" and the API exposes no
+organization endpoint, so it stated something the product does not know; the search input held a `useState`
+that fed nothing and a `⌘K` badge bound to no handler.
 
 ### Silent session refresh — `src/middleware.ts`
 
@@ -301,12 +302,12 @@ the second layer. Reproduced before the fix: two concurrent refreshes with one t
 
 ## Dashboard (`/dash/*`)
 
-All 10 screens are ported. `src/app/dash/layout.tsx` (server: resolves the user **and the GitHub
+Seven screens. `src/app/dash/layout.tsx` (server: resolves the user **and the GitHub
 connection**, injects the pre-paint theme script) → `DashStateProvider` → `DashShell` (client: grid +
 sidebar + topbar). Components in `src/components/dash/`, modules in `src/lib/dash/`.
 
 **Routes** are real, one per screen. The screen keys (`home`, `findings`, `pipelines`, `reports`,
-`reportDetail`, `remediations`, `attack`, `integrations`, `team`) remain the identity of a screen because
+`reportDetail`, `remediations`, `integrations`) remain the identity of a screen because
 the sidebar exposes them as `data-screen` and the cadastro preview navigates by them. The map lives
 in `src/lib/dash/dash-routes.ts` — always route through `SCREEN_ROUTES` / `reportDetailRoute()` /
 `findingRoute()`, never hard-code a path. The old `repos` key and its `/dash/repositorios/gerenciar` route
@@ -326,12 +327,15 @@ API (it has no session). `?theme=light` forces the theme without persisting it.
 longer exist, cleared on login/logout to tidy up older sessions. `logout()` calls `/api/auth/logout` and
 routes to `/login`.
 
-**Início, Findings, Relatórios, Scans and Remediações read the API** — see
-[Dados reais](#dados-reais-findings-relatórios-e-scans) below. The screens that are *still* mock
-(AI Emulation and Time) carry `<DemoDataBadge />` next
-to their `<h1>` whenever the connection is real
-(`showDemoBadge`). In demo mode the whole app is a prototype and the badge stays hidden. Remove the badge
-from a screen the moment it starts reading the API.
+**Every remaining screen reads the API** — see
+[Dados reais](#dados-reais-findings-relatórios-e-scans) below. `<DemoDataBadge />` (`showDemoBadge`) still
+exists for a screen that is mock while the connection is real; nothing uses it today. Remove the badge from
+a screen the moment it starts reading the API.
+
+**AI Emulation and Time were deleted**, with `AttackEmulationScreen`, `AttackChain`, and the `INSIGHTS`,
+`TEAM`, `ROLE_LABELS`, `Insight` and `AttackStep` mock data they owned. They were never implemented against
+the API and had no path to it: Time has no endpoint at all, and AI Emulation would read the Tier 3
+`analysis_json`. `AttackPathCard` survives — the report detail uses it.
 
 **All data is deterministic mock data** in `src/lib/dash/mock-data.ts`. `buildFindings()` generates 80
 synthetic findings from `VULN_TEMPLATES` with a seeded `mulberry32(20240629)` PRNG, plus 10 hand-written
@@ -810,7 +814,6 @@ These are the seams between screens. Keep them in the helpers, not inline:
 - `findingRoute(id)` → `/dash/findings?finding=<id>`. Report detail and Remediações both link to a finding;
   the Findings list scrolls to and flashes that row.
 - `?scan=<id>` on `/dash/remediacoes` scopes the list to one execution (Scans links to it).
-- `?scan=<id>` on `/dash/ai-emulation` selects which execution's attack path to show.
 
 ### Screens never mutate the shared mock arrays
 
@@ -828,8 +831,7 @@ Two pieces of the dashboard remain in `legacy/dash/index.html` only:
    cross-filter by clicking a bar/slice (`onDimClick`), and the filter state they would drive already exists
    in `findings-filters.ts` — so they plug in without reworking anything.
 2. **The finding slide-over drawer** — `openFinding`, `rotationBlock`. The port replaces it with the
-   `findingRoute()` deep link. Building the drawer would also restore the chain-scoped prev/next that
-   AI Emulation had to drop.
+   `findingRoute()` deep link.
 
 `src/components/dash/NotPortedYet.tsx` is now referenced by nothing. Delete it whenever.
 

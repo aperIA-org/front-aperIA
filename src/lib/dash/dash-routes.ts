@@ -16,9 +16,7 @@ export const DASH_SCREENS = [
   'reports',
   'reportDetail',
   'remediations',
-  'attack',
   'integrations',
-  'team',
 ] as const;
 
 export type DashScreen = (typeof DASH_SCREENS)[number];
@@ -29,7 +27,6 @@ export const DATA_SCREENS: readonly DashScreen[] = [
   'pipelines',
   'reports',
   'reportDetail',
-  'attack',
   'remediations',
 ];
 
@@ -40,9 +37,7 @@ export const SCREEN_LABELS: Record<DashScreen, string> = {
   reports: 'Relatórios',
   reportDetail: 'Relatórios',
   remediations: 'Remediações',
-  attack: 'AI Emulation',
   integrations: 'Repositórios',
-  team: 'Time',
 };
 
 export const SCREEN_ROUTES: Record<DashScreen, string> = {
@@ -52,9 +47,7 @@ export const SCREEN_ROUTES: Record<DashScreen, string> = {
   reports: '/dash/relatorios',
   reportDetail: '/dash/relatorios',
   remediations: '/dash/remediacoes',
-  attack: '/dash/ai-emulation',
   integrations: '/dash/repositorios',
-  team: '/dash/time',
 };
 
 /** Âncora da seção de seleção de repositórios dentro de `/dash/repositorios`. */

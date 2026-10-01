@@ -12,7 +12,6 @@ import {
   type DashScreen,
 } from '@/lib/dash/dash-routes';
 import {
-  IconAttack,
   IconChevron,
   IconFindings,
   IconHome,
@@ -20,7 +19,6 @@ import {
   IconRepos,
   IconReports,
   IconScans,
-  IconTeam,
 } from './DashIcons';
 
 type NavItem = {
@@ -44,10 +42,8 @@ function navItems(findingsCount: number): (NavItem | null)[] {
       badge: findingsCount,
     },
     { screen: 'remediations', label: 'Remediações', icon: <IconRemediations /> },
-    { screen: 'attack', label: 'AI Emulation', icon: <IconAttack /> },
     null,
     { screen: 'integrations', label: 'Repositórios', icon: <IconRepos /> },
-    { screen: 'team', label: 'Time', icon: <IconTeam /> },
   ];
 }
 

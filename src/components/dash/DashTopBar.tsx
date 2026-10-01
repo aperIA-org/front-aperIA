@@ -11,7 +11,6 @@ import {
   IconChevronDown,
   IconLogout,
   IconMoon,
-  IconSearch,
   IconSun,
 } from './DashIcons';
 
@@ -34,7 +33,6 @@ export function DashTopBar({ user }: { user: CurrentUser | null }) {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuWrapRef = useRef<HTMLDivElement | null>(null);
-  const [search, setSearch] = useState('');
 
   // Sem sessão resolvida o header não inventa um nome.
   const parts = user?.username.trim().split(/\s+/).filter(Boolean) ?? [];
@@ -63,36 +61,14 @@ export function DashTopBar({ user }: { user: CurrentUser | null }) {
     >
       <div className="relative mx-auto flex h-full max-w-[1440px] items-center gap-4 px-8">
         {/* O protótipo esconde o breadcrumb na Início. */}
+        {/* Sem prefixo de organização: o aperIA não modela workspace, e o
+            "Acme" era do protótipo. Inventar um nome aqui faria o cabeçalho
+            afirmar algo que o produto não sabe. */}
         <div
           className="flex items-center gap-2 text-[13px] text-fg-dim"
           style={{ display: isHome ? 'none' : 'flex' }}
         >
-          <span className="text-fg-mute">Acme</span>
-          <span className="text-fg-dim">/</span>
           <span className="text-fg">{breadcrumb}</span>
-        </div>
-
-        <div className="absolute left-1/2 w-full max-w-[400px] -translate-x-1/2 px-4">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-dim">
-              <IconSearch />
-            </span>
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar… (⌘K)"
-              aria-label="Buscar"
-              className="inp w-full"
-              style={{ paddingLeft: 32, paddingRight: 44, background: 'var(--bg-page)' }}
-            />
-            <span
-              className="mono absolute right-3 top-1/2 -translate-y-1/2 rounded-xs border border-line px-1.5 py-0.5 text-[10px] text-fg-dim"
-              style={{ background: 'var(--bg-surface-raised)' }}
-            >
-              ⌘K
-            </span>
-          </div>
         </div>
 
         <div className="ml-auto flex items-center gap-4">
@@ -162,23 +138,6 @@ export function DashTopBar({ user }: { user: CurrentUser | null }) {
                   </div>
                   <div className="mt-0.5 text-[12px] text-fg-dim">
                     {user?.email ?? 'Faça login novamente para carregar seus dados.'}
-                  </div>
-                </div>
-                <div
-                  className="flex items-center gap-[9px]"
-                  style={{ padding: '10px 14px', borderBottom: '1px solid var(--border-default)' }}
-                >
-                  <div
-                    className="mono grid h-6 w-6 flex-shrink-0 place-items-center rounded-md text-[11px] font-semibold"
-                    style={{ background: 'var(--bg-surface-raised)', color: 'var(--text-secondary)' }}
-                  >
-                    A
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[10px] uppercase tracking-[0.05em] text-fg-faint">
-                      Organização
-                    </div>
-                    <div className="text-[12.5px] font-semibold text-fg">Acme · Pessoal</div>
                   </div>
                 </div>
                 <button
