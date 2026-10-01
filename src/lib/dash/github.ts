@@ -90,6 +90,22 @@ export function monitoredRepos(connection: GitHubConnection): Repository[] {
   return connection.repositories.filter((repo) => repo.active);
 }
 
+/**
+ * O endereço web do repositório, a partir do que o banco guarda.
+ *
+ * `repo_url` vem do que foi cadastrado e é inconsistente: uns registros têm o
+ * sufixo `.git` (a URL de clone), outros não. Concatenar `/pull/21` direto
+ * produzia `…/python-api.git/pull/21`, que o GitHub não resolve — o link
+ * abria uma 404 sem nada indicar o motivo.
+ *
+ * Normalizar na leitura, e não no banco, porque a mesma coluna alimenta coisas
+ * que não são link; e uma migration não impediria o próximo cadastro de
+ * entrar com `.git` de novo.
+ */
+export function repoWebUrl(repoUrl: string): string {
+  return repoUrl.replace(/\.git$/, '').replace(/\/$/, '');
+}
+
 /** "OCR-aperIA/payments-api" → "payments-api". */
 export function repoShortName(fullName: string): string {
   const slash = fullName.indexOf('/');

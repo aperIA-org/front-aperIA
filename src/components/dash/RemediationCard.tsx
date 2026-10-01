@@ -3,17 +3,14 @@
 import Link from 'next/link';
 import { Fragment } from 'react';
 import { findingRoute } from '@/lib/dash/dash-routes';
-import { REM_STATUS_PT } from '@/lib/dash/format';
-import type { Finding, Remediation, RemediationStatus, ScanJob } from '@/lib/dash/types';
+import { repoWebUrl } from '@/lib/dash/github';
+import type {
+  Remediation,
+  RemediationContext,
+  RemediationDestino,
+} from '@/lib/dash/types';
 import { DiffView } from './DiffView';
 import { SevBadge } from './SevBadge';
-
-const STATUS_CLASS: Record<RemediationStatus, string> = {
-  suggested: 'st-queued',
-  approved: 'st-done',
-  rejected: 'st-failed',
-  merged: 'st-done',
-};
 
 /** Identificadores em CAIXA ALTA ganham fonte mono dentro das instruções. */
 const UPPER_ID = /\b([A-Z][A-Z0-9_/]{6,})\b/g;
@@ -107,25 +104,69 @@ function RotationBlock({ instructions }: { instructions: string | null }) {
   );
 }
 
+/**
+ * Onde o patch vive — o rodapé do card.
+ *
+ * Substituiu os botões Aprovar/Rejeitar. Eles gravavam uma decisão que não
+ * mexia em nada: quem aplica um patch é o "Apply suggestion" do GitHub, e o
+ * dashboard nunca ficava sabendo. Duas superfícies de decisão que não
+ * conversavam. Aqui há uma só, e o card diz como chegar nela.
+ */
+/**
+ * Onde o patch vive — o rodapé do card.
+ *
+ * Substituiu os botões Aprovar/Rejeitar. Eles gravavam uma decisão que não
+ * mexia em nada: quem aplica um patch é o "Apply suggestion" do GitHub, e o
+ * dashboard nunca ficava sabendo. Duas superfícies de decisão que não
+ * conversavam. Aqui há uma só, e o card diz como chegar nela.
+ */
+function DestinoBadge({ destino }: { destino: RemediationDestino }) {
+  if (destino.tipo === 'suggestion') {
+    return (
+      <div className="mt-3 flex items-center gap-1.5 text-[12px]">
+        <span style={{ color: 'var(--sev-safe)' }}>●</span>
+        <span className="text-fg-mute">Aberta como sugestão no PR —</span>
+        <a className="lnk-ext" href={destino.commentUrl} target="_blank" rel="noopener">
+          revisar e aplicar no GitHub <ExternalIcon />
+        </a>
+      </div>
+    );
+  }
+
+  const motivo =
+    destino.tipo === 'sem-pr'
+      ? 'Scan de branch: não havia pull request onde comentar.'
+      : 'O arquivo não faz parte das mudanças do pull request.';
+
+  return (
+    <div className="mt-3 flex items-start gap-1.5 text-[12px]">
+      <span className="text-fg-dim">○</span>
+      <span className="text-fg-mute">
+        Não foi aberta como sugestão. {motivo} O patch acima é a correção
+        proposta — aplicar continua sendo manual.
+      </span>
+    </div>
+  );
+}
+
 export function RemediationCard({
   remediation,
-  status,
-  approvedBy,
+  destino,
   finding,
   job,
   highlighted,
-  onApprove,
-  onReject,
 }: {
   remediation: Remediation;
-  /** Status efetivo — pode vir de uma aprovação feita nesta sessão. */
-  status: RemediationStatus;
-  approvedBy: string | null;
-  finding?: Finding;
-  job?: ScanJob;
+  /** Onde o patch vive — é o que o rodapé do card comunica. */
+  destino: RemediationDestino;
+  /**
+   * Só os campos que o card usa, e não a `Finding` inteira: com dado real eles
+   * vêm embutidos na remediação, e exigir o tipo completo obrigaria a inventar
+   * os campos que a API não devolve.
+   */
+  finding?: RemediationContext['finding'];
+  job?: RemediationContext['job'];
   highlighted?: boolean;
-  onApprove: () => void;
-  onReject: () => void;
 }) {
   return (
     <div
@@ -140,9 +181,6 @@ export function RemediationCard({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex flex-wrap items-center gap-2">
             {finding?.severity && <SevBadge severity={finding.severity} />}
-            <span className={`sev ${STATUS_CLASS[status]}`}>
-              {REM_STATUS_PT[status] ?? status}
-            </span>
           </div>
 
           <h3 className="mt-2 text-[15px] font-semibold leading-snug">
@@ -175,7 +213,7 @@ export function RemediationCard({
         {finding?.repo_url && job?.pr_number && (
           <a
             className="lnk-ext"
-            href={`${finding.repo_url}/pull/${job.pr_number}`}
+            href={`${repoWebUrl(finding.repo_url)}/pull/${job.pr_number}`}
             target="_blank"
             rel="noopener"
           >
@@ -184,24 +222,7 @@ export function RemediationCard({
         )}
       </div>
 
-      {status === 'suggested' ? (
-        <div className="mt-3 flex items-center gap-2">
-          <button type="button" className="btn btn-sm btn-success" onClick={onApprove}>
-            Aprovar patch
-          </button>
-          <button type="button" className="btn btn-sm btn-danger" onClick={onReject}>
-            Rejeitar
-          </button>
-        </div>
-      ) : status === 'approved' ? (
-        <div className="mt-3 text-[12px]" style={{ color: '#22c55e' }}>
-          Aprovado por {approvedBy || '—'}
-        </div>
-      ) : status === 'rejected' ? (
-        <div className="mt-3 text-[12px]" style={{ color: '#ef4444' }}>
-          Rejeitado por {approvedBy || '—'}
-        </div>
-      ) : null}
+      <DestinoBadge destino={destino} />
     </div>
   );
 }

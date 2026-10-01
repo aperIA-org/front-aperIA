@@ -326,9 +326,9 @@ API (it has no session). `?theme=light` forces the theme without persisting it.
 longer exist, cleared on login/logout to tidy up older sessions. `logout()` calls `/api/auth/logout` and
 routes to `/login`.
 
-**Início, Findings, Relatórios and Scans read the API** — see
+**Início, Findings, Relatórios, Scans and Remediações read the API** — see
 [Dados reais](#dados-reais-findings-relatórios-e-scans) below. The screens that are *still* mock
-(Remediações, AI Emulation and Time) carry `<DemoDataBadge />` next
+(AI Emulation and Time) carry `<DemoDataBadge />` next
 to their `<h1>` whenever the connection is real
 (`showDemoBadge`). In demo mode the whole app is a prototype and the badge stays hidden. Remove the badge
 from a screen the moment it starts reading the API.
@@ -546,9 +546,11 @@ the badge rather than showing a zero.
 **Scans keeps client state only in demo mode.** The fabricated job from "Iniciar scan" and the polling that
 finishes `s2`'s Tier 3 are prototype theatre and are gated on `demo`; with real data the list *is* the
 server's, so the manual-scan action's `revalidatePath('/dash')` is what makes a new execution appear. A
-local copy would drift from the server instead. For the same reason the scan card changes destination: in
-demo it opens that scan's remediations, with real data it opens the commit's report — Remediações is still
-mock, and sending a real id there would land on an empty list.
+local copy would drift from the server instead. The scan card also changes destination: in demo it opens
+that scan's remediations, with real data it opens the commit's report, which is the fuller outcome of an
+execution. `?scan=` on Remediações is a real filter now (it becomes `scan_job_id` on the API), so nothing
+is lost — the "N remediações" badge on the card is the one thing that stays demo-only, because counting
+per scan would cost one request per card.
 
 Four things that are load-bearing:
 
@@ -578,10 +580,11 @@ Four things that are load-bearing:
     and `titulo` is forwarded to `GET /findings?title=` as an **exact match**. Narrowing on the server is the
     point — 3007 occurrences would not survive the client's 1000 ceiling.
   - `?finding=<id>` forces the flat view, since that is where a single row exists.
-- **Three concepts do not exist in the API**: finding resolution (`status`/`resolved_at`), repository
-  ownership (`owner_team`) and remediations (there is no route at all). The open/resolved split, the
-  "remediados" count and the report's PR/remediation blocks therefore *disappear* when the data is real
-  instead of being filled with invented values. `?status=` is still parsed so old links do not break.
+- **Two concepts do not exist in the API**: finding resolution (`status`/`resolved_at`) and repository
+  ownership (`owner_team`). The open/resolved split and the "remediados" count therefore *disappear* when
+  the data is real instead of being filled with invented values. `?status=` is still parsed so old links do
+  not break. Remediations used to be on this list; they are real now — see
+  [Remediações](#remediações-dados-reais) below.
 - **A report's identity is the execution `id`, not the `commit_sha`.** It used to be the sha, back when a
   commit had exactly one execution. Re-scanning the same branch now stacks a new execution instead of
   overwriting the previous one, so the sha no longer addresses a screen — the URL is
@@ -615,6 +618,36 @@ Se ele voltar: o conteúdo vem de um LLM, então **HTML cru fica desligado** e n
 `dangerouslySetInnerHTML` — renderizar a marcação do modelo é vetor de XSS. O componente antigo está no
 histórico do git, com essa regra já aplicada. As dependências `react-markdown` e `remark-gfm` seguem no
 `package.json` sem uso.
+
+### Remediações (dados reais)
+
+`src/lib/api/remediations.ts` (`fetchRemediations`) reads `GET /remediations`; the approve/reject
+Server Action lives in `src/lib/api/remediation-actions.ts`. The screen was already complete — this was
+a wiring job, plus the back-end work that had to come first.
+
+- **The back-end generated nothing.** `SuggestPatchUseCase` existed, fully tested, and **no worker called
+  it**; the `remediations` table had never received a row. A read route alone would have returned an empty
+  list forever. `remediation_worker.suggest_remediations` now sits in the canvas between
+  `post_tier2_report` and `tier3_gate` and returns `analysis` untouched, because the gate runs on it next.
+- **Only tier 1 and 2 findings get a patch**, and only those with `file_path`+`line_number`, worst first,
+  capped at `REMEDIATION_MAX_PER_SCAN` (10). DAST is excluded on purpose: the same ZAP alert repeats once
+  per route and none of them point at a line of code.
+- **Each item arrives with its own context** — finding title, severity, file, repo, PR — from the join that
+  proves ownership on the server. That is why `RemediationCard` takes
+  `Pick<Finding, …>` / `Pick<ScanJob, 'pr_number'>` instead of the full types: resolving the finding on the
+  client would mean fetching the user's entire finding set to render a dozen cards.
+- **`?scan=` is resolved on the server now.** It goes to the API as `scan_job_id` rather than filtering an
+  already-downloaded list. The context banner still needs *when* the scan ran, which is not embedded in a
+  remediation, so the page also calls `fetchScan(scanId)` — but only when there is a scope.
+- **Approve/reject is optimistic, then real.** The card flips immediately, `decideRemediation` writes, and
+  a rejection from the API undoes the local entry and shows the reason on the card. The API answers 409 if
+  the remediation was already decided — approving is a signed act, not a toggle — and 404 (never 403) when
+  it belongs to someone else, so existence does not leak.
+- **Approving here applies nothing.** The product premise is that every patch ships as a GitHub code
+  suggestion and only a human applies it, on GitHub. The endpoint records who decided and when.
+- A manual scan has no PR, so nothing is posted — the remediation is persisted with
+  `github_comment_id: null` and the dashboard is the surface that remains. The `pr_number` link on the card
+  simply disappears.
 
 ### Os tres estados da tela de relatorio
 
@@ -781,9 +814,10 @@ These are the seams between screens. Keep them in the helpers, not inline:
 
 ### Screens never mutate the shared mock arrays
 
-Approve/reject on Remediações, and the Scans polling that completes `s2`'s Tier 3, both hold their changes
-in `useState` instead of writing into `REMEDIATIONS` / `SCAN_JOBS`. Mutating module state would leave the
-dataset corrupted after navigating away and back.
+The Scans polling that completes `s2`'s Tier 3 holds its changes in `useState` instead of writing into
+`SCAN_JOBS`. Mutating module state would leave the dataset corrupted after navigating away and back. The
+same rule applies to approve/reject on Remediações in demo mode — with real data the optimistic `useState`
+is backed by a Server Action, and `REMEDIATIONS` is never touched either way.
 
 ## What is NOT ported
 
