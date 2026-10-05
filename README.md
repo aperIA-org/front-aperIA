@@ -82,6 +82,17 @@ quando estão em demonstração, para a origem do dado nunca ficar ambígua.
 
 ---
 
+## Integrantes
+
+| Nome | RM |
+|---|---|
+| Heitor Hideki Nishimura | 571082 |
+| Eduardo Augusto Costa Castro | 573427 |
+| Guilherme Botelho de Araujo | 569722 |
+| Diego Araujo Silva | 573684 |
+
+---
+
 ## Licença
 
 [GNU General Public License v3.0](LICENSE) ou posterior.
